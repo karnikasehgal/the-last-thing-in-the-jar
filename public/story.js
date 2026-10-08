@@ -30,7 +30,7 @@ const AGES = [
     reveal:"Zeus grew up, forced Cronus to cough the stone back up, and set it at Delphi as the <i>omphalos</i>, the navel of the world. Pilgrims anointed it with oil for a thousand years. Nobody asked about the thumbprint." },
 
   { id:"silver", c:"#6f7f8f", num:"II", label:"The Silver Age", title:"The Fire", greek:"ἀργύρεον γένος · children for a hundred years", glyph:"Λ", gpos:"bottom:14%;left:3%",
-    myth:"The silver race stayed children for a century. Then Prometheus stole fire from the gods, hidden in a hollow fennel stalk. Zeus answered with a gift of his own: Pandora, and a sealed jar.", cite:"Works and Days 90–142 · Theogony 565–567",
+    myth:"The silver race stayed children for a century. Then Prometheus stole fire from the gods, hidden in a hollow fennel stalk. Zeus answered with a gift of his own: Pandora, and a sealed jar. (A jar, a <i>pithos</i>. The “box” is a Renaissance mistranslation.)", cite:"Works and Days 90–142 · Theogony 565–567",
     witness:["I held the stalk while he climbed down. It was warm all the way through, like holding someone's wrist.","Later I stood next to Pandora when the lid came up. Everything flew out: sickness, toil, grief. <i>One thing didn't.</i> I'll tell you what at the end."],
     echo:"He told me fire was a gift. Zeus said it was a theft. They were both right. That's what nobody tells you about gifts.",
     relic:{icon:"fennel",name:"Hollow Fennel Stalk",desc:"Giant fennel (narthex). Interior scorched black. Still faintly warm.",found:"The Caucasus",by:"Heracles"},
@@ -78,3 +78,21 @@ const AGES = [
     reveal:"The psychologist C. R. Snyder described hope as more than a feeling: a goal, a <i>pathway</i> towards it, and the will to walk it. The stone, the stalk, the plank and the thread were each a pathway for someone. Your reading follows." }
 ];
 
+
+// The painting that opens each act, like a film's establishing shot. All public domain unless noted.
+// pos = the part of the painting the camera drifts towards.
+const SCENES = {
+  golden: {img:"img/golden.jpg", pos:"50% 22%", credit:"Michelangelo, <i>The Delphic Sibyl</i>, 1509", place:"Sistine Chapel ceiling, Vatican"},
+  silver: {img:"img/silver.jpg", pos:"50% 40%", credit:"Piero di Cosimo, <i>The Myth of Prometheus</i>, c. 1515", place:"Alte Pinakothek, Munich"},
+  bronze: {img:"img/bronze.jpg", pos:"38% 55%", credit:"Michelangelo, <i>The Deluge</i>, 1508–09", place:"Sistine Chapel ceiling, Vatican"},
+  heroic: {img:"img/heroic.jpg", pos:"32% 45%", credit:"Annibale Carracci, <i>The Triumph of Bacchus and Ariadne</i>, 1597–1602", place:"Farnese Gallery, Palazzo Farnese, Rome"},
+  iron:   {img:"img/iron.jpg",   pos:"50% 40%", credit:"Raphael, <i>Hope</i>, from the Baglioni Altarpiece, 1507", place:"Pinacoteca Vaticana, Vatican"}
+};
+
+// The opening titles, played over the Sistine ceiling.
+const TITLES = [
+  "In the beginning there was Chaos.",
+  "Then Earth, and Sky, and the Titans, and a king who swallowed his own children.",
+  "The poets remembered the gods. They remembered the heroes.",
+  "They forgot the woman standing in the corner of the room."
+];

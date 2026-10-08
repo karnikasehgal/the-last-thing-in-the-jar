@@ -1,6 +1,6 @@
 # The Last Thing in the Jar
 
-**An interactive AI side story of Greek mythology.**
+**A short film you can play: an AI side story of Greek mythology, set in Renaissance frescoes.**
 
 > The gods got the myths. The heroes got the glory. I got there first, and I left you clues.
 
@@ -17,6 +17,9 @@ Inspired by the way Zach Cregger's *Resident Evil* (2026) treats its lead as a s
 The twist is in the jar. (Find the five hidden Greek letters and you'll know before she tells you.)
 
 ## What's in it
+- **Opening titles** over Michelangelo's Sistine Chapel ceiling, letterboxed, with a quiet score generated live in the browser (Web Audio) that shifts key with each act.
+- **Five acts**, each opening on a full-screen painting from the Vatican or Rome with a slow camera drift: Michelangelo's *Delphic Sibyl* and *Deluge*, Piero di Cosimo's *Prometheus*, Carracci's *Bacchus and Ariadne*, Raphael's *Hope*, *Parnassus* and *Council of the Gods*.
+- **End credits**, with a tease for Episode II (Heracles, the Argonauts, Troy, Odysseus) and share links.
 - **Echoes**: each Age has a "found recording", voiced in the browser with live waveform and word-by-word transcript.
 - **Choices with consequences**: each moral dilemma unseals the next Age and reveals who found the relic.
 - **A red thread** that unspools down the page through every relic as you scroll.
@@ -44,6 +47,8 @@ npx wrangler deploy
 ```
 
 ## Design
+Paintings are public domain via Wikimedia Commons, except the Sistine ceiling photo (CC BY-SA 3.0, credited on the page). `public/og.jpg` is the share card.
+
 Soft and quiet on purpose: fresco plaster, sepia ink, sinopia red and faded lapis, arched niches from Italian Renaissance architecture, IM Fell (a 17th-century typeface) and Cardo (made for classicists, with proper Greek).
 
 ## Sources

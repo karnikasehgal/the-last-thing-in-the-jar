@@ -16,7 +16,7 @@ const $ = (s, r = document) => r.querySelector(s);
 
 function render() {
   const story = $("#story");
-  story.querySelectorAll(".age").forEach(n => n.remove());
+  story.querySelectorAll(".age,.scene").forEach(n => n.remove());
   AGES.forEach((a, i) => {
     const sec = document.createElement("section");
     sec.className = "age"; sec.id = a.id; sec.dataset.i = i;
@@ -48,7 +48,16 @@ function render() {
       </div>
       <button class="glyph${state.letters[i] ? " got" : ""}" style="${a.gpos}" aria-label="A faint letter">${a.glyph}</button>
       <div class="seal">This age is still closed. Answer the one before it.</div>`;
-    if (i > 0 && state.choices[i - 1] === undefined) sec.classList.add("sealed");
+    const sealed = i > 0 && state.choices[i - 1] === undefined;
+    if (sealed) sec.classList.add("sealed");
+    const sc = SCENES[a.id], scene = document.createElement("section");
+    scene.className = "scene" + (sealed ? " locked" : "");
+    scene.dataset.scene = a.id;
+    scene.innerHTML = `<div class="img" style="background-image:url(${sc.img});background-position:${sc.pos};transform-origin:${sc.pos}"></div><div class="shade"></div>
+      <div class="card"><div class="act">Act ${a.num}</div><h2>${a.label}</h2><div class="sub">${a.title}</div><div class="lock">This act opens when you finish the one before.</div></div>
+      <div class="credit">${sc.credit}. ${sc.place}</div><div class="down">scroll ↓</div>`;
+    story.appendChild(scene);
+    sceneIO.observe(scene);
     story.appendChild(sec);
     sec.querySelectorAll(".opt").forEach(b => b.onclick = () => choose(i, +b.dataset.k));
     sec.querySelector(".echo button").onclick = () => playEcho(sec.querySelector(".echo"), a.echo);
@@ -68,7 +77,11 @@ function choose(i, k) {
   sec.querySelector(".found").classList.add("show");
   sec.querySelector(".hid")?.classList.remove("hid");
   const next = AGES[i + 1] && document.getElementById(AGES[i + 1].id);
-  if (next) { next.classList.remove("sealed"); note(`${AGES[i + 1].label} is open.`); }
+  if (next) {
+    next.classList.remove("sealed");
+    next.previousElementSibling.classList.remove("locked");
+    note(`Act ${AGES[i + 1].num} is open. Keep scrolling.`);
+  }
   else showReading(true);
   updateChat();
   setTimeout(layoutThread, 50);
@@ -90,10 +103,11 @@ function playEcho(box, text) {
   const synth = window.speechSynthesis;
   const words = [...box.querySelectorAll(".w")];
   const btn = box.querySelector("button");
-  const stop = () => { synth?.cancel(); document.querySelectorAll(".echo.on").forEach(e => { e.classList.remove("on"); e.querySelector("button").textContent = "listen to the echo"; }); speaking = null; };
+  const stop = () => { score.duck(false); synth?.cancel(); document.querySelectorAll(".echo.on").forEach(e => { e.classList.remove("on"); e.querySelector("button").textContent = "listen to the echo"; }); speaking = null; };
   if (speaking === box) return stop();
   stop();
   speaking = box; box.classList.add("on"); btn.textContent = "listening";
+  score.duck(true);
   words.forEach(w => w.classList.remove("lit"));
   let idx = 0;
   const lightTo = n => { for (; idx < Math.min(n, words.length); idx++) words[idx].classList.add("lit"); };
@@ -182,6 +196,12 @@ $("#copyBtn").onclick = () => {
   navigator.clipboard?.writeText(txt).then(() => note("Copied."), () => note("Couldn't copy here."));
 };
 
+// Sharing
+const shareUrl = () => location.origin + location.pathname;
+const tweet = text => `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}`;
+$("#shareCredits").href = tweet("I followed the thread through five ages of Greek myth and found the last thing in the jar.");
+$("#shareReading").onclick = () => { const r = ranked(); open(tweet(`My patron god is ${r[0]}, and the one I neglect is ${r[r.length - 1]}. Found out by following a red thread through five ages of Greek myth.`), "_blank", "noopener"); };
+
 // Appendix
 $("#gods").innerHTML = GOD_LIST.map(g => `<div class="god" data-g="${g}"><h3>${g}<span>${GODS[g].gk}</span></h3><div class="ep">${GODS[g].a}</div><p><i>Gift.</i> ${GODS[g].gift}</p><p><i>Shadow.</i> ${GODS[g].shadow}</p></div>`).join("");
 
@@ -237,6 +257,86 @@ $("#reset").onclick = () => {
 
 const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add("in")), {threshold:.12});
 document.querySelectorAll(".fade").forEach(el => io.observe(el));
+
+
+
+// ---------- the film ----------
+
+// Each scene drifts slowly when it comes into view, and the score shifts key.
+const sceneIO = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add("in"); score.key(e.target.dataset.scene); }
+  else if (e.intersectionRatio === 0) e.target.classList.remove("in");
+}), {threshold:[0, .45]});
+sceneIO.observe($("#readingScene"));
+
+// A quiet score made in the browser: a slow chord of soft tones in a large reverberant room.
+const score = (() => {
+  const CHORDS = { // Hz
+    open:[110, 164.8, 220, 261.6], golden:[130.8, 196, 261.6, 329.6], silver:[110, 164.8, 220, 261.6],
+    bronze:[98, 146.8, 196, 233.1], heroic:[87.3, 130.8, 174.6, 220], iron:[110, 164.8, 220, 277.2], parnassus:[130.8, 196, 246.9, 329.6]
+  };
+  let ctx, master, voices = [], on = false, current = "open", ducked = false;
+  const level = () => ducked ? 0.018 : 0.06;
+  function build() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0;
+    const len = ctx.sampleRate * 4, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    const verb = ctx.createConvolver(); verb.buffer = ir;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100;
+    const wet = ctx.createGain(); wet.gain.value = .8; const dry = ctx.createGain(); dry.gain.value = .35;
+    lp.connect(verb).connect(wet).connect(master); lp.connect(dry).connect(master); master.connect(ctx.destination);
+    CHORDS.open.forEach((f, i) => {
+      const g = ctx.createGain(); g.gain.value = .16;
+      const lfo = ctx.createOscillator(), lg = ctx.createGain();
+      lfo.frequency.value = .04 + i * .023; lg.gain.value = .1; lfo.connect(lg).connect(g.gain); lfo.start();
+      const oscs = [0, 4].map(det => { const o = ctx.createOscillator(); o.type = i ? "sine" : "triangle"; o.frequency.value = f; o.detune.value = det; o.connect(g); o.start(); return o; });
+      g.connect(lp); voices.push(oscs);
+    });
+  }
+  return {
+    get on() { return on; },
+    start() { if (!ctx) build(); ctx.resume(); on = true; master.gain.setTargetAtTime(level(), ctx.currentTime, 2.5); this.key(current); },
+    stop() { if (!ctx) return; on = false; master.gain.setTargetAtTime(0, ctx.currentTime, .8); },
+    key(name) { if (!CHORDS[name]) return; current = name; if (!ctx) return; CHORDS[name].forEach((f, i) => voices[i]?.forEach(o => o.frequency.setTargetAtTime(f, ctx.currentTime, 2.2))); },
+    duck(d) { ducked = d; if (ctx && on) master.gain.setTargetAtTime(level(), ctx.currentTime, .6); }
+  };
+})();
+function paintSound() { $("#soundBtn").textContent = score.on ? "sound on" : "sound off"; }
+$("#soundBtn").onclick = () => { score.on ? score.stop() : score.start(); paintSound(); };
+
+// Opening titles
+(() => {
+  const intro = $("#intro"), line = $("#introLine"), title = $("#introTitle");
+  if (unlocked()) $("#startBtn").textContent = "Continue, with sound";
+  let timers = [], done = false;
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const finish = () => {
+    if (done) return; done = true;
+    timers.forEach(clearTimeout);
+    intro.classList.add("gone");
+    document.body.style.overflow = "";
+    setTimeout(() => { intro.remove(); layoutThread(); }, 2300);
+  };
+  document.body.style.overflow = "hidden";
+  const roll = sound => {
+    if (sound) { score.start(); paintSound(); }
+    intro.classList.add("rolling");
+    if (unlocked()) { later(finish, 1200); return; }
+    let t = 1800;
+    TITLES.forEach(text => {
+      later(() => { line.textContent = text; line.classList.add("on"); }, t);
+      later(() => line.classList.remove("on"), t + 3600);
+      t += 5000;
+    });
+    later(() => title.classList.add("on"), t);
+    later(finish, t + 4600);
+  };
+  $("#startBtn").onclick = () => roll(true);
+  $("#startQuiet").onclick = () => roll(false);
+  $("#skip").onclick = finish;
+  addEventListener("keydown", e => { if (e.key === "Escape" && !done && intro.classList.contains("rolling")) finish(); });
+})();
 
 render();
 addEventListener("load", layoutThread);
