@@ -33,6 +33,9 @@ The twist is in the jar. (Find the five hidden Greek letters and you'll know bef
 - `src/worker.js`: Cloudflare Worker with `/api/echo` (chat) and `/api/reading`; streams from Claude, or from Cloudflare Workers AI if no Anthropic key is set
 - `wrangler.jsonc`: config (rate limit: 12 AI calls per visitor per minute)
 
+## Live
+https://elpis.karnika-portfolio.workers.dev
+
 ## Run locally
 ```bash
 npm install
