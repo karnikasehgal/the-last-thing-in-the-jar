@@ -10,7 +10,7 @@ Inspired by the way Zach Cregger's *Resident Evil* (2026) treats its lead as a s
 |---|---|---|---|
 | I · Golden | Rhea tricks Cronus with a swaddled stone | The stone, with her thumbprint in the seal | Pilgrims at Delphi |
 | II · Silver | Prometheus steals fire; Pandora opens the jar | A scorched fennel stalk | Heracles |
-| III · Bronze | Deucalion and Pyrrha survive the flood | An oak plank with nine marks | Pyrrha |
+| III · Bronze | Deucalion and Pyrrha survive the flood | An oak plank with nine marks | Deucalion |
 | IV · Heroes | Theseus escapes the Labyrinth | The red thread | Dionysus |
 | V · Iron | Our age | The screen you're reading on | You |
 
@@ -25,7 +25,8 @@ The twist is in the jar. (Find the five hidden Greek letters and you'll know bef
 - **Psyche reading (AI + psychology)**: your choices map onto the twelve Olympians as inner archetypes (Jung; Jean Shinoda Bolen's *Goddesses in Everywoman* / *Gods in Everyman*). You get a patron, an ally and a neglected god, plus a personal reading. The ending also draws on C. R. Snyder's hope theory.
 
 ## Stack
-- `public/index.html`: the whole experience (HTML/CSS/vanilla JS, no build step)
+- `public/story.js`: **the story itself** (every Age, relic, echo, choice and god). Edit this to change the writing.
+- `public/index.html` + `public/app.js`: the page and how it behaves (plain HTML/CSS/JS, no build step)
 - `src/worker.js`: Cloudflare Worker with `/api/echo` (chat) and `/api/reading`; streams from Claude, or from Cloudflare Workers AI if no Anthropic key is set
 - `wrangler.jsonc`: config (rate limit: 12 AI calls per visitor per minute)
 
@@ -42,7 +43,12 @@ npx wrangler secret put ANTHROPIC_API_KEY   # optional
 npx wrangler deploy
 ```
 
+## Design
+Soft and quiet on purpose: fresco plaster, sepia ink, sinopia red and faded lapis, arched niches from Italian Renaissance architecture, IM Fell (a 17th-century typeface) and Cardo (made for classicists, with proper Greek).
+
 ## Sources
 Hesiod, *Works and Days* 90–201 and *Theogony* 453–567 · Apollodorus 1.7.2 · Ovid, *Metamorphoses* I · Plutarch, *Theseus* 19–20 · Catullus 64 · Pausanias 10.24.6. The Witness and her relics are invented; the myths are not.
+
+Further reading: Morford, Lenardon & Sham, *Classical Mythology* · Katerina Servi, *Greek Mythology* · Edith Hamilton, *Mythology* · Apollodorus, tr. Robin Hard · Robert Graves, *The Greek Myths* · Stephen Fry, *Heroes* and *Troy* · Apollonius, *Argonautica*, tr. Richard Hunter · Homer, *Iliad*, tr. Martin Hammond, and *Odyssey*, tr. Emily Wilson · Virgil, *Aeneid*, tr. David West.
 
 Made by Karnika Sehgal.

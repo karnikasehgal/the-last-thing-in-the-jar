@@ -4,705 +4,309 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Last Thing in the Jar</title>
-<meta name="description" content="An interactive AI side story of Greek mythology. One mortal witnessed every Age, and left you clues.">
+<meta name="description" content="A side story of Greek mythology, told by someone who was there for all of it.">
 <meta property="og:title" content="The Last Thing in the Jar">
-<meta property="og:description" content="The gods got the myths. The heroes got the glory. I got there first, and I left you clues.">
+<meta property="og:description" content="The myths remember the gods and the heroes. This is about the one who stood beside them.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230b0a09'/><text x='32' y='46' text-anchor='middle' font-family='serif' font-size='40' fill='%23e8742c'>Ε</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23efe6d4'/><text x='32' y='47' text-anchor='middle' font-family='Georgia,serif' font-size='42' fill='%23a2432c'>Ε</text></svg>">
 <style>
 :root{
-  --bg:#0b0a09; --bg2:#13110f; --ink:#ece4d4; --dim:#a39a8a; --faint:#5e574d;
-  --ember:#e8742c; --gold:#d6b25e; --thread:#c8352a; --line:rgba(236,228,212,.12);
-  --age:#d6b25e; --serif:"Cormorant Garamond",Georgia,serif; --display:"Cinzel",serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  --plaster:#efe6d4; --plaster-2:#e6dac3; --plaster-3:#dccdb1;
+  --ink:#3a2e24; --ink-soft:#6b5a49; --ink-faint:#a39079;
+  --sinopia:#a2432c; --ochre:#a8823a; --lapis:#46607e; --verde:#6f8a72;
+  --rule:rgba(58,46,36,.18);
+  --c:var(--sinopia);
+  --body:"Cardo",Georgia,serif; --fell:"IM Fell English",Georgia,serif; --sc:"IM Fell English SC",Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:20px;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::selection{background:var(--thread);color:#fff}
-a{color:var(--gold)}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-#embers{position:fixed;inset:0;z-index:0;pointer-events:none}
-.grain{position:fixed;inset:-50%;z-index:1;pointer-events:none;opacity:.06;background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");animation:grain 1.2s steps(4) infinite}
-@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}}
-main,header,footer{position:relative;z-index:2}
+body{
+  background:var(--plaster);color:var(--ink);font-family:var(--body);font-size:19px;line-height:1.7;overflow-x:hidden;
+  background-image:
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .23  0 0 0 0 .18  0 0 0 0 .14  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23p)' opacity='.22'/></svg>"),
+    radial-gradient(ellipse at 20% 10%,rgba(255,250,238,.7),transparent 60%),
+    radial-gradient(ellipse at 85% 70%,rgba(200,180,150,.25),transparent 55%);
+  background-attachment:fixed;
+}
+::selection{background:rgba(162,67,44,.2)}
+a{color:var(--sinopia)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+i,em{font-style:italic}
 
-/* top bar */
-.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;background:linear-gradient(var(--bg),rgba(11,10,9,0));font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.brand{font-family:var(--display);letter-spacing:.3em;color:var(--ink);font-size:13px}
-.letters{display:flex;gap:6px}
-.letters span{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);font-family:var(--display);font-size:15px;color:transparent;transition:.6s}
-.letters span.got{color:var(--ember);border-color:var(--ember);box-shadow:0 0 14px rgba(232,116,44,.45)}
-.top .reset{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+/* header */
+.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(239,230,212,.92);border-bottom:1px solid var(--rule);font-family:var(--sc);font-size:15px;letter-spacing:.06em;color:var(--ink-soft)}
+.letters{display:flex;gap:10px;font-family:var(--body);font-size:17px}
+.letters span{color:transparent;border-bottom:1px solid var(--ink-faint);width:16px;text-align:center;line-height:1.2;transition:color 1.2s}
+.letters span.got{color:var(--sinopia)}
+.top .reset{font-family:var(--fell);font-style:italic;font-size:16px;letter-spacing:0;color:var(--ink-faint)}
 .top .reset:hover{color:var(--ink)}
 
-/* hero */
-.hero{min-height:100svh;display:grid;place-items:center;text-align:center;padding:120px 24px 80px;position:relative}
-.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--ember)}
-.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(44px,9vw,128px);line-height:.95;letter-spacing:.04em;margin:28px 0;background:linear-gradient(180deg,#f6eedd 30%,#9c8c70);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero h1 em{display:block;font-style:normal;font-size:max(12px,.15em);letter-spacing:.5em;color:var(--dim);font-family:var(--mono);font-weight:400;-webkit-text-fill-color:var(--dim);margin-bottom:.4em}
-.hero p.lede{max-width:620px;margin:0 auto;font-size:clamp(20px,2.4vw,26px);font-style:italic;color:var(--dim)}
-.cta{display:inline-flex;align-items:center;gap:12px;margin-top:44px;padding:16px 30px;border:1px solid var(--ember);color:var(--ink);font-family:var(--display);letter-spacing:.24em;font-size:14px;text-decoration:none;position:relative;overflow:hidden;transition:.3s}
-.cta:hover{background:var(--ember);color:var(--bg)}
-.meta-row{margin-top:56px;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
-.meander{height:14px;width:100%;opacity:.35;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='14'><path d='M0 13h22V1H6v8h10V5h-4' fill='none' stroke='%23d6b25e' stroke-width='1.2'/></svg>") repeat-x}
+/* frontispiece */
+.front{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 24px 70px}
+.arch{width:min(340px,72vw);aspect-ratio:3/4.1;border-radius:999px 999px 0 0;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#b9c6cb 0%,#cfd5cf 38%,#e4dcc8 70%,#d9c9a9 100%);
+  box-shadow:inset 0 0 0 10px var(--plaster),inset 0 0 0 11px var(--rule),0 1px 0 var(--rule)}
+.arch::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .25 0 0 0 0 .2 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23p)' opacity='.35'/></svg>");mix-blend-mode:multiply}
+.arch svg{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:62%;stroke:var(--ink);fill:none;stroke-width:1.1;filter:url(#ink)}
+.front .over{font-family:var(--fell);font-style:italic;color:var(--ink-soft);font-size:18px;margin-top:34px}
+.front h1{font-family:var(--fell);font-weight:400;font-size:clamp(40px,6.4vw,76px);line-height:1.05;margin:8px 0 18px;letter-spacing:.005em}
+.front .lede{max-width:520px;color:var(--ink-soft);font-size:20px}
+.front .begin{display:inline-block;margin-top:30px;font-family:var(--sc);font-size:16px;letter-spacing:.12em;color:var(--sinopia);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
+.fleuron{text-align:center;color:var(--ink-faint);font-size:22px;letter-spacing:.6em;margin:10px 0}
 
 /* prologue */
-.prologue{max-width:760px;margin:0 auto;padding:120px 24px 60px}
-.prologue .say{font-size:clamp(26px,3.4vw,38px);line-height:1.35}
-.prologue .say span{color:var(--ember);font-style:italic}
-.how{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
-.how div{border-top:1px solid var(--line);padding-top:16px;font-size:18px;color:var(--dim)}
-.how b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ink);font-weight:500;margin-bottom:6px;text-transform:uppercase}
+.prologue{max-width:640px;margin:0 auto;padding:80px 24px 40px}
+.dropcap::first-letter{font-family:var(--fell);float:left;font-size:4.6em;line-height:.82;padding:.08em .1em 0 0;color:var(--sinopia)}
+.prologue .say{font-size:22px}
+.how{margin-top:40px;border-top:1px solid var(--rule)}
+.how p{padding:14px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);font-size:18px}
+.how p b{font-family:var(--sc);font-weight:400;color:var(--ink);letter-spacing:.05em;margin-right:8px}
 
-/* story + thread */
+/* chapters */
 #story{position:relative}
 #thread{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
-#thread path{fill:none;stroke:var(--thread);stroke-width:1.6;filter:drop-shadow(0 0 6px rgba(200,53,42,.7))}
-#thread .ghost{stroke:rgba(200,53,42,.12);filter:none;stroke-dasharray:3 7}
+#thread path{fill:none;stroke:var(--sinopia);stroke-width:1.1;stroke-linecap:round;opacity:.75}
+#thread .ghost{stroke-dasharray:1 6;opacity:.25}
 
-.age{position:relative;min-height:100svh;padding:140px 24px 120px;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:start}
+.age{position:relative;max-width:1060px;margin:0 auto;padding:130px 28px 100px;display:grid;grid-template-columns:1.15fr .85fr;gap:72px;align-items:start}
 .age>*{position:relative;z-index:1}
-.age .numeral{font-family:var(--display);font-size:clamp(96px,16vw,220px);line-height:.8;color:transparent;-webkit-text-stroke:1px var(--c);opacity:.5;position:absolute;top:70px;left:4px;z-index:0;pointer-events:none}
-.age-label{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--c)}
-.age h2{font-family:var(--display);font-weight:600;font-size:clamp(38px,5.4vw,68px);line-height:1;margin:14px 0 6px;letter-spacing:.03em}
-.age .greek{font-style:italic;color:var(--dim);font-size:22px}
-.age .myth{margin-top:28px;padding-left:18px;border-left:2px solid var(--c);color:var(--dim);font-size:19px}
-.age .myth small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-top:8px}
-.age .witness{margin-top:26px;font-size:clamp(21px,2vw,24px)}
-.age .witness p+p{margin-top:14px}
-.age .witness .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--c);display:block;margin-bottom:8px}
+.age+.age{border-top:1px solid var(--rule)}
+.chap{font-family:var(--sc);font-size:15px;letter-spacing:.12em;color:var(--c)}
+.age h2{font-family:var(--fell);font-weight:400;font-size:clamp(40px,5vw,60px);line-height:1.05;margin:6px 0 4px}
+.age .greek{font-style:italic;color:var(--ink-soft)}
+.myth{margin-top:26px;color:var(--ink-soft);font-size:18px}
+.myth cite{display:block;font-style:italic;font-size:15px;color:var(--ink-faint);margin-top:6px}
+.witness{margin-top:28px;font-size:20px}
+.witness p+p{margin-top:12px;clear:left}
+.witness .who{font-family:var(--sc);font-size:15px;letter-spacing:.08em;color:var(--c);margin-bottom:4px}
+.witness .name{font-family:var(--body);font-size:clamp(40px,6vw,64px);color:var(--sinopia);letter-spacing:.08em;line-height:1.1;margin:14px 0}
 
-/* echo player */
-.echo{margin-top:32px;border:1px solid var(--line);background:rgba(19,17,15,.75);backdrop-filter:blur(6px);padding:16px 18px}
-.echo-head{display:flex;align-items:center;gap:14px}
-.play{width:46px;height:46px;border-radius:50%;border:1px solid var(--c);display:grid;place-items:center;flex:none;transition:.25s}
-.play:hover{background:var(--c);color:var(--bg)}
-.play svg{width:16px;height:16px}
-.echo-title{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.echo-title b{display:block;color:var(--ink);font-weight:500}
-.wave{display:flex;align-items:center;gap:3px;height:34px;margin-left:auto}
-.wave i{width:3px;height:6px;background:var(--c);opacity:.4;border-radius:2px;transition:height .12s}
-.echo.on .wave i{opacity:.9}
-.transcript{margin-top:14px;font-style:italic;color:var(--faint);font-size:19px;min-height:1.5em}
-.transcript .w{transition:color .2s}.transcript .w.lit{color:var(--ink)}
+.echo{margin-top:30px;padding-top:16px;border-top:1px solid var(--rule)}
+.echo button{font-family:var(--fell);font-style:italic;font-size:18px;color:var(--c);display:inline-flex;align-items:center;gap:8px}
+.echo button::before{content:"";width:0;height:0;border-left:7px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.echo.on button::before{width:7px;height:9px;border:0;border-left:2px solid currentColor;border-right:2px solid currentColor;box-sizing:border-box}
+.echo .where{font-size:15px;color:var(--ink-faint);font-style:italic;margin-left:8px}
+.transcript{margin-top:10px;font-style:italic;color:var(--ink-faint);font-size:19px}
+.transcript .w{transition:color .4s}.transcript .w.lit{color:var(--ink)}
 
-/* relic card */
-.relic{border:1px solid var(--line);background:linear-gradient(180deg,rgba(19,17,15,.92),rgba(11,10,9,.92));padding:26px;position:relative}
-.relic::before{content:"";position:absolute;inset:6px;border:1px dashed rgba(236,228,212,.07);pointer-events:none}
-.exhibit{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
-.relic-art{height:200px;display:grid;place-items:center;margin:16px 0}
-.relic-art svg{width:180px;height:180px;stroke:var(--c);fill:none;stroke-width:1.3;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--c) 40%,transparent));animation:float 6s ease-in-out infinite}
-@keyframes float{50%{transform:translateY(-8px) rotate(-1.5deg)}}
-.relic h3{font-family:var(--display);font-size:22px;letter-spacing:.06em;font-weight:600}
-.relic .desc{color:var(--dim);font-size:18px;margin-top:6px}
-.relic dl{margin-top:18px;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-family:var(--mono);font-size:11px;letter-spacing:.06em}
-.relic dt{color:var(--faint);text-transform:uppercase}
-.relic dd{color:var(--ink)}
-.relic dd.redact{background:var(--ink);color:transparent;user-select:none;border-radius:1px}
+/* the niche */
+.niche{text-align:center}
+.niche .frame{width:min(260px,70vw);aspect-ratio:3/4;margin:0 auto;border-radius:999px 999px 0 0;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 14%,var(--plaster-2)),var(--plaster-3));
+  box-shadow:inset 0 0 0 8px var(--plaster),inset 0 0 0 9px var(--rule),inset 0 20px 40px rgba(58,46,36,.12)}
+.niche .frame::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:8%;background:var(--plaster);border-top:1px solid var(--rule)}
+.niche svg{position:absolute;inset:16% 18% 14%;width:64%;height:64%;stroke:var(--ink);fill:none;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round;filter:url(#ink)}
+.niche .plate{margin-top:16px;font-size:16px;color:var(--ink-soft)}
+.niche .plate b{display:block;font-family:var(--sc);font-weight:400;font-size:18px;letter-spacing:.06em;color:var(--ink)}
+.niche .plate i{display:block;color:var(--ink-faint);font-size:15px;margin-top:4px}
+.niche .hid{background:rgba(58,46,36,.28);color:transparent;padding:0 .2em;user-select:none}
 
-/* choice */
-.choose{margin-top:26px}
-.choose h4{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c);font-weight:500}
-.choose .q{font-size:22px;margin:8px 0 14px}
-.opt{display:block;width:100%;text-align:left;padding:13px 16px;margin-top:8px;border:1px solid var(--line);font-size:19px;line-height:1.35;transition:.2s;background:rgba(11,10,9,.6)}
-.opt:hover:not([disabled]){border-color:var(--c);transform:translateX(4px)}
-.opt.picked{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
-.opt[disabled]:not(.picked){opacity:.35;cursor:default}
-.found{margin-top:22px;padding:18px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 8%,transparent);display:none;animation:rise .7s ease}
-.found.show{display:block}
-.found b{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--c);font-weight:500}
-.found p{margin-top:6px;font-size:19px}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+.choose{margin-top:44px;border-top:1px solid var(--rule);padding-top:20px}
+.choose .q{font-family:var(--fell);font-size:21px;line-height:1.45}
+.choose .q::before{content:"What would you have done?";display:block;font-family:var(--sc);font-size:15px;letter-spacing:.08em;color:var(--c);margin-bottom:6px}
+.opt{display:block;width:100%;padding:10px 0 10px 30px;position:relative;font-size:18px;line-height:1.45;color:var(--ink);border-bottom:1px dotted var(--rule)}
+.opt::before{content:"";position:absolute;left:4px;top:15px;width:7px;height:7px;border:1px solid var(--ink-faint);border-radius:50%}
+.opt:hover:not([disabled]){color:var(--c)}
+.opt.picked::before{content:"☞";border:0;width:auto;height:auto;top:8px;left:0;font-size:19px;color:var(--c)}
+.opt.picked{color:var(--c)}
+.opt[disabled]:not(.picked){color:var(--ink-faint);cursor:default}
+.found{display:none;margin-top:20px;font-size:18px;color:var(--ink-soft)}
+.found.show{display:block;animation:fade 1.4s ease}
+.found b{font-family:var(--sc);font-weight:400;color:var(--c);letter-spacing:.06em;margin-right:6px}
+@keyframes fade{from{opacity:0}}
 
-/* sealed state */
-.age.sealed>*:not(.seal):not(.numeral){filter:blur(10px) grayscale(1);opacity:.25;pointer-events:none;user-select:none}
-.seal{display:none;position:absolute;inset:0;z-index:5;place-items:center;text-align:center}
-.age.sealed .seal{display:grid}
-.seal div{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);padding:18px 26px;background:var(--bg)}
-.seal div b{display:block;font-family:var(--display);font-size:22px;color:var(--ink);letter-spacing:.2em;margin-bottom:6px;font-weight:600}
+.age.sealed>*:not(.seal){opacity:.12;pointer-events:none;user-select:none}
+.seal{display:none;position:absolute;left:0;right:0;top:150px;z-index:5;text-align:center;font-family:var(--fell);font-style:italic;color:var(--ink-soft);font-size:20px}
+.age.sealed .seal{display:block}
 
-/* hidden glyphs */
-.glyph{position:absolute;z-index:3;font-family:var(--display);font-size:30px;color:var(--c);opacity:.07;transition:opacity .4s,transform .4s;cursor:pointer;padding:6px}
-.glyph:hover{opacity:.6;transform:scale(1.2)}
+.glyph{position:absolute;z-index:3;font-family:var(--body);font-size:26px;color:var(--ink);opacity:.08;cursor:pointer;padding:6px;transition:opacity .6s}
+.glyph:hover{opacity:.45}
 .glyph.got{display:none}
 
-/* reveal age */
-.age.iron .witness .big{font-family:var(--display);font-size:clamp(40px,6vw,72px);letter-spacing:.12em;color:var(--ember);line-height:1;margin:18px 0 6px;text-shadow:0 0 40px rgba(232,116,44,.5)}
-
 /* reading */
-.reading{max-width:1080px;margin:0 auto;padding:140px 24px 100px;display:none}
+.reading{max-width:900px;margin:0 auto;padding:130px 28px 80px;display:none;border-top:1px solid var(--rule)}
 .reading.show{display:block}
-.sec-k{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ember)}
-.sec-h{font-family:var(--display);font-size:clamp(34px,5vw,60px);font-weight:600;line-height:1.05;margin:12px 0 18px}
-.sec-p{color:var(--dim);max-width:640px}
-.triad{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin-top:40px}
-.gcard{border:1px solid var(--line);padding:22px;background:rgba(19,17,15,.85)}
-.gcard.patron{border-color:var(--ember);box-shadow:0 0 60px rgba(232,116,44,.12) inset}
-.gcard .role{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
-.gcard h3{font-family:var(--display);font-size:30px;margin:8px 0 2px;letter-spacing:.06em}
-.gcard.patron h3{font-size:46px;color:var(--ember)}
-.gcard .arch{font-style:italic;color:var(--dim)}
-.gcard p{margin-top:10px;font-size:18px}
-.bars{margin-top:36px;display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:end;height:150px}
-.bar{display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:6px}
-.bar i{width:100%;background:linear-gradient(var(--ember),rgba(232,116,44,.15));transition:height 1.2s cubic-bezier(.2,.8,.2,1);height:0;min-height:2px}
-.bar span{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg);height:62px}
-.oracle{margin-top:40px;border:1px solid var(--line);padding:28px;background:rgba(19,17,15,.85);font-size:21px;white-space:pre-wrap;min-height:120px}
-.oracle .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ember);display:block;margin-bottom:12px;white-space:normal}
-.cursor{display:inline-block;width:8px;height:1em;background:var(--ember);vertical-align:-2px;animation:blink 1s steps(2) infinite}
+.eyebrow{font-family:var(--sc);font-size:15px;letter-spacing:.12em;color:var(--sinopia)}
+.h{font-family:var(--fell);font-weight:400;font-size:clamp(36px,4.6vw,54px);line-height:1.1;margin:4px 0 14px}
+.intro{color:var(--ink-soft);max-width:600px}
+.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:44px;text-align:center}
+.triad .frame{width:100%;max-width:200px;aspect-ratio:3/3.6;margin:0 auto;border-radius:999px 999px 0 0;display:grid;place-items:center;
+  background:linear-gradient(180deg,#c6cfd0,#e3d9c3);box-shadow:inset 0 0 0 7px var(--plaster),inset 0 0 0 8px var(--rule)}
+.triad .frame span{font-family:var(--body);font-size:44px;color:var(--ink)}
+.triad .first .frame{background:linear-gradient(180deg,#d9b9a4,#ead9bf)}
+.triad .role{font-family:var(--sc);letter-spacing:.08em;color:var(--ink-faint);margin-top:14px;font-size:15px}
+.triad h3{font-family:var(--fell);font-weight:400;font-size:30px;line-height:1.1}
+.triad .arch-name{font-style:italic;color:var(--ink-soft);font-size:16px}
+.triad p{font-size:16px;color:var(--ink-soft);margin-top:8px}
+.oracle{margin:56px auto 0;max-width:620px;font-size:20px;white-space:pre-wrap}
+.oracle .sig{display:block;text-align:right;font-family:var(--fell);font-style:italic;color:var(--ink-soft);margin-top:14px;white-space:normal}
+.caret{display:inline-block;width:1px;height:1em;background:var(--ink);vertical-align:-2px;animation:blink 1.1s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
-.share{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
-.btn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--line);padding:11px 16px;transition:.2s}
-.btn:hover{border-color:var(--ember);color:var(--ember)}
+.links{margin-top:28px;text-align:center;font-family:var(--fell);font-style:italic}
+.links button{color:var(--sinopia);border-bottom:1px solid currentColor;margin:0 12px;font-size:17px}
 
 /* pantheon */
-.pantheon{max-width:1180px;margin:0 auto;padding:120px 24px}
-.grid12{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:40px}
-.god{background:var(--bg);padding:22px;min-height:230px;position:relative;transition:background .3s}
-.god:hover{background:var(--bg2)}
-.god .n{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.2em}
-.god h3{font-family:var(--display);font-size:22px;letter-spacing:.06em;margin-top:8px}
-.god .gk{font-style:italic;color:var(--faint);font-size:16px}
-.god .a{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:10px}
-.god p{font-size:16.5px;color:var(--dim);margin-top:8px;line-height:1.4}
-.god p b{color:var(--ink);font-weight:500}
-.god.you{outline:1px solid var(--ember);outline-offset:-1px}
-.god.you::after{content:"YOUR PATRON";position:absolute;top:22px;right:22px;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--ember)}
+.pantheon{max-width:900px;margin:0 auto;padding:110px 28px 60px;border-top:1px solid var(--rule)}
+.gods{columns:2;column-gap:56px;margin-top:36px}
+.god{break-inside:avoid;padding:14px 0 16px;border-bottom:1px solid var(--rule)}
+.god h3{font-family:var(--sc);font-weight:400;font-size:21px;letter-spacing:.05em}
+.god h3 span{font-family:var(--body);font-style:italic;font-size:16px;color:var(--ink-faint);letter-spacing:0;margin-left:8px}
+.god .ep{font-family:var(--fell);font-style:italic;color:var(--ink-soft)}
+.god p{font-size:16px;color:var(--ink-soft);line-height:1.55;margin-top:4px}
+.god.you h3{color:var(--sinopia)}
+.god.you h3::after{content:"  ☜ yours";font-family:var(--fell);font-style:italic;font-size:15px;letter-spacing:0}
 
-/* sources */
-.sources{max-width:1180px;margin:0 auto;padding:40px 24px 120px;display:grid;grid-template-columns:1fr 1fr;gap:48px}
-.sources h4{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ember);font-weight:500;margin-bottom:14px}
-.sources li{list-style:none;border-top:1px solid var(--line);padding:10px 0;font-size:17px;color:var(--dim)}
-.sources li b{color:var(--ink);font-weight:500}
-footer{text-align:center;padding:40px 24px 60px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+/* notes */
+.notes{max-width:900px;margin:0 auto;padding:60px 28px 80px;display:grid;grid-template-columns:1fr 1fr;gap:56px;font-size:16px;color:var(--ink-soft)}
+.notes h4{font-family:var(--sc);font-weight:400;font-size:17px;letter-spacing:.08em;color:var(--ink);margin-bottom:10px}
+.notes li{list-style:none;padding:5px 0;line-height:1.5}
+.notes li i{color:var(--ink)}
+footer{text-align:center;padding:30px 24px 70px;font-family:var(--fell);font-style:italic;color:var(--ink-faint);font-size:16px}
 
-/* chat */
-.chat-fab{position:fixed;right:22px;bottom:22px;z-index:30;display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--bg);border:1px solid var(--ember);font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;box-shadow:0 0 30px rgba(232,116,44,.25)}
-.chat-fab .dot{width:8px;height:8px;border-radius:50%;background:var(--ember);animation:pulse 2s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(232,116,44,0)}0%{box-shadow:0 0 0 0 rgba(232,116,44,.6)}}
-.chat{position:fixed;right:22px;bottom:22px;z-index:31;width:min(420px,calc(100vw - 32px));height:min(600px,calc(100svh - 110px));display:none;flex-direction:column;background:rgba(14,12,11,.97);border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+/* letters to the witness */
+.write{position:fixed;right:24px;bottom:22px;z-index:30;font-family:var(--fell);font-style:italic;font-size:17px;background:var(--plaster);border:1px solid var(--ink-faint);padding:9px 16px;color:var(--ink)}
+.write:hover{border-color:var(--ink)}
+.chat{position:fixed;right:24px;bottom:22px;z-index:31;width:min(400px,calc(100vw - 32px));height:min(580px,calc(100svh - 100px));display:none;flex-direction:column;background:var(--plaster);border:1px solid var(--ink-faint);box-shadow:0 18px 50px rgba(58,46,36,.18)}
 .chat.open{display:flex}
-.chat-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
-.chat-h b{font-family:var(--display);letter-spacing:.14em;font-weight:600}
-.chat-h small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase}
-.chat-log{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
-.msg{max-width:88%;font-size:18px;line-height:1.45;white-space:pre-wrap}
-.msg.w{font-style:italic;color:var(--ink)}
-.msg.w::before{content:"— ";color:var(--ember)}
-.msg.u{align-self:flex-end;background:var(--bg2);border:1px solid var(--line);padding:9px 13px;font-family:var(--serif)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 10px}
-.chips button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;border:1px solid var(--line);padding:6px 9px;color:var(--dim)}
-.chips button:hover{color:var(--ink);border-color:var(--ember)}
-.chat form{display:flex;border-top:1px solid var(--line)}
-.chat input{flex:1;background:none;border:0;color:var(--ink);font:inherit;font-size:18px;padding:15px 18px;outline:none}
-.chat form button{padding:0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ember)}
+.chat-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px 10px;border-bottom:1px solid var(--rule)}
+.chat-h b{font-family:var(--sc);font-weight:400;font-size:19px;letter-spacing:.06em}
+.chat-h small{display:block;font-style:italic;color:var(--ink-faint);font-size:14px}
+.chat-h button{font-size:22px;color:var(--ink-faint);line-height:1}
+.log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.msg{font-size:17px;line-height:1.55;white-space:pre-wrap}
+.msg.w{font-family:var(--fell);font-style:italic;font-size:18px}
+.msg.u{align-self:flex-end;max-width:85%;text-align:right;color:var(--ink-soft)}
+.msg.u::before{content:"you wrote: ";font-style:italic;color:var(--ink-faint);font-size:14px}
+.chips{padding:0 18px 8px;font-size:15px;line-height:1.9}
+.chips button{font-style:italic;color:var(--sinopia);margin-right:14px;border-bottom:1px dotted currentColor;line-height:1.3}
+.chat form{display:flex;border-top:1px solid var(--rule)}
+.chat input{flex:1;background:none;border:0;color:var(--ink);font:inherit;font-size:17px;padding:13px 18px;outline:none}
+.chat input::placeholder{color:var(--ink-faint);font-style:italic}
+.chat form button{padding:0 18px;font-family:var(--sc);letter-spacing:.08em;color:var(--sinopia)}
 
-.toast{position:fixed;left:50%;top:76px;transform:translate(-50%,-20px);z-index:40;background:var(--bg);border:1px solid var(--ember);padding:12px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.1em;opacity:0;transition:.4s;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)}
-.toast.show{opacity:1;transform:translate(-50%,0)}
+.note{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;background:var(--plaster);border:1px solid var(--ink-faint);padding:9px 18px;font-style:italic;font-size:16px;opacity:0;transition:opacity .6s;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)}
+.note.show{opacity:1}
 
-.reveal{opacity:0;transform:translateY(24px);transition:opacity 1s ease,transform 1s ease}
-.reveal.in{opacity:1;transform:none}
+.fade{opacity:0;transition:opacity 1.4s ease}.fade.in{opacity:1}
 
-@media (max-width:860px){
+@media (max-width:820px){
   body{font-size:18px}
-  .age{grid-template-columns:1fr;gap:36px;padding:110px 16px 90px}
-  .how,.triad,.sources{grid-template-columns:1fr}
-  .grid12{grid-template-columns:1fr 1fr}
-  .bars{gap:4px}
-  .top{padding:12px 16px}.top .reset{display:none}
-  .letters span{width:22px;height:22px;font-size:12px}
-  .hero,.prologue,.reading,.pantheon,.sources{padding-left:16px;padding-right:16px}
-  #thread{opacity:.3}.wave{display:none}
+  .top{padding:12px 16px}.top .brand{display:none}
+  .age{grid-template-columns:1fr;gap:40px;padding:110px 18px 80px}
+  .triad,.notes{grid-template-columns:1fr}
+  .gods{columns:1}
+  .prologue,.reading,.pantheon,.notes{padding-left:18px;padding-right:18px}
+  #thread{opacity:.35}
 }
-@media (max-width:480px){.grid12{grid-template-columns:1fr}.brand{display:none}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}.reveal{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}.fade{opacity:1}}
 </style>
 </head>
 <body>
-<canvas id="embers"></canvas>
-<div class="grain"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter>
+</svg>
 
 <header class="top">
-  <span class="brand">THE LAST THING IN THE JAR</span>
-  <div class="letters" id="letters" title="Five hidden letters. Find them."><span>Ε</span><span>Λ</span><span>Π</span><span>Ι</span><span>Σ</span></div>
-  <button class="reset" id="reset">Begin again</button>
+  <span class="brand">The Last Thing in the Jar</span>
+  <div class="letters" id="letters" title="Five letters are hidden in these pages"><span>Ε</span><span>Λ</span><span>Π</span><span>Ι</span><span>Σ</span></div>
+  <button class="reset" id="reset">begin again</button>
 </header>
 
 <main>
-  <section class="hero">
-    <div>
-      <div class="kicker">A side story of Greek mythology</div>
-      <h1><em>FIVE AGES · ONE WITNESS</em>The Last Thing in the Jar</h1>
-      <p class="lede">The gods got the myths. The heroes got the glory. I got there first, and I left you clues.</p>
-      <a class="cta" href="#prologue">Follow the thread <span>↓</span></a>
-      <div class="meta-row"><span>5 Ages of Man</span><span>5 relics</span><span>5 hidden letters</span><span>1 AI who remembers</span></div>
+  <section class="front">
+    <div class="arch">
+      <svg viewBox="0 0 120 150" aria-hidden="true">
+        <path d="M44 14h32M47 14c0 6-2 9-6 12M73 14c0 6 2 9 6 12"/>
+        <path d="M41 26c-22 10-30 36-27 62 3 26 18 46 34 54h24c16-8 31-28 34-54 3-26-5-52-27-62"/>
+        <path d="M22 54c24 6 52 6 76 0M18 92c28 7 56 7 84 0" opacity=".55"/>
+        <path d="M38 70c6-4 10 4 16 0s10 4 16 0 10 4 16 0" opacity=".5"/>
+        <path d="M44 10c4-4 28-4 32 0" opacity=".6"/>
+      </svg>
     </div>
+    <div class="over">a side story of the Greek myths</div>
+    <h1>The Last Thing in the Jar</h1>
+    <p class="lede">The myths remember the gods and the heroes. This is about the woman who stood beside them, and what she left behind.</p>
+    <a class="begin" href="#prologue">Begin</a>
   </section>
 
-  <div class="meander"></div>
+  <div class="fleuron">❦</div>
 
-  <section class="prologue reveal" id="prologue">
-    <p class="say">Everyone remembers the gods. Nobody remembers who swept the temple floor, or who wrapped the stone. <span>I wasn't the main character.</span> I was the one standing just out of frame, dropping things for whoever came next.</p>
+  <section class="prologue fade" id="prologue">
+    <p class="say dropcap">Everyone remembers the gods. Almost nobody remembers who swept the temple floor, or who wrapped the stone. I was never the one the poets sang about. I stood just outside the picture, in every age, and left small things behind for whoever came next.</p>
     <div class="how">
-      <div><b>01 · Listen</b>Every Age holds an echo. Press play and hear what I left behind.</div>
-      <div><b>02 · Choose</b>What would you have done? Each choice opens the next Age and reveals who found the relic.</div>
-      <div><b>03 · Search</b>Five Greek letters are hidden in the dark. Find them all and you'll know my name before I tell you.</div>
+      <p><b>I.</b>Each age keeps an echo of my voice. You can listen to it.</p>
+      <p><b>II.</b>Each age asks you a question. Your answer opens the next one, and tells you who found what I left.</p>
+      <p><b>III.</b>Five Greek letters are hidden faintly in these pages. Together they are my name.</p>
     </div>
   </section>
 
   <div id="story"><svg id="thread" aria-hidden="true"><path class="ghost" id="ghost"/><path id="threadPath"/></svg></div>
 
   <section class="reading" id="reading">
-    <div class="sec-k">The Oracle's reading</div>
-    <h2 class="sec-h">The gods you carry</h2>
-    <p class="sec-p">Psychiatrist Jean Shinoda Bolen argued the Olympians are better read as patterns inside people than as beings in the sky: everyone has all twelve, at different volumes. Your five choices turned some of them up.</p>
+    <div class="eyebrow">The reading</div>
+    <h2 class="h">The gods you carry</h2>
+    <p class="intro">The Jungian analyst Jean Shinoda Bolen suggested we read the Olympians as patterns in ourselves rather than figures on a mountain. Everyone carries all twelve, some louder than others. Your five answers made some of them louder.</p>
     <div class="triad" id="triad"></div>
-    <div class="bars" id="bars"></div>
-    <div class="oracle" id="oracle"><span class="k">Elpis speaks</span><span id="oracleText"></span></div>
-    <div class="share"><button class="btn" id="copyBtn">Copy my reading</button><button class="btn" onclick="openChat()">Ask her about it</button></div>
+    <div class="oracle"><span id="oracleText"></span><span class="sig">— Elpis</span></div>
+    <div class="links"><button id="copyBtn">copy your reading</button><button onclick="openChat()">write to her about it</button></div>
   </section>
 
-  <section class="pantheon reveal" id="pantheon">
-    <div class="sec-k">Appendix · The Twelve</div>
-    <h2 class="sec-h">The Olympians as inner archetypes</h2>
-    <p class="sec-p">Each god's gift, and the shadow it casts when it runs the whole show. Built on Jungian archetypes and Bolen's <i>Goddesses in Everywoman</i> (1984) and <i>Gods in Everyman</i> (1989).</p>
-    <div class="grid12" id="grid12"></div>
+  <section class="pantheon fade" id="pantheon">
+    <div class="eyebrow">Appendix</div>
+    <h2 class="h">The twelve, as inner figures</h2>
+    <p class="intro">Each god's gift, and the shadow it casts when it is left to run everything. After Jung, and Bolen's <i>Goddesses in Everywoman</i> (1984) and <i>Gods in Everyman</i> (1989).</p>
+    <div class="gods" id="gods"></div>
   </section>
 
-  <section class="sources reveal">
+  <section class="notes fade">
     <div>
-      <h4>What the poets wrote</h4>
+      <h4>The ancient sources</h4>
       <ul>
-        <li><b>Hesiod, Works and Days 106–201</b> · the Five Ages of Man</li>
-        <li><b>Hesiod, Theogony 453–500</b> · the swaddled stone, later set up at Delphi</li>
-        <li><b>Theogony 565–567; Works and Days 90–99</b> · fire in a fennel stalk; Pandora's jar, and the one thing left inside</li>
-        <li><b>Apollodorus 1.7.2; Ovid, Metamorphoses I</b> · Deucalion, Pyrrha and the flood</li>
-        <li><b>Plutarch, Theseus 19–20; Catullus 64</b> · Ariadne's thread and Naxos</li>
+        <li>Hesiod, <i>Works and Days</i> 90–201, the jar and the five ages</li>
+        <li>Hesiod, <i>Theogony</i> 453–567, the stone and the stolen fire</li>
+        <li>Pausanias 10.24.6, the stone at Delphi</li>
+        <li>Apollodorus, <i>Library</i> 1.7.2 and 2.5.11, the flood; Prometheus freed</li>
+        <li>Ovid, <i>Metamorphoses</i> I, Deucalion and Pyrrha</li>
+        <li>Plutarch, <i>Theseus</i> 19–20; Catullus 64, Ariadne</li>
+      </ul>
+      <h4 style="margin-top:26px">Further reading</h4>
+      <ul>
+        <li>Morford, Lenardon &amp; Sham, <i>Classical Mythology</i></li>
+        <li>Katerina Servi, <i>Greek Mythology</i></li>
+        <li>Edith Hamilton, <i>Mythology</i></li>
+        <li>Apollodorus, <i>The Library of Greek Mythology</i>, tr. Robin Hard</li>
+        <li>Robert Graves, <i>The Greek Myths</i></li>
+        <li>Stephen Fry, <i>Heroes</i> and <i>Troy</i></li>
+        <li>Apollonius of Rhodes, <i>Argonautica</i>, tr. Richard Hunter</li>
+        <li>Homer, <i>Iliad</i>, tr. Martin Hammond; <i>Odyssey</i>, tr. Emily Wilson</li>
+        <li>Virgil, <i>Aeneid</i>, tr. David West</li>
       </ul>
     </div>
     <div>
-      <h4>What's mine</h4>
+      <h4>What is invented</h4>
       <ul>
-        <li><b>The Witness and every relic</b> · invented. She's the side character; the myths are the main story.</li>
-        <li><b>The psychology</b> · Jung's archetypes, Bolen's gods-as-patterns, C. R. Snyder's hope theory (goals, pathways, agency). It's a lens for reflection, not a diagnosis.</li>
-        <li><b>The AI</b> · Claude plays the Witness. She only remembers the Ages you've unlocked, so she can't spoil the ending.</li>
+        <li>The witness, and every object she leaves, are mine. The myths around her are not.</li>
+        <li>The reading borrows from Jung, Bolen, and C. R. Snyder's work on hope. It is meant for reflection, not diagnosis.</li>
+        <li>When you write to her, the replies are written by an AI (Claude). She only knows the ages you have opened, so she cannot give the ending away.</li>
       </ul>
     </div>
   </section>
 </main>
 
-<footer>Made by Karnika Sehgal · Voiced by Claude · Myths by people who've been dead for 2,700 years</footer>
+<footer>Made by Karnika Sehgal</footer>
 
-<button class="chat-fab" id="fab" onclick="openChat()"><span class="dot"></span><span id="fabLabel">Speak to the Witness</span></button>
-<div class="chat" id="chat" role="dialog" aria-label="Chat with the Witness">
-  <div class="chat-h"><div><b id="chatName">THE WITNESS</b><small id="chatSub">remembers only what you've unlocked</small></div><button onclick="closeChat()" aria-label="Close" style="font-size:22px;color:var(--dim)">×</button></div>
-  <div class="chat-log" id="log"></div>
+<button class="write" id="writeBtn" onclick="openChat()">Write to the witness</button>
+<div class="chat" id="chat" role="dialog" aria-label="Letters to the witness">
+  <div class="chat-h"><div><b id="chatName">The Witness</b><small id="chatSub"></small></div><button onclick="closeChat()" aria-label="Close">×</button></div>
+  <div class="log" id="log"></div>
   <div class="chips" id="chips"></div>
-  <form id="chatForm"><input id="chatIn" placeholder="Ask her anything…" autocomplete="off" maxlength="1200"><button>Send</button></form>
+  <form id="chatForm"><input id="chatIn" placeholder="Write something…" autocomplete="off" maxlength="1200"><button>Send</button></form>
 </div>
-<div class="toast" id="toast"></div>
+<div class="note" id="note"></div>
 
-<script>
-const GODS = {
-  Zeus:{gk:"Ζεύς",a:"The Sovereign",gift:"Vision and decisiveness: builds the kingdom, makes the call.",shadow:"Confuses being in charge with being close. Can't hear no."},
-  Hera:{gk:"Ἥρα",a:"The Committed",gift:"Loyalty that keeps vows when it would be easier not to.",shadow:"When betrayed, punishes the wrong person."},
-  Poseidon:{gk:"Ποσειδῶν",a:"The Deep Feeler",gift:"Emotional depth and force: feels everything all the way down.",shadow:"Grudges that surface as storms, years later."},
-  Demeter:{gk:"Δημήτηρ",a:"The Nurturer",gift:"Feeds, tends and sustains the people around her.",shadow:"Grief so total it freezes the whole world (ask about Persephone)."},
-  Athena:{gk:"Ἀθηνᾶ",a:"The Strategist",gift:"Cool thinking under pressure; sees the whole board.",shadow:"Armoured. Solves the feeling instead of having it."},
-  Apollo:{gk:"Ἀπόλλων",a:"The Clarifier",gift:"Truth, discipline, craft. Brings order and light.",shadow:"Perfectionism and distance; admired more than known."},
-  Artemis:{gk:"Ἄρτεμις",a:"The Independent",gift:"Self-direction and fierce protection of the vulnerable.",shadow:"Contempt for weakness; can be merciless."},
-  Ares:{gk:"Ἄρης",a:"The Warrior",gift:"Courage in the body. Acts now, while others debate.",shadow:"Impulsive anger; fights the fight instead of the problem."},
-  Aphrodite:{gk:"Ἀφροδίτη",a:"The Connector",gift:"Magnetism; transforms people through relationship and beauty.",shadow:"Moves on fast, leaves chaos in the wake."},
-  Hephaestus:{gk:"Ἥφαιστος",a:"The Maker",gift:"Turns pain into craft; builds what lasts.",shadow:"Withdraws to the forge; resentment kept warm."},
-  Hermes:{gk:"Ἑρμῆς",a:"The Messenger",gift:"Wit and fluency; crosses between worlds and translates.",shadow:"Slippery. Talks past the truth when it's inconvenient."},
-  Dionysus:{gk:"Διόνυσος",a:"The Liberator",gift:"Ecstasy and release; dissolves the walls between people.",shadow:"Excess. Loses the self along with the boundaries."}
-};
-const GOD_LIST = Object.keys(GODS);
-
-const ICONS = {
-  stone:`<svg viewBox="0 0 100 100"><path d="M28 38c4-14 30-20 44-8 12 10 10 34-4 42-14 9-36 6-42-8-4-9-1-18 2-26z"/><path d="M26 44c14 6 34 4 48-8M30 62c14 4 30 2 42-8M40 30c-4 14-2 34 6 44"/><circle cx="62" cy="58" r="5" stroke-dasharray="2 2"/></svg>`,
-  fennel:`<svg viewBox="0 0 100 100"><path d="M30 86 72 14M36 88 78 16"/><path d="M33 87l3 1M50 58l5 3M62 38l5 3"/><path d="M75 15c-2-6 4-10 2-15M75 15c4-4 9-2 10-7M75 15c-6-2-7-7-12-7" stroke-linecap="round"/><circle cx="75" cy="14" r="3"/></svg>`,
-  plank:`<svg viewBox="0 0 100 100"><path d="M14 38 86 30l2 26-72 8z"/><path d="M18 46c20-3 44-6 66-8M20 56c18-2 40-5 64-7" opacity=".5"/><path d="M30 41v14M36 40v14M42 40v14M48 39v14M54 38v14M60 38v14M66 37v14M72 36v14M78 35v14"/></svg>`,
-  thread:`<svg viewBox="0 0 100 100"><circle cx="46" cy="50" r="24"/><path d="M24 44c14-6 30-6 44 2M23 54c16 4 32 2 46-8M30 32c10 10 16 26 14 40M44 26c8 12 12 30 6 48M58 30c2 14 0 30-8 42"/><path d="M68 62c8 6 10 14 6 20s-12 6-14 12" stroke-dasharray="1 0"/></svg>`,
-  screen:`<svg viewBox="0 0 100 100"><rect x="30" y="12" width="40" height="76" rx="7"/><path d="M44 18h12"/><path d="M50 40c-6 0-10 5-10 10 0 7 10 14 10 14s10-7 10-14c0-5-4-10-10-10z"/><circle cx="50" cy="80" r="2.5"/></svg>`
-};
-
-const AGES = [
-  { id:"golden", c:"#d6b25e", num:"I", label:"The Golden Age", title:"The Stone", greek:"χρύσεον γένος · when Cronus ruled", glyph:"Ε", gpos:"top:46%;right:6%",
-    myth:"Cronus swallowed his children so none could overthrow him. When Zeus was born, his mother Rhea handed Cronus a stone in swaddling clothes instead. He swallowed it whole.", cite:"Hesiod, Theogony 453–500",
-    witness:["I wrapped it. Rhea's hands were shaking too much to fold the linen, so I did it, and sealed the knot with clay.","My thumb slipped. It left a print. I didn't fix it."],
-    echo:"If you're hearing this, the stone made it out. He swallowed it and never tasted the difference. Remember that. The ones who devour everything rarely look at what they're eating.",
-    relic:{icon:"stone",name:"Swaddled Stone",desc:"Fist-sized river stone. Linen wrapping, clay seal, one small thumbprint.",found:"Delphi",by:"Every pilgrim for 1,000 years"},
-    q:"Rhea asks you to help deceive a king to save a child. If he notices, everyone in the room dies.",
-    opts:[
-      {t:"Wrap the stone. A lie that saves a life isn't a lie.",g:{Hermes:2,Demeter:2}},
-      {t:"Refuse. The risk to everyone else is too high.",g:{Hera:2,Apollo:1,Zeus:1}},
-      {t:"Wrap it, and keep the baby's real blanket as proof, in case it all goes wrong.",g:{Athena:2,Hermes:1,Hephaestus:1}}],
-    reveal:"Zeus grew up, forced Cronus to cough the stone back up, and set it at Delphi as the <i>omphalos</i>, the navel of the world. Pilgrims anointed it with oil for a thousand years. Nobody asked about the thumbprint." },
-
-  { id:"silver", c:"#b9c4d0", num:"II", label:"The Silver Age", title:"The Fire", greek:"ἀργύρεον γένος · children for a hundred years", glyph:"Λ", gpos:"bottom:14%;left:3%",
-    myth:"The silver race stayed children for a century. Then Prometheus stole fire from the gods, hidden in a hollow fennel stalk. Zeus answered with a gift of his own: Pandora, and a sealed jar.", cite:"Works and Days 90–142 · Theogony 565–567",
-    witness:["I held the stalk while he climbed down. It was warm all the way through, like holding someone's wrist.","Later I stood next to Pandora when the lid came up. Everything flew out: sickness, toil, grief. <i>One thing didn't.</i> I'll tell you what at the end."],
-    echo:"He told me fire was a gift. Zeus said it was a theft. They were both right. That's what nobody tells you about gifts.",
-    relic:{icon:"fennel",name:"Hollow Fennel Stalk",desc:"Giant fennel (narthex). Interior scorched black. Still faintly warm.",found:"The Caucasus",by:"Heracles"},
-    q:"You're holding the only fire on earth. Zeus will punish whoever is caught with it.",
-    opts:[
-      {t:"Light every hearth you can reach before dawn.",g:{Hephaestus:2,Demeter:1,Dionysus:1}},
-      {t:"Hide it and keep it for your own village.",g:{Ares:2,Hera:1,Poseidon:1}},
-      {t:"Give it back to the gods. Some things aren't ours.",g:{Zeus:2,Apollo:2}}],
-    reveal:"Generations later Heracles climbed the Caucasus, shot the eagle, and freed Prometheus. At the foot of the rock he found a scorched stalk, still warm. He kept it. He never knew why." },
-
-  { id:"bronze", c:"#c47f43", num:"III", label:"The Bronze Age", title:"The Flood", greek:"χάλκειον γένος · a race that loved war", glyph:"Π", gpos:"top:24%;left:46%",
-    myth:"The bronze race lived for violence, and Zeus decided to drown them. Deucalion and Pyrrha floated in a wooden chest for nine days and nights until they grounded on Mount Parnassus.", cite:"Apollodorus 1.7.2 · Ovid, Metamorphoses I",
-    witness:["I drilled the air holes. Then I scratched a mark into the oak every morning, and counted out loud so they'd know someone was counting.","They were told to throw <i>the bones of their mother</i> behind them. They panicked. I didn't. I'd already seen the answer lying on the ground."],
-    echo:"Nine days. When the water drops, look down. The answer is always lying on the ground.",
-    relic:{icon:"plank",name:"Oak Plank, Nine Marks",desc:"Split from a sea chest. Nine scratches, evenly spaced. Salt-bleached.",found:"Mount Parnassus",by:"Pyrrha"},
-    q:"The water is rising and the chest holds only two.",
-    opts:[
-      {t:"Save the two kindest people you know.",g:{Artemis:2,Demeter:1,Aphrodite:1}},
-      {t:"Save the two strongest. Someone has to rebuild.",g:{Ares:2,Poseidon:2,Zeus:1}},
-      {t:"Refuse the question. Start building a bigger boat.",g:{Hephaestus:2,Athena:2}}],
-    reveal:"Pyrrha solved it first: <i>mother</i> was the Earth, <i>bones</i> were stones. Every stone they threw became a person. Some say she'd read the answer already, carved beside nine marks on a plank that washed up at her feet." },
-
-  { id:"heroic", c:"#c8352a", num:"IV", label:"The Age of Heroes", title:"The Thread", greek:"ἡρώων θεῖον γένος · the demigods", glyph:"Ι", gpos:"bottom:22%;right:44%",
-    myth:"Theseus entered Daedalus' Labyrinth, killed the Minotaur, and found his way out with a thread from Ariadne. Then he sailed away and left her asleep on Naxos.", cite:"Plutarch, Theseus 19–20 · Catullus 64",
-    witness:["I spun it. Red wool on an olive-wood spindle. Ariadne asked for <i>something that remembers the way back.</i>","Every hero you've heard of had help: a thread, a sword under a rock, a voice in a dark room. History only keeps the one who walked out."],
-    echo:"I wasn't asking to be remembered. I was asking you to notice. Look at what the heroes are holding, and ask who handed it to them.",
-    relic:{icon:"thread",name:"Ball of Red Thread",desc:"Hand-spun wool, dyed madder red. One end frayed against stone.",found:"A beach on Naxos",by:"Dionysus"},
-    q:"You know Theseus will leave Ariadne the moment he's safe. She doesn't.",
-    opts:[
-      {t:"Warn her, even if it breaks her heart early.",g:{Artemis:2,Hera:2}},
-      {t:"Say nothing. It's her story to live.",g:{Apollo:2,Zeus:1,Dionysus:1}},
-      {t:"Tie a second thread, one that leads someone better to her.",g:{Aphrodite:2,Dionysus:2,Hermes:1}}],
-    reveal:"Theseus dropped the thread on the beach when he sailed. Dionysus found it lying beside Ariadne, followed it to her, and married her. Her crown is still in the sky: <i>Corona Borealis</i>." },
-
-  { id:"iron", c:"#e8742c", num:"V", label:"The Iron Age", title:"You", greek:"γένος σιδήρεον · our age, of toil and grief", glyph:"Σ", gpos:"top:12%;right:30%", iron:true,
-    myth:"Hesiod wrote that he wished he'd never been born into the fifth race, the age of iron, of labour by day and worry by night. He meant his own time. He also meant ours.", cite:"Works and Days 174–201",
-    witness:["You've been carrying the same thing every hero carried. You just didn't have a name for it.","When the lid came up, everything escaped. One thing stayed under the lip of the jar. Me.","__BIG__","Hope. I was there in every Age because I'm the only thing that never left."],
-    echo:"Every Age, I stayed. Now you've found me, on a glowing screen, at whatever hour this is. That's the last relic. And you're the one who found it.",
-    relic:{icon:"screen",name:"The Screen in Your Hand",desc:"Glass, light, and whoever is reading this right now.",found:"Here",by:"You"},
-    q:"Hesiod never said whether hope in the jar was a blessing kept for us or a curse kept from us. What do you do with it?",
-    opts:[
-      {t:"Keep it close. It's the one thing that's mine.",g:{Poseidon:2,Artemis:1}},
-      {t:"Give it away to someone who needs it more.",g:{Aphrodite:2,Demeter:1,Dionysus:1}},
-      {t:"Question it. Hope that can't be examined is just wishing.",g:{Athena:2,Apollo:1,Hermes:1}}],
-    reveal:"Psychologist C. R. Snyder described hope as more than a feeling: a goal, a <i>pathway</i> to reach it, and the <i>agency</i> to walk that path. Thread, stalk, plank, stone. Every relic was a pathway. Your reading is below." }
-];
-
-const LS = "elpis-state-v1";
-let state = {choices:{}, letters:[false,false,false,false,false]};
-try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.choices) state = s; } catch {}
-const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} };
-const unlocked = () => Object.keys(state.choices).length;
-const $ = (s, r=document) => r.querySelector(s);
-
-function render() {
-  const story = $("#story");
-  story.querySelectorAll(".age").forEach(n => n.remove());
-  AGES.forEach((a, i) => {
-    const sec = document.createElement("section");
-    sec.className = "age" + (a.iron ? " iron" : "");
-    sec.id = a.id; sec.style.setProperty("--c", a.c); sec.dataset.i = i;
-    const wit = a.witness.map(p => p === "__BIG__" ? `<div class="big">ἘΛΠΊΣ</div>` : `<p>${p}</p>`).join("");
-    sec.innerHTML = `
-      <div class="numeral">${a.num}</div>
-      <div>
-        <div class="age-label">${a.label}</div>
-        <h2>${a.title}</h2>
-        <div class="greek">${a.greek}</div>
-        <div class="myth">${a.myth}<small>The myth · ${a.cite}</small></div>
-        <div class="witness"><span class="tag">${a.iron ? "Her name" : "What I saw"}</span>${wit}</div>
-        <div class="echo" data-i="${i}">
-          <div class="echo-head">
-            <button class="play" aria-label="Play echo"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z"/></svg></button>
-            <div class="echo-title"><b>Echo ${a.num}</b>found recording · ${a.relic.found}</div>
-            <div class="wave">${"<i></i>".repeat(22)}</div>
-          </div>
-          <div class="transcript">${a.echo.split(" ").map(w => `<span class="w">${w}</span>`).join(" ")}</div>
-        </div>
-      </div>
-      <div>
-        <div class="relic">
-          <div class="exhibit"><span>Exhibit ${a.num}</span><span>${a.label.replace("The ","")}</span></div>
-          <div class="relic-art">${ICONS[a.relic.icon]}</div>
-          <h3>${a.relic.name}</h3>
-          <div class="desc">${a.relic.desc}</div>
-          <dl><dt>Left by</dt><dd>${a.iron && unlocked() >= 4 ? "Elpis" : "Unknown witness"}</dd><dt>Found at</dt><dd>${a.relic.found}</dd><dt>Found by</dt><dd class="${state.choices[i] ? "" : "redact"}">${a.relic.by}</dd></dl>
-        </div>
-        <div class="choose">
-          <h4>What would you have done?</h4>
-          <div class="q">${a.q}</div>
-          ${a.opts.map((o, k) => `<button class="opt${state.choices[i] === k ? " picked" : ""}" data-k="${k}" ${state.choices[i] !== undefined ? "disabled" : ""}>${o.t}</button>`).join("")}
-          <div class="found${state.choices[i] !== undefined ? " show" : ""}"><b>Who found it</b><p>${a.reveal}</p></div>
-        </div>
-      </div>
-      <button class="glyph${state.letters[i] ? " got" : ""}" style="${a.gpos}" aria-label="A faint mark">${a.glyph}</button>
-      <div class="seal"><div><b>Sealed</b>Make your choice in the Age before</div></div>`;
-    if (i > 0 && state.choices[i - 1] === undefined) sec.classList.add("sealed");
-    story.appendChild(sec);
-
-    sec.querySelectorAll(".opt").forEach(b => b.onclick = () => choose(i, +b.dataset.k));
-    sec.querySelector(".play").onclick = () => playEcho(sec.querySelector(".echo"), a.echo);
-    sec.querySelector(".glyph").onclick = e => findLetter(i, e.currentTarget);
-  });
-  paintLetters();
-  if (unlocked() >= 5) showReading(false);
-  updateChatName();
-  requestAnimationFrame(layoutThread);
-}
-
-function choose(i, k) {
-  if (state.choices[i] !== undefined) return;
-  state.choices[i] = k; save();
-  const sec = document.getElementById(AGES[i].id);
-  sec.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (+b.dataset.k === k) b.classList.add("picked"); });
-  sec.querySelector(".found").classList.add("show");
-  sec.querySelector("dd.redact")?.classList.remove("redact");
-  const next = document.getElementById(AGES[i + 1]?.id);
-  if (next) {
-    next.classList.remove("sealed");
-    if (i + 1 === 4) next.querySelector("dd").textContent = "Elpis";
-    toast(`${AGES[i + 1].label} unsealed. The Witness remembers more now.`);
-  } else {
-    showReading(true);
-  }
-  updateChatName();
-  setTimeout(layoutThread, 50);
-}
-
-function paintLetters() {
-  document.querySelectorAll("#letters span").forEach((s, i) => s.classList.toggle("got", state.letters[i]));
-}
-function findLetter(i, el) {
-  state.letters[i] = true; save();
-  el.classList.add("got"); paintLetters();
-  const n = state.letters.filter(Boolean).length;
-  const names = ["epsilon","lambda","pi","iota","sigma"];
-  toast(n === 5 ? "ΕΛΠΙΣ. Say it out loud. You know my name now." : `You found ${AGES[i].glyph} (${names[i]}). ${5 - n} still hidden in the dark.`);
-}
-
-let toastT;
-function toast(msg) {
-  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3600);
-}
-
-/* Echo playback: browser speech + live waveform + word highlighting */
-let speaking = null, waveTimer = null;
-function playEcho(box, text) {
-  const synth = window.speechSynthesis;
-  const words = [...box.querySelectorAll(".w")];
-  const stop = () => {
-    synth?.cancel(); clearInterval(waveTimer); waveTimer = null;
-    document.querySelectorAll(".echo.on").forEach(e => e.classList.remove("on"));
-    document.querySelectorAll(".wave i").forEach(b => b.style.height = "6px");
-    speaking = null;
-  };
-  if (speaking === box) return stop();
-  stop();
-  speaking = box; box.classList.add("on");
-  words.forEach(w => w.classList.remove("lit"));
-  const bars = box.querySelectorAll(".wave i");
-  waveTimer = setInterval(() => bars.forEach(b => b.style.height = (6 + Math.random() * 26) + "px"), 110);
-
-  let idx = 0;
-  const lightTo = n => { for (; idx < Math.min(n, words.length); idx++) words[idx].classList.add("lit"); };
-  if (!synth) {
-    const iv = setInterval(() => { lightTo(idx + 1); if (idx >= words.length) { clearInterval(iv); stop(); } }, 330);
-    return;
-  }
-  const u = new SpeechSynthesisUtterance(text);
-  const voices = synth.getVoices();
-  u.voice = voices.find(v => /Samantha|Serena|Moira|Karen|Daniel|Google UK English Female/i.test(v.name)) || voices.find(v => /^en/i.test(v.lang)) || null;
-  u.rate = 0.86; u.pitch = 0.82;
-  let usedBoundary = false;
-  u.onboundary = e => {
-    if (e.name && e.name !== "word") return;
-    usedBoundary = true;
-    lightTo(text.slice(0, e.charIndex).split(" ").filter(Boolean).length + 1);
-  };
-  const fallback = setInterval(() => { if (!usedBoundary) lightTo(idx + 1); }, 380);
-  u.onend = u.onerror = () => { clearInterval(fallback); lightTo(words.length); if (speaking === box) stop(); };
-  synth.speak(u);
-}
-window.speechSynthesis?.addEventListener?.("voiceschanged", () => {});
-
-/* The red thread: drawn through every relic, unspooling as you scroll */
-function layoutThread() {
-  const story = $("#story"), svg = $("#thread");
-  const r0 = story.getBoundingClientRect();
-  const w = r0.width, h = story.scrollHeight;
-  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  const pts = [...story.querySelectorAll(".relic-art")].map(el => {
-    const r = el.getBoundingClientRect();
-    return [r.left - r0.left + r.width / 2, r.top - r0.top + r.height / 2];
-  });
-  if (!pts.length) return;
-  let d = `M ${w * 0.5} 0`;
-  let prev = [w * 0.5, 0];
-  pts.forEach(([x, y], i) => {
-    const sway = (i % 2 ? -1 : 1) * w * 0.28;
-    d += ` C ${prev[0] + sway} ${prev[1] + (y - prev[1]) * 0.45}, ${x - sway} ${y - (y - prev[1]) * 0.45}, ${x} ${y}`;
-    prev = [x, y];
-  });
-  d += ` C ${prev[0]} ${prev[1] + 200}, ${w * 0.5} ${h - 200}, ${w * 0.5} ${h}`;
-  $("#ghost").setAttribute("d", d);
-  const p = $("#threadPath"); p.setAttribute("d", d);
-  const len = p.getTotalLength();
-  p.style.strokeDasharray = len; p.dataset.len = len;
-  drawThread();
-}
-function drawThread() {
-  const p = $("#threadPath"), len = +p.dataset.len || 0;
-  const story = $("#story"), r = story.getBoundingClientRect();
-  const sealed = story.querySelector(".age.sealed");
-  const limit = sealed ? (sealed.getBoundingClientRect().top - r.top) / r.height : 1;
-  const prog = Math.max(0, Math.min(limit, (innerHeight * 0.6 - r.top) / r.height));
-  p.style.strokeDashoffset = len * (1 - prog);
-}
-addEventListener("scroll", drawThread, {passive:true});
-addEventListener("resize", () => requestAnimationFrame(layoutThread));
-
-/* Reading */
-function scores() {
-  const s = Object.fromEntries(GOD_LIST.map(g => [g, 0]));
-  Object.entries(state.choices).forEach(([i, k]) => Object.entries(AGES[i].opts[k].g).forEach(([g, v]) => s[g] += v));
-  return s;
-}
-function ranked() {
-  const s = scores();
-  return GOD_LIST.map((g, i) => [g, s[g], i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]);
-}
-let readingDone = false;
-function showReading(scroll) {
-  const sec = $("#reading"); sec.classList.add("show");
-  const r = ranked(), s = scores(), max = Math.max(...Object.values(s), 1);
-  const patron = r[0][0], ally = r[1][0], neglected = r[r.length - 1][0];
-  const card = (role, g, cls) => `<div class="gcard ${cls}"><div class="role">${role}</div><h3>${g}</h3><div class="arch">${GODS[g].gk} · ${GODS[g].a}</div><p><b>Gift.</b> ${GODS[g].gift}</p>${cls === "patron" ? `<p><b>Shadow.</b> ${GODS[g].shadow}</p>` : ""}</div>`;
-  $("#triad").innerHTML = card("Your patron", patron, "patron") + card("Your ally", ally, "") + card("The god you neglect", neglected, "");
-  $("#bars").innerHTML = GOD_LIST.map(g => `<div class="bar"><i data-h="${(s[g] / max) * 80}%"></i><span>${g}</span></div>`).join("");
-  setTimeout(() => document.querySelectorAll(".bar i").forEach(b => b.style.height = b.dataset.h), 200);
-  document.querySelectorAll(".god").forEach(el => el.classList.toggle("you", el.dataset.g === patron));
-  if (scroll) setTimeout(() => sec.scrollIntoView({behavior:"smooth"}), 700);
-  if (!readingDone) { readingDone = true; fetchReading(patron, ally, neglected); }
-  setTimeout(layoutThread, 100);
-}
-async function fetchReading(patron, ally, neglected) {
-  const out = $("#oracleText");
-  out.innerHTML = `<span class="cursor"></span>`;
-  const choices = AGES.map((a, i) => { const o = a.opts[state.choices[i]]; return {age:a.label, text:o.t, gods:Object.keys(o.g)}; });
-  const fallback = `You chose like someone ruled by ${patron}: ${GODS[patron].gift.toLowerCase()} Watch the shadow, though. ${GODS[patron].shadow}\n\n${ally} walks beside you; that's the part of you that shows up when ${patron} gets tired.\n\nAnd ${neglected}? You barely let them speak. This week, do one small thing ${neglected} would do. ${GODS[neglected].gift}\n\nI stayed in the jar for this. Don't waste me.`;
-  try {
-    const res = await fetch("/api/reading", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({choices, patron, ally, neglected})});
-    if (!res.ok || !res.body) throw 0;
-    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-    let txt = "";
-    for (;;) { const {done, value} = await reader.read(); if (done) break; txt += value; out.innerHTML = fmt(txt) + `<span class="cursor"></span>`; }
-    out.innerHTML = fmt(txt);
-  } catch { typeOut(out, fallback); }
-}
-function typeOut(el, text) { let i = 0; const t = setInterval(() => { i += 3; el.innerHTML = fmt(text.slice(0, i)) + (i < text.length ? `<span class="cursor"></span>` : ""); if (i >= text.length) clearInterval(t); }, 18); }
-function fmt(t) { return t.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/_(.+?)_/g, "<i>$1</i>"); }
-$("#copyBtn").onclick = () => {
-  const r = ranked();
-  const txt = `The Last Thing in the Jar\nPatron: ${r[0][0]} · Ally: ${r[1][0]} · Neglected: ${r[r.length-1][0]}\n\n${$("#oracleText").innerText}\n\n${location.href.split("#")[0]}`;
-  navigator.clipboard?.writeText(txt).then(() => toast("Copied. Pass the thread on."), () => toast("Couldn't copy here."));
-};
-
-/* Pantheon */
-$("#grid12").innerHTML = GOD_LIST.map((g, i) => `<div class="god" data-g="${g}"><div class="n">${String(i + 1).padStart(2, "0")} / 12</div><h3>${g}</h3><div class="gk">${GODS[g].gk}</div><div class="a">${GODS[g].a}</div><p><b>Gift:</b> ${GODS[g].gift}</p><p><b>Shadow:</b> ${GODS[g].shadow}</p></div>`).join("");
-
-/* Chat with the Witness */
-let history = [];
-const chips = () => unlocked() >= 4
-  ? ["Is hope a blessing or a curse?", "Why did you stay in the jar?", "How do I find hope when I'm burnt out?"]
-  : ["Who are you?", "What's real and what's yours?", ["Why did you keep the thumbprint?","What stayed in the jar?","Why count out loud?","Who helped Theseus besides you?"][Math.min(unlocked(), 3)]];
-function updateChatName() {
-  const known = unlocked() >= 4;
-  $("#chatName").textContent = known ? "ELPIS" : "THE WITNESS";
-  $("#fabLabel").textContent = known ? "Speak to Elpis" : "Speak to the Witness";
-  $("#chatSub").textContent = `remembers ${Math.min(unlocked() + 1, 5)} of 5 Ages`;
-  $("#chips").innerHTML = chips().map(c => `<button type="button">${c}</button>`).join("");
-  $("#chips").querySelectorAll("button").forEach(b => b.onclick = () => send(b.textContent));
-}
-function openChat() {
-  $("#chat").classList.add("open"); $("#fab").style.display = "none";
-  if (!history.length && !$("#log").children.length) addMsg("w", unlocked() >= 4 ? "You found me. Ask what you like; I've got nowhere else to be." : "You can hear me? Good. Most people walk right past. Ask me about what I saw, but only the Ages you've opened. I won't spoil the rest.");
-  $("#chatIn").focus();
-}
-function closeChat() { $("#chat").classList.remove("open"); $("#fab").style.display = ""; }
-function addMsg(who, text) { const d = document.createElement("div"); d.className = "msg " + who; d.innerHTML = fmt(text); $("#log").appendChild(d); $("#log").scrollTop = 1e9; return d; }
-let busy = false;
-async function send(text) {
-  text = text.trim(); if (!text || busy) return;
-  busy = true; $("#chatIn").value = "";
-  addMsg("u", text); history.push({role:"user", content:text});
-  const el = addMsg("w", ""); el.innerHTML = `<span class="cursor"></span>`;
-  let reply = "";
-  try {
-    const res = await fetch("/api/echo", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({messages:history, unlocked:unlocked(), letters:state.letters.filter(Boolean).length})});
-    if (!res.ok || !res.body) { let m = "The echo is too faint here."; try { m = (await res.json()).error || m; } catch {} throw new Error(m); }
-    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-    for (;;) { const {done, value} = await reader.read(); if (done) break; reply += value; el.innerHTML = fmt(reply) + `<span class="cursor"></span>`; $("#log").scrollTop = 1e9; }
-    el.innerHTML = fmt(reply);
-    history.push({role:"assistant", content:reply});
-  } catch (e) {
-    el.innerHTML = fmt(`*${e.message && e.message !== "Failed to fetch" ? e.message : "The echo is too faint here. (The AI isn't connected; run it with wrangler dev or deploy it.)"}*`);
-    history.pop();
-  }
-  busy = false;
-}
-$("#chatForm").onsubmit = e => { e.preventDefault(); send($("#chatIn").value); };
-addEventListener("keydown", e => { if (e.key === "Escape") closeChat(); });
-
-$("#reset").onclick = () => {
-  if (!confirm("Forget every choice and every letter?")) return;
-  state = {choices:{}, letters:[false,false,false,false,false]}; save();
-  readingDone = false; history = []; $("#log").innerHTML = ""; $("#reading").classList.remove("show");
-  render(); scrollTo({top:0, behavior:"smooth"});
-};
-
-/* Scroll reveals */
-const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add("in")), {threshold:.15});
-document.querySelectorAll(".reveal").forEach(el => io.observe(el));
-
-/* Embers: they take the colour of whichever Age you're in */
-(() => {
-  const cv = $("#embers"), ctx = cv.getContext("2d");
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  let W, H, dpr, parts = [], col = [232,116,44];
-  const resize = () => { dpr = Math.min(devicePixelRatio || 1, 2); W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; cv.style.width = innerWidth + "px"; cv.style.height = innerHeight + "px"; };
-  resize(); addEventListener("resize", resize);
-  const hex = h => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
-  const spawn = () => ({x:Math.random() * W, y:H + 10, r:(Math.random() * 1.8 + .4) * dpr, vy:(Math.random() * .6 + .25) * dpr, vx:(Math.random() - .5) * .3 * dpr, life:0, max:400 + Math.random() * 500, ph:Math.random() * 6});
-  for (let i = 0; i < 70; i++) { const p = spawn(); p.y = Math.random() * H; parts.push(p); }
-  let target = col.slice();
-  addEventListener("scroll", () => {
-    const mid = innerHeight / 2;
-    const cur = [...document.querySelectorAll(".age")].find(s => { const r = s.getBoundingClientRect(); return r.top < mid && r.bottom > mid; });
-    target = cur ? hex(cur.style.getPropertyValue("--c")) : [232,116,44];
-  }, {passive:true});
-  (function tick() {
-    col = col.map((c, i) => c + (target[i] - c) * .03);
-    ctx.clearRect(0, 0, W, H);
-    for (const p of parts) {
-      p.life++; p.y -= p.vy; p.x += p.vx + Math.sin((p.life + p.ph * 50) / 60) * .25 * dpr;
-      const a = Math.sin(Math.PI * Math.min(p.life / p.max, 1)) * .8;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283);
-      ctx.fillStyle = `rgba(${col.map(Math.round).join(",")},${a})`;
-      ctx.shadowBlur = 8 * dpr; ctx.shadowColor = `rgba(${col.map(Math.round).join(",")},${a})`;
-      ctx.fill();
-      if (p.life > p.max || p.y < -10) Object.assign(p, spawn());
-    }
-    requestAnimationFrame(tick);
-  })();
-})();
-
-render();
-addEventListener("load", layoutThread);
-document.fonts?.ready.then(layoutThread);
-</script>
+<script src="story.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
