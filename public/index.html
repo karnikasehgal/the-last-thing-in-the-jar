@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Last Thing in the Jar</title>
-<meta name="description" content="A side story of Greek mythology, told by someone who was there for all of it.">
+<meta name="description" content="A short film you can play. Five ordinary people with five terrible jobs, in five ages of Greek myth.">
 <meta property="og:title" content="The Last Thing in the Jar">
-<meta property="og:description" content="A short film you can play: five ages of Greek myth, told by the one who was always in the room. Paintings from the Sistine Chapel and Rome.">
+<meta property="og:description" content="A short film you can play. A courier, a potter, a carpenter, a janitor and an intern, in five ages of Greek myth. Shot entirely on Renaissance frescoes.">
 <meta property="og:image" content="https://elpis.karnika-portfolio.workers.dev/og.jpg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://elpis.karnika-portfolio.workers.dev/">
@@ -15,409 +15,226 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23efe6d4'/><text x='32' y='47' text-anchor='middle' font-family='Georgia,serif' font-size='42' fill='%23a2432c'>Ε</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23000'/><text x='32' y='46' text-anchor='middle' font-family='Georgia,serif' font-size='40' fill='%23f2e8d5'>Ε</text></svg>">
 <style>
 :root{
-  --plaster:#efe6d4; --plaster-2:#e6dac3; --plaster-3:#dccdb1;
-  --ink:#3a2e24; --ink-soft:#6b5a49; --ink-faint:#a39079;
-  --sinopia:#a2432c; --ochre:#a8823a; --lapis:#46607e; --verde:#6f8a72;
-  --rule:rgba(58,46,36,.18);
-  --c:var(--sinopia);
+  --cream:#f2e8d5; --cream-dim:rgba(242,232,213,.62); --cream-faint:rgba(242,232,213,.35);
+  --paper:#efe6d4; --ink:#3a2e24; --sinopia:#a2432c;
+  --bar:9vh;
   --body:"Cardo",Georgia,serif; --fell:"IM Fell English",Georgia,serif; --sc:"IM Fell English SC",Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  background:var(--plaster);color:var(--ink);font-family:var(--body);font-size:19px;line-height:1.7;overflow-x:hidden;
-  background-image:
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .23  0 0 0 0 .18  0 0 0 0 .14  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23p)' opacity='.22'/></svg>"),
-    radial-gradient(ellipse at 20% 10%,rgba(255,250,238,.7),transparent 60%),
-    radial-gradient(ellipse at 85% 70%,rgba(200,180,150,.25),transparent 55%);
-  background-attachment:fixed;
-}
-::selection{background:rgba(162,67,44,.2)}
-a{color:var(--sinopia)}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
-i,em{font-style:italic}
+html,body{height:100%;background:#000;color:var(--cream);font-family:var(--body);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+[hidden]{display:none!important}
+::selection{background:rgba(162,67,44,.5)}
 
-/* header */
-.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(239,230,212,.92);border-bottom:1px solid var(--rule);font-family:var(--sc);font-size:15px;letter-spacing:.06em;color:var(--ink-soft)}
-.letters{display:flex;gap:10px;font-family:var(--body);font-size:17px}
-.letters span{color:transparent;border-bottom:1px solid var(--ink-faint);width:16px;text-align:center;line-height:1.2;transition:color 1.2s}
-.letters span.got{color:var(--sinopia)}
-.top .reset{font-family:var(--fell);font-style:italic;font-size:16px;letter-spacing:0;color:var(--ink-faint)}
-.top .reset:hover{color:var(--ink)}
+#stage{position:fixed;inset:0;overflow:hidden;background:#000}
+.layer{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease}
+.layer.on{opacity:1}
+.layer img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;filter:sepia(.12) saturate(.92) contrast(1.02) brightness(.9);will-change:transform;user-select:none;-webkit-user-drag:none}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,.55) 100%)}
+.grain{position:absolute;inset:-50%;pointer-events:none;opacity:.07;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='.85' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");animation:grain .9s steps(3) infinite}
+@keyframes grain{0%{transform:translate(0,0)}33%{transform:translate(-2%,1%)}66%{transform:translate(1%,-2%)}}
 
-/* frontispiece */
-.front{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 24px 70px}
-.arch{width:min(340px,72vw);aspect-ratio:3/4.1;border-radius:999px 999px 0 0;position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#b9c6cb 0%,#cfd5cf 38%,#e4dcc8 70%,#d9c9a9 100%);
-  box-shadow:inset 0 0 0 10px var(--plaster),inset 0 0 0 11px var(--rule),0 1px 0 var(--rule)}
-.arch::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .25 0 0 0 0 .2 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23p)' opacity='.35'/></svg>");mix-blend-mode:multiply}
-.arch svg{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:62%;stroke:var(--ink);fill:none;stroke-width:1.1;filter:url(#ink)}
-.front .over{font-family:var(--fell);font-style:italic;color:var(--ink-soft);font-size:18px;margin-top:34px}
-.front h1{font-family:var(--fell);font-weight:400;font-size:clamp(40px,6.4vw,76px);line-height:1.05;margin:8px 0 18px;letter-spacing:.005em}
-.front .lede{max-width:520px;color:var(--ink-soft);font-size:20px}
-.front .begin{display:inline-block;margin-top:30px;font-family:var(--sc);font-size:16px;letter-spacing:.12em;color:var(--sinopia);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
-.fleuron{text-align:center;color:var(--ink-faint);font-size:22px;letter-spacing:.6em;margin:10px 0}
+.bar{position:fixed;left:0;right:0;height:var(--bar);background:#000;z-index:10;display:flex;align-items:center;padding:0 22px;gap:16px}
+.bar.top{top:0;justify-content:space-between}
+.bar.bottom{bottom:0}
+#where{font-family:var(--sc);letter-spacing:.14em;font-size:13.5px;color:var(--cream-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#items{display:flex;gap:8px}
+#items span{width:26px;height:26px;border:1px solid var(--cream-faint);display:grid;place-items:center}
+#items span svg{width:20px;height:20px;stroke:var(--cream);fill:none;stroke-width:3.5;stroke-linecap:round}
+#items span:not(.got) svg{display:none}
+.ctl{display:flex;gap:16px;font-family:var(--fell);font-style:italic;font-size:15px;color:var(--cream-dim);flex:none}
+.ctl button:hover{color:var(--cream)}
+#credit{position:fixed;right:22px;bottom:calc(var(--bar) / 2);transform:translateY(50%);z-index:11;font-size:12px;font-style:italic;color:var(--cream-faint);max-width:46vw;text-align:right;line-height:1.35;text-shadow:0 1px 6px #000}
 
-/* prologue */
-.prologue{max-width:640px;margin:0 auto;padding:80px 24px 40px}
-.dropcap::first-letter{font-family:var(--fell);float:left;font-size:4.6em;line-height:.82;padding:.08em .1em 0 0;color:var(--sinopia)}
-.prologue .say{font-size:22px}
-.how{margin-top:40px;border-top:1px solid var(--rule)}
-.how p{padding:14px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);font-size:18px}
-.how p b{font-family:var(--sc);font-weight:400;color:var(--ink);letter-spacing:.05em;margin-right:8px}
+#sub{position:fixed;left:50%;bottom:calc(var(--bar) + 30px);transform:translateX(-50%);z-index:9;width:min(860px,calc(100vw - 40px));text-align:center;font-size:clamp(18px,2vw,24px);line-height:1.45;text-shadow:0 0 2px #000,0 2px 10px #000,0 0 30px rgba(0,0,0,.9);transition:opacity .5s;pointer-events:none}
+#sub.off{opacity:0}
 
-/* chapters */
-#story{position:relative}
-#thread{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
-#thread path{fill:none;stroke:var(--sinopia);stroke-width:1.1;stroke-linecap:round;opacity:.75}
-#thread .ghost{stroke-dasharray:1 6;opacity:.25}
+#tag{position:fixed;left:6vw;bottom:calc(var(--bar) + 15vh);z-index:9;opacity:0;transform:translateY(8px);transition:opacity 1.4s,transform 1.4s;text-shadow:0 2px 16px rgba(0,0,0,.9);pointer-events:none}
+#tag.on{opacity:1;transform:none}
+#tag b{display:block;font-family:var(--fell);font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1}
+#tag span{display:block;font-family:var(--fell);font-style:italic;font-size:clamp(17px,1.7vw,21px);margin-top:6px;color:var(--cream-dim)}
 
-.age{position:relative;max-width:1060px;margin:0 auto;padding:130px 28px 100px;display:grid;grid-template-columns:1.15fr .85fr;gap:72px;align-items:start}
-.age>*{position:relative;z-index:1}
-.age+.age{border-top:1px solid var(--rule)}
-.chap{font-family:var(--sc);font-size:15px;letter-spacing:.12em;color:var(--c)}
-.age h2{font-family:var(--fell);font-weight:400;font-size:clamp(40px,5vw,60px);line-height:1.05;margin:6px 0 4px}
-.age .greek{font-style:italic;color:var(--ink-soft)}
-.myth{margin-top:26px;color:var(--ink-soft);font-size:18px}
-.myth cite{display:block;font-style:italic;font-size:15px;color:var(--ink-faint);margin-top:6px}
-.witness{margin-top:28px;font-size:20px}
-.witness p+p{margin-top:12px;clear:left}
-.witness .who{font-family:var(--sc);font-size:15px;letter-spacing:.08em;color:var(--c);margin-bottom:4px}
-.witness .name{font-family:var(--body);font-size:clamp(40px,6vw,64px);color:var(--sinopia);letter-spacing:.08em;line-height:1.1;margin:14px 0}
+.ov{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;text-align:center;padding:calc(var(--bar) + 20px) 24px}
+.ov.on{display:flex;animation:in 1.2s ease both}
+@keyframes in{from{opacity:0}}
+.black{background:#000}
+.dim{background:rgba(0,0,0,.62)}
 
-.echo{margin-top:30px;padding-top:16px;border-top:1px solid var(--rule)}
-.echo button{font-family:var(--fell);font-style:italic;font-size:18px;color:var(--c);display:inline-flex;align-items:center;gap:8px}
-.echo button::before{content:"";width:0;height:0;border-left:7px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
-.echo.on button::before{width:7px;height:9px;border:0;border-left:2px solid currentColor;border-right:2px solid currentColor;box-sizing:border-box}
-.echo .where{font-size:15px;color:var(--ink-faint);font-style:italic;margin-left:8px}
-.transcript{margin-top:10px;font-style:italic;color:var(--ink-faint);font-size:19px}
-.transcript .w{transition:color .4s}.transcript .w.lit{color:var(--ink)}
+#start{background:radial-gradient(ellipse at center,rgba(0,0,0,.55) 20%,rgba(0,0,0,.85))}
+#start .over{font-family:var(--fell);font-style:italic;color:var(--cream-dim);font-size:18px}
+#start h1{font-family:var(--fell);font-weight:400;font-size:clamp(44px,8vw,104px);line-height:1;margin:12px 0 36px;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+.big{font-family:var(--sc);letter-spacing:.16em;font-size:17px;border:1px solid rgba(242,232,213,.6);padding:13px 34px;transition:.35s}
+.big:hover{background:var(--cream);color:#000}
+.small{display:block;margin:16px auto 0;font-style:italic;font-size:15px;color:var(--cream-dim)}
+.small:hover{color:var(--cream)}
+#start .fine{margin-top:40px;font-size:14px;font-style:italic;color:var(--cream-dim);line-height:1.6;text-shadow:0 1px 8px #000}
 
-/* the niche */
-.niche{text-align:center}
-.niche .frame{width:min(260px,70vw);aspect-ratio:3/4;margin:0 auto;border-radius:999px 999px 0 0;position:relative;overflow:hidden;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 14%,var(--plaster-2)),var(--plaster-3));
-  box-shadow:inset 0 0 0 8px var(--plaster),inset 0 0 0 9px var(--rule),inset 0 20px 40px rgba(58,46,36,.12)}
-.niche .frame::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:8%;background:var(--plaster);border-top:1px solid var(--rule)}
-.niche svg{position:absolute;inset:16% 18% 14%;width:64%;height:64%;stroke:var(--ink);fill:none;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round;filter:url(#ink)}
-.niche .plate{margin-top:16px;font-size:16px;color:var(--ink-soft)}
-.niche .plate b{display:block;font-family:var(--sc);font-weight:400;font-size:18px;letter-spacing:.06em;color:var(--ink)}
-.niche .plate i{display:block;color:var(--ink-faint);font-size:15px;margin-top:4px}
-.niche .hid{background:rgba(58,46,36,.28);color:transparent;padding:0 .2em;user-select:none}
+#title .act{font-family:var(--sc);letter-spacing:.34em;font-size:15px;color:var(--cream-dim)}
+#title h2{font-family:var(--fell);font-weight:400;font-size:clamp(46px,7vw,92px);line-height:1;margin:14px 0 10px}
+#title .place{font-family:var(--fell);font-style:italic;font-size:20px;color:var(--cream-dim)}
+#title>div>*{animation:in 2s ease both}#title>div>*:nth-child(2){animation-delay:.6s}#title>div>*:nth-child(3){animation-delay:1.2s}
 
-.choose{margin-top:44px;border-top:1px solid var(--rule);padding-top:20px}
-.choose .q{font-family:var(--fell);font-size:21px;line-height:1.45}
-.choose .q::before{content:"What would you have done?";display:block;font-family:var(--sc);font-size:15px;letter-spacing:.08em;color:var(--c);margin-bottom:6px}
-.opt{display:block;width:100%;padding:10px 0 10px 30px;position:relative;font-size:18px;line-height:1.45;color:var(--ink);border-bottom:1px dotted var(--rule)}
-.opt::before{content:"";position:absolute;left:4px;top:15px;width:7px;height:7px;border:1px solid var(--ink-faint);border-radius:50%}
-.opt:hover:not([disabled]){color:var(--c)}
-.opt.picked::before{content:"☞";border:0;width:auto;height:auto;top:8px;left:0;font-size:19px;color:var(--c)}
-.opt.picked{color:var(--c)}
-.opt[disabled]:not(.picked){color:var(--ink-faint);cursor:default}
-.found{display:none;margin-top:20px;font-size:18px;color:var(--ink-soft)}
-.found.show{display:block;animation:fade 1.4s ease}
-.found b{font-family:var(--sc);font-weight:400;color:var(--c);letter-spacing:.06em;margin-right:6px}
-@keyframes fade{from{opacity:0}}
+#choice .q{font-family:var(--fell);font-size:clamp(24px,3vw,36px);line-height:1.3;max-width:760px;margin:0 auto 28px;text-shadow:0 2px 20px #000}
+#choice .opts{display:flex;flex-direction:column;gap:10px;max-width:620px;margin:0 auto}
+#choice .opts button{font-size:clamp(17px,1.8vw,21px);padding:13px 20px;border:1px solid var(--cream-faint);background:rgba(0,0,0,.35);transition:.25s;line-height:1.35}
+#choice .opts button:hover{border-color:var(--cream);background:rgba(242,232,213,.1)}
+#choice .opts button:focus-visible{outline:1px solid var(--cream);outline-offset:3px}
+#choice .timer{height:1px;background:var(--cream-dim);max-width:620px;margin:22px auto 0;transform-origin:left}
+#choice .hint{margin-top:10px;font-style:italic;font-size:14px;color:var(--cream-faint)}
 
-.age.sealed>*:not(.seal){opacity:.12;pointer-events:none;user-select:none}
-.seal{display:none;position:absolute;left:0;right:0;top:150px;z-index:5;text-align:center;font-family:var(--fell);font-style:italic;color:var(--ink-soft);font-size:20px}
-.age.sealed .seal{display:block}
+#card .lines{max-width:700px;margin:0 auto;font-family:var(--fell);font-size:clamp(21px,2.3vw,28px);line-height:1.55}
+#card .lines p{opacity:0;transition:opacity 1.6s ease}
+#card .lines p.on{opacity:1}
+#card .lines p+p{margin-top:16px}
+#card .src{margin-top:34px;font-size:13.5px;font-style:italic;color:var(--cream-faint);opacity:0;transition:opacity 1.6s}
+#card .src.on{opacity:1}
 
-.glyph{position:absolute;z-index:3;font-family:var(--body);font-size:26px;color:var(--ink);opacity:.08;cursor:pointer;padding:6px;transition:opacity .6s}
-.glyph:hover{opacity:.45}
-.glyph.got{display:none}
+#relic .k{font-family:var(--sc);letter-spacing:.3em;font-size:13.5px;color:var(--cream-dim)}
+#relic svg{width:150px;height:150px;stroke:var(--cream);fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;margin:16px auto;display:block;filter:url(#ink)}
+#relic h3{font-family:var(--fell);font-weight:400;font-size:clamp(28px,3.2vw,40px)}
+#relic p{font-style:italic;color:var(--cream-dim);margin-top:4px;font-size:18px}
 
-/* reading */
-.reading{max-width:900px;margin:0 auto;padding:130px 28px 80px;display:none;border-top:1px solid var(--rule)}
-.reading.show{display:block}
-.eyebrow{font-family:var(--sc);font-size:15px;letter-spacing:.12em;color:var(--sinopia)}
-.h{font-family:var(--fell);font-weight:400;font-size:clamp(36px,4.6vw,54px);line-height:1.1;margin:4px 0 14px}
-.intro{color:var(--ink-soft);max-width:600px}
-.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:44px;text-align:center}
-.triad .frame{width:100%;max-width:200px;aspect-ratio:3/3.6;margin:0 auto;border-radius:999px 999px 0 0;display:grid;place-items:center;
-  background:linear-gradient(180deg,#c6cfd0,#e3d9c3);box-shadow:inset 0 0 0 7px var(--plaster),inset 0 0 0 8px var(--rule)}
-.triad .frame span{font-family:var(--body);font-size:44px;color:var(--ink)}
-.triad .first .frame{background:linear-gradient(180deg,#d9b9a4,#ead9bf)}
-.triad .role{font-family:var(--sc);letter-spacing:.08em;color:var(--ink-faint);margin-top:14px;font-size:15px}
-.triad h3{font-family:var(--fell);font-weight:400;font-size:30px;line-height:1.1}
-.triad .arch-name{font-style:italic;color:var(--ink-soft);font-size:16px}
-.triad p{font-size:16px;color:var(--ink-soft);margin-top:8px}
-.oracle{margin:56px auto 0;max-width:620px;font-size:20px;white-space:pre-wrap}
-.oracle .sig{display:block;text-align:right;font-family:var(--fell);font-style:italic;color:var(--ink-soft);margin-top:14px;white-space:normal}
-.caret{display:inline-block;width:1px;height:1em;background:var(--ink);vertical-align:-2px;animation:blink 1.1s steps(2) infinite}
+#form .sheet{background:var(--paper);color:var(--ink);width:min(560px,100%);text-align:left;padding:30px 34px 28px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:rotate(-1.2deg);font-size:16.5px;line-height:1.5;
+  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/><feColorMatrix values='0 0 0 0 .23 0 0 0 0 .18 0 0 0 0 .14 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23p)' opacity='.25'/></svg>")}
+#form .head{font-family:var(--sc);letter-spacing:.08em;font-size:14px;border-bottom:1px solid rgba(58,46,36,.4);padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;gap:10px}
+#form .row{display:grid;grid-template-columns:22px 1fr 30px;gap:8px;padding:7px 0;border-bottom:1px dotted rgba(58,46,36,.3);opacity:0;transition:opacity .9s}
+#form .row.on{opacity:1}
+#form .row i{color:#7a6a58}
+#form .m{font-size:21px;color:var(--sinopia);text-align:center;line-height:1.1}
+#form .sig{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;font-style:italic;color:#6b5a49;opacity:0;transition:opacity .9s}
+#form .sig.on{opacity:1}
+#form .hand{font-family:var(--fell);font-style:italic;color:#2a3a5e;font-size:19px}
+#form .go{display:block;margin:20px auto 0;font-family:var(--sc);letter-spacing:.1em;color:var(--sinopia);opacity:0;transition:opacity .9s}
+#form .go.on{opacity:1}
+
+#patron{position:fixed;left:6vw;top:calc(var(--bar) + 7vh);z-index:9;opacity:0;transition:opacity 1.6s;text-shadow:0 2px 18px rgba(0,0,0,.9);max-width:min(420px,80vw);pointer-events:none}
+#patron.on{opacity:1}
+#patron small{font-family:var(--sc);letter-spacing:.24em;font-size:13px;color:var(--cream-dim)}
+#patron b{display:block;font-family:var(--fell);font-weight:400;font-size:clamp(40px,5vw,64px);line-height:1.05;margin-top:4px}
+#patron span{display:block;font-style:italic;color:var(--cream-dim);font-size:17px}
+#patron em{display:block;margin-top:12px;font-style:normal;font-size:15px;color:var(--cream-dim);line-height:1.6}
+
+#credits{background:#000;align-items:flex-start;overflow:hidden;padding:0;z-index:25}
+#credits .roll{width:100%;padding:100vh 24px 20vh;animation:roll 60s linear forwards}
+@keyframes roll{to{transform:translateY(calc(-100% + 100vh))}}
+#credits .t{font-family:var(--fell);font-size:clamp(40px,6vw,72px);line-height:1}
+#credits .ep{font-family:var(--sc);letter-spacing:.3em;font-size:14px;color:var(--cream-dim);margin-top:14px}
+#credits dl{margin:14vh auto 0;max-width:620px}
+#credits dt{font-family:var(--sc);letter-spacing:.22em;font-size:13px;color:var(--cream-faint);margin-top:44px}
+#credits dd{font-family:var(--fell);font-size:21px;margin-top:6px;line-height:1.5}
+#credits .cast{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;max-width:460px;margin:8px auto 0}
+#credits .cast span:nth-child(odd){text-align:right;font-family:var(--fell);font-size:22px}
+#credits .cast span:nth-child(even){text-align:left;font-style:italic;color:var(--cream-dim);font-size:17px;line-height:1.9}
+#credits .next{margin-top:18vh;font-family:var(--fell);font-style:italic;font-size:clamp(22px,2.6vw,30px)}
+#credits .next small{display:block;font-family:var(--sc);font-style:normal;letter-spacing:.22em;font-size:13px;color:var(--cream-dim);margin-top:10px}
+#credits .skipc{position:fixed;right:22px;bottom:22px;font-style:italic;color:var(--cream-faint);font-size:15px;z-index:2}
+
+#end h2{font-family:var(--fell);font-weight:400;font-size:clamp(36px,5vw,60px);margin-bottom:28px}
+#end .menu{display:flex;flex-direction:column;gap:12px;align-items:center}
+#end .menu .big{min-width:260px}
+#end .note{margin:30px auto 0;font-size:13.5px;font-style:italic;color:var(--cream-faint);max-width:520px;line-height:1.6}
+#end .note a{color:inherit}
+
+#chapters .list{display:flex;flex-direction:column;gap:6px;min-width:min(440px,90vw)}
+#chapters .list button{display:flex;justify-content:space-between;gap:20px;padding:12px 18px;border:1px solid var(--cream-faint);font-size:18px;text-align:left}
+#chapters .list button:hover:not([disabled]){border-color:var(--cream)}
+#chapters .list button[disabled]{opacity:.3;cursor:default}
+#chapters .list i{color:var(--cream-dim);font-size:15px}
+#chapters h2{font-family:var(--fell);font-weight:400;font-size:40px;margin-bottom:22px}
+
+#talk{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px}
+#talk.on{display:flex}
+#talk .box{width:min(560px,100%);height:min(640px,calc(100svh - 32px));background:var(--paper);color:var(--ink);display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#talk .who{display:flex;gap:6px;flex-wrap:wrap;padding:14px 16px 10px;border-bottom:1px solid rgba(58,46,36,.2);align-items:center}
+#talk .who button{font-family:var(--sc);letter-spacing:.06em;font-size:15px;padding:5px 11px;border:1px solid rgba(58,46,36,.25);color:#6b5a49}
+#talk .who button.sel{border-color:var(--ink);color:var(--ink)}
+#talk .who button[disabled]{opacity:.35;cursor:default}
+#talk .who .x{margin-left:auto;border:0;font-size:24px;line-height:1;padding:0 4px}
+#talk .about{padding:8px 18px 0;font-style:italic;color:#7a6a58;font-size:15px}
+#talk .log{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+#talk .msg{font-size:17px;line-height:1.5;white-space:pre-wrap}
+#talk .msg.c{max-width:90%}
+#talk .msg.c b{font-family:var(--sc);font-weight:400;letter-spacing:.05em;color:var(--sinopia);margin-right:6px}
+#talk .msg.u{align-self:flex-end;max-width:80%;background:rgba(58,46,36,.07);padding:8px 12px}
+#talk form{display:flex;border-top:1px solid rgba(58,46,36,.2)}
+#talk input{flex:1;background:none;border:0;font:inherit;font-size:17px;color:var(--ink);padding:14px 18px;outline:none;min-width:0}
+#talk input::placeholder{color:#a39079;font-style:italic}
+#talk form button{padding:0 18px;font-family:var(--sc);letter-spacing:.08em;color:var(--sinopia)}
+.caret{display:inline-block;width:1px;height:1em;background:currentColor;vertical-align:-2px;animation:blink 1s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
-.links{margin-top:28px;text-align:center;font-family:var(--fell);font-style:italic}
-.links button{color:var(--sinopia);border-bottom:1px solid currentColor;margin:0 12px;font-size:17px}
 
-/* pantheon */
-.pantheon{max-width:900px;margin:0 auto;padding:110px 28px 60px;border-top:1px solid var(--rule)}
-.gods{columns:2;column-gap:56px;margin-top:36px}
-.god{break-inside:avoid;padding:14px 0 16px;border-bottom:1px solid var(--rule)}
-.god h3{font-family:var(--sc);font-weight:400;font-size:21px;letter-spacing:.05em}
-.god h3 span{font-family:var(--body);font-style:italic;font-size:16px;color:var(--ink-faint);letter-spacing:0;margin-left:8px}
-.god .ep{font-family:var(--fell);font-style:italic;color:var(--ink-soft)}
-.god p{font-size:16px;color:var(--ink-soft);line-height:1.55;margin-top:4px}
-.god.you h3{color:var(--sinopia)}
-.god.you h3::after{content:"  ☜ yours";font-family:var(--fell);font-style:italic;font-size:15px;letter-spacing:0}
+#toast{position:fixed;left:50%;top:calc(var(--bar) + 14px);transform:translateX(-50%);z-index:40;font-style:italic;font-size:15px;color:var(--cream);background:rgba(0,0,0,.7);padding:8px 16px;opacity:0;transition:opacity .6s;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)}
+#toast.on{opacity:1}
 
-/* notes */
-.notes{max-width:900px;margin:0 auto;padding:60px 28px 80px;display:grid;grid-template-columns:1fr 1fr;gap:56px;font-size:16px;color:var(--ink-soft)}
-.notes h4{font-family:var(--sc);font-weight:400;font-size:17px;letter-spacing:.08em;color:var(--ink);margin-bottom:10px}
-.notes li{list-style:none;padding:5px 0;line-height:1.5}
-.notes li i{color:var(--ink)}
-footer{text-align:center;padding:30px 24px 70px;font-family:var(--fell);font-style:italic;color:var(--ink-faint);font-size:16px}
-
-/* letters to the witness */
-.write{position:fixed;right:24px;bottom:22px;z-index:30;font-family:var(--fell);font-style:italic;font-size:17px;background:var(--plaster);border:1px solid var(--ink-faint);padding:9px 16px;color:var(--ink)}
-.write:hover{border-color:var(--ink)}
-.chat{position:fixed;right:24px;bottom:22px;z-index:31;width:min(400px,calc(100vw - 32px));height:min(580px,calc(100svh - 100px));display:none;flex-direction:column;background:var(--plaster);border:1px solid var(--ink-faint);box-shadow:0 18px 50px rgba(58,46,36,.18)}
-.chat.open{display:flex}
-.chat-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px 10px;border-bottom:1px solid var(--rule)}
-.chat-h b{font-family:var(--sc);font-weight:400;font-size:19px;letter-spacing:.06em}
-.chat-h small{display:block;font-style:italic;color:var(--ink-faint);font-size:14px}
-.chat-h button{font-size:22px;color:var(--ink-faint);line-height:1}
-.log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
-.msg{font-size:17px;line-height:1.55;white-space:pre-wrap}
-.msg.w{font-family:var(--fell);font-style:italic;font-size:18px}
-.msg.u{align-self:flex-end;max-width:85%;text-align:right;color:var(--ink-soft)}
-.msg.u::before{content:"you wrote: ";font-style:italic;color:var(--ink-faint);font-size:14px}
-.chips{padding:0 18px 8px;font-size:15px;line-height:1.9}
-.chips button{font-style:italic;color:var(--sinopia);margin-right:14px;border-bottom:1px dotted currentColor;line-height:1.3}
-.chat form{display:flex;border-top:1px solid var(--rule)}
-.chat input{flex:1;background:none;border:0;color:var(--ink);font:inherit;font-size:17px;padding:13px 18px;outline:none}
-.chat input::placeholder{color:var(--ink-faint);font-style:italic}
-.chat form button{padding:0 18px;font-family:var(--sc);letter-spacing:.08em;color:var(--sinopia)}
-
-.note{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;background:var(--plaster);border:1px solid var(--ink-faint);padding:9px 18px;font-style:italic;font-size:16px;opacity:0;transition:opacity .6s;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)}
-.note.show{opacity:1}
-
-.fade{opacity:0;transition:opacity 1.4s ease}.fade.in{opacity:1}
-
-/* ---------- the film ---------- */
-:root{--night:#14100c;--cream:#f2e8d5}
-.bars::before,.bars::after,.scene::before,.scene::after{content:"";position:absolute;left:0;right:0;height:7vh;background:#000;z-index:4;transition:height 1.6s ease}
-.bars::before,.scene::before{top:0}.bars::after,.scene::after{bottom:0}
-
-.opening{position:fixed;inset:0;z-index:100;background:#000;color:var(--cream);overflow:hidden;transition:opacity 2.2s ease}
-.opening.gone{opacity:0;pointer-events:none}
-.opening .bars{position:absolute;inset:0;pointer-events:none}
-.intro-img{position:absolute;top:-5%;bottom:-5%;left:0;width:auto;aspect-ratio:2400/863;min-width:140vw;background:url(img/ceiling.jpg) center/cover;opacity:.38;filter:sepia(.25) brightness(.85);transform:translateX(0);transition:opacity 3s ease}
-.opening.rolling .intro-img{opacity:.75;animation:pan 34s linear forwards}
-@keyframes pan{to{transform:translateX(calc(-100% + 100vw))}}
-.opening::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.75) 100%);z-index:1;pointer-events:none}
-.intro-start{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity 1.2s}
-.opening.rolling .intro-start{opacity:0;pointer-events:none}
-.intro-start .over{font-family:var(--fell);font-style:italic;opacity:.8;font-size:18px}
-.intro-start h1{font-family:var(--fell);font-weight:400;font-size:clamp(40px,7vw,88px);line-height:1.05;margin:10px 0 34px;text-shadow:0 2px 30px rgba(0,0,0,.6)}
-.intro-start .go{font-family:var(--sc);letter-spacing:.14em;font-size:17px;color:var(--cream);border:1px solid rgba(242,232,213,.6);padding:12px 28px;transition:.4s}
-.intro-start .go:hover{background:var(--cream);color:#000}
-.intro-start .quiet{margin-top:14px;font-style:italic;font-size:15px;color:rgba(242,232,213,.6)}
-.intro-line{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:5;text-align:center;font-family:var(--fell);font-style:italic;font-size:clamp(22px,3vw,36px);padding:0 10vw;opacity:0;transition:opacity 1.4s ease;text-shadow:0 2px 24px rgba(0,0,0,.8)}
-.intro-line.on{opacity:1}
-.intro-title{position:absolute;inset:0;z-index:5;display:grid;place-items:center;text-align:center;font-family:var(--fell);font-size:clamp(44px,8vw,104px);line-height:1;opacity:0;transition:opacity 2.4s ease;text-shadow:0 2px 40px rgba(0,0,0,.7);padding:0 24px}
-.intro-title small{display:block;font-family:var(--sc);font-size:clamp(14px,1.4vw,18px);letter-spacing:.3em;margin-top:22px;opacity:.75}
-.intro-title.on{opacity:1}
-.skip,.intro-credit{position:absolute;z-index:6;bottom:calc(7vh + 14px);font-size:14px;color:rgba(242,232,213,.55);font-style:italic}
-.skip{right:24px;font-family:var(--fell);font-size:16px}.skip:hover{color:var(--cream)}
-.intro-credit{left:24px;max-width:60vw}
-.intro-credit a{color:inherit}
-
-.scene{position:relative;height:100svh;min-height:520px;overflow:hidden;background:var(--night);color:var(--cream)}
-.scene .img{position:absolute;inset:-3%;background-size:cover;background-repeat:no-repeat;transform:scale(1.02);transition:transform 16s cubic-bezier(.2,.6,.3,1),filter 2s;filter:sepia(.18) saturate(.9) brightness(.82)}
-.scene.in .img{transform:scale(1.13)}
-.scene .shade{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse at 50% 45%,rgba(20,16,12,.05) 20%,rgba(20,16,12,.7) 100%),linear-gradient(transparent 55%,rgba(20,16,12,.65))}
-.scene .card{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;text-shadow:0 2px 28px rgba(0,0,0,.75)}
-.scene .card>*{opacity:0;transform:translateY(10px);transition:opacity 1.8s ease,transform 1.8s ease}
-.scene.in .card>*{opacity:1;transform:none}
-.scene.in .card>*:nth-child(2){transition-delay:.7s}.scene.in .card>*:nth-child(3){transition-delay:1.4s}.scene.in .card>*:nth-child(4){transition-delay:2.2s}
-.scene .act{font-family:var(--sc);letter-spacing:.3em;font-size:16px;opacity:.85}
-.scene h2{font-family:var(--fell);font-weight:400;font-size:clamp(48px,8vw,104px);line-height:1;margin:12px 0 8px}
-.scene .sub{font-family:var(--fell);font-style:italic;font-size:clamp(20px,2.4vw,28px);opacity:.9}
-.scene .lock{margin-top:26px;font-style:italic;font-size:17px;opacity:.75}
-.scene .credit{position:absolute;z-index:5;left:24px;bottom:calc(7vh + 12px);font-size:13.5px;font-style:italic;color:rgba(242,232,213,.7);max-width:70vw;line-height:1.4}
-.scene .down{position:absolute;z-index:5;right:24px;bottom:calc(7vh + 12px);font-family:var(--fell);font-style:italic;font-size:15px;color:rgba(242,232,213,.7)}
-.scene.locked .img{filter:grayscale(1) brightness(.45)}
-.scene:not(.locked) .lock{display:none}
-.scene.locked .down{display:none}
-
-.reading{padding:0;max-width:none;border:0}
-.reading .inner{max-width:900px;margin:0 auto;padding:110px 28px 80px}
-.figure{margin:40px 0 0}
-.figure img{display:block;width:100%;aspect-ratio:16/7;object-fit:cover;object-position:50% 52%;filter:sepia(.15) saturate(.92)}
-.figure figcaption{font-size:14px;font-style:italic;color:var(--ink-faint);margin-top:8px}
-
-.credits{background:var(--night);color:var(--cream);text-align:center;padding:22vh 24px 18vh;position:relative}
-.credits .t{font-family:var(--fell);font-size:clamp(38px,5.6vw,68px);line-height:1.05}
-.credits .ep{font-family:var(--sc);letter-spacing:.3em;font-size:15px;opacity:.7;margin-top:14px}
-.credits dl{margin:12vh auto 0;max-width:560px}
-.credits dt{font-family:var(--sc);letter-spacing:.2em;font-size:13.5px;opacity:.55;margin-top:34px}
-.credits dd{font-family:var(--fell);font-size:22px;margin-top:4px;line-height:1.4}
-.credits .next{margin-top:16vh;font-family:var(--fell);font-style:italic;font-size:clamp(22px,2.6vw,30px)}
-.credits .next small{display:block;font-family:var(--sc);font-style:normal;letter-spacing:.2em;font-size:13.5px;opacity:.6;margin-top:10px}
-.credits .share{display:inline-block;margin-top:40px;font-family:var(--sc);letter-spacing:.14em;font-size:15px;color:var(--cream);border:1px solid rgba(242,232,213,.5);padding:11px 24px;text-decoration:none}
-.credits .share:hover{background:var(--cream);color:#000}
-.credits .small{margin-top:60px;font-size:13px;font-style:italic;opacity:.45;line-height:1.6}
-.credits .small a{color:inherit}
-.sound{font-family:var(--fell);font-style:italic;font-size:16px;color:var(--ink-faint);margin-right:18px}
-.sound:hover{color:var(--ink)}
-@media (max-width:820px){.scene .credit{max-width:calc(100vw - 48px);right:24px}.scene .down{display:none}.intro-credit{max-width:calc(100vw - 110px)}}
-
-@media (max-width:820px){
-  body{font-size:18px}
-  .top{padding:12px 16px}.top .brand{display:none}
-  .age{grid-template-columns:1fr;gap:40px;padding:110px 18px 80px}
-  .triad,.notes{grid-template-columns:1fr}
-  .gods{columns:1}
-  .prologue,.reading,.pantheon,.notes{padding-left:18px;padding-right:18px}
-  #thread{opacity:.35}
+@media (max-width:700px){
+  :root{--bar:11vh}
+  .bar{padding:0 14px}
+  #where{font-size:11.5px;letter-spacing:.06em}
+  #items{display:none}
+  .ctl{gap:12px;font-size:14px}
+  #credit{max-width:calc(100vw - 28px);right:14px;font-size:11px}
+  #tag{left:16px;bottom:calc(var(--bar) + 20vh)}
+  #patron{left:16px}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}.fade{opacity:1}}
+@media (prefers-reduced-motion:reduce){.grain{animation:none}}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter>
-</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter></svg>
 
-<header class="top">
-  <span class="brand">The Last Thing in the Jar</span>
-  <div class="letters" id="letters" title="Five letters are hidden in these pages"><span>Ε</span><span>Λ</span><span>Π</span><span>Ι</span><span>Σ</span></div>
-  <div><button class="sound" id="soundBtn">sound off</button><button class="reset" id="reset">begin again</button></div>
-</header>
+<div id="stage"><div class="layer"><img alt=""></div><div class="layer"><img alt=""></div><div class="vignette"></div><div class="grain"></div></div>
 
-<div class="opening" id="intro">
-  <div class="intro-img"></div>
-  <div class="bars"></div>
-  <div class="intro-start">
-    <div class="over">a short film you can play, in five ages</div>
-    <h1>The Last Thing in the Jar</h1>
-    <button class="go" id="startBtn">Begin, with sound</button>
-    <button class="quiet" id="startQuiet">or begin in silence</button>
+<div class="bar top">
+  <span id="where"></span>
+  <div id="items"></div>
+  <div class="ctl"><button id="pauseBtn" hidden>pause</button><button id="skipBtn" hidden>skip ›</button><button id="soundBtn">sound on</button><button id="menuBtn" hidden>chapters</button></div>
+</div>
+<div class="bar bottom"></div>
+<p id="sub" class="off"></p>
+<div id="credit"></div>
+<div id="tag"><b></b><span></span></div>
+<div id="patron"></div>
+
+<div class="ov" id="start"><div>
+  <div class="over">a short film you can play</div>
+  <h1>The Last Thing in the Jar</h1>
+  <button class="big" id="playBtn">Play</button>
+  <button class="small" id="restartBtn" hidden>start from the beginning</button>
+  <button class="small" id="chapBtn" hidden>chapters</button>
+  <div class="fine">Five acts · about twelve minutes · sound on<br>Shot entirely on Renaissance frescoes from the Vatican and Rome</div>
+</div></div>
+
+<div class="ov black" id="title"><div></div></div>
+<div class="ov dim" id="choice"><div style="width:100%"><div class="q"></div><div class="opts"></div><div class="timer"></div><div class="hint">choose before the moment passes</div></div></div>
+<div class="ov black" id="card"><div><div class="lines"></div><div class="src"></div></div></div>
+<div class="ov dim" id="relic"><div><div class="k">item</div><div class="art"></div><h3></h3><p></p></div></div>
+<div class="ov dim" id="form"><div class="sheet"></div></div>
+<div class="ov" id="credits"><div class="roll"></div><button class="skipc" id="skipCredits">skip credits ›</button></div>
+<div class="ov dim" id="end"><div>
+  <h2>The Last Thing in the Jar</h2>
+  <div class="menu">
+    <button class="big" id="talkBtn">Talk to the cast</button>
+    <button class="big" id="shareBtn">Share on X</button>
+    <button class="big" id="againBtn">Watch again</button>
+    <button class="small" id="endChapBtn">chapters</button>
   </div>
-  <p class="intro-line" id="introLine"></p>
-  <div class="intro-title" id="introTitle"><div>The Last Thing in the Jar<small>Episode I · The Five Ages</small></div></div>
-  <button class="skip" id="skip">skip ›</button>
-  <div class="intro-credit">Michelangelo, ceiling of the Sistine Chapel, 1508–12. Photo: <a href="https://commons.wikimedia.org/wiki/File:CAPPELLA_SISTINA_Ceiling.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 3.0</div>
-</div>
+  <p class="note">The courier, the potter, the carpenter, the janitor and the intern are invented. The myths around them are not: Hesiod, Apollodorus, Ovid, Plutarch, Pausanias, Catullus. Voices are AI (Deepgram Aura on Cloudflare). The cast and the Oracle answer with AI. <a href="https://github.com/karnikasehgal/the-last-thing-in-the-jar" target="_blank" rel="noopener">Sources and code</a>.</p>
+</div></div>
+<div class="ov dim" id="chapters"><div><h2>Chapters</h2><div class="list"></div><button class="small" id="chapClose">close</button></div></div>
 
-<main>
-  <section class="front">
-    <div class="arch">
-      <svg viewBox="0 0 120 150" aria-hidden="true">
-        <path d="M44 14h32M47 14c0 6-2 9-6 12M73 14c0 6 2 9 6 12"/>
-        <path d="M41 26c-22 10-30 36-27 62 3 26 18 46 34 54h24c16-8 31-28 34-54 3-26-5-52-27-62"/>
-        <path d="M22 54c24 6 52 6 76 0M18 92c28 7 56 7 84 0" opacity=".55"/>
-        <path d="M38 70c6-4 10 4 16 0s10 4 16 0 10 4 16 0" opacity=".5"/>
-        <path d="M44 10c4-4 28-4 32 0" opacity=".6"/>
-      </svg>
-    </div>
-    <div class="over">a side story of the Greek myths</div>
-    <h1>The Last Thing in the Jar</h1>
-    <p class="lede">The myths remember the gods and the heroes. This is about the woman who stood beside them, and what she left behind.</p>
-    <a class="begin" href="#prologue">Begin</a>
-  </section>
+<div id="talk"><div class="box">
+  <div class="who"></div>
+  <div class="about"></div>
+  <div class="log"></div>
+  <form><input placeholder="Say something…" autocomplete="off" maxlength="1200"><button>Send</button></form>
+</div></div>
+<div id="toast"></div>
 
-  <div class="fleuron">❦</div>
-
-  <section class="prologue fade" id="prologue">
-    <p class="say dropcap">Everyone remembers the gods. Almost nobody remembers who swept the temple floor, or who wrapped the stone. I was never the one the poets sang about. I stood just outside the picture, in every age, and left small things behind for whoever came next.</p>
-    <div class="how">
-      <p><b>I.</b>Each age keeps an echo of my voice. You can listen to it.</p>
-      <p><b>II.</b>Each age asks you a question. Your answer opens the next one, and tells you who found what I left.</p>
-      <p><b>III.</b>Five Greek letters are hidden faintly in these pages. Together they are my name.</p>
-    </div>
-  </section>
-
-  <div id="story"><svg id="thread" aria-hidden="true"><path class="ghost" id="ghost"/><path id="threadPath"/></svg></div>
-
-  <section class="reading" id="reading">
-    <div class="scene" id="readingScene" data-scene="parnassus">
-      <div class="img" style="background-image:url(img/parnassus.jpg);background-position:50% 30%"></div><div class="shade"></div>
-      <div class="card"><div class="act">Epilogue</div><h2>The Reading</h2><div class="sub">what your choices say about you</div></div>
-      <div class="credit">Raphael, <i>The Parnassus</i>, 1511. Stanza della Segnatura, Vatican</div>
-      <div class="down">read on ↓</div>
-    </div>
-    <div class="inner">
-    <div class="eyebrow">The reading</div>
-    <h2 class="h">The gods you carry</h2>
-    <p class="intro">The Jungian analyst Jean Shinoda Bolen suggested we read the Olympians as patterns in ourselves rather than figures on a mountain. Everyone carries all twelve, some louder than others. Your five answers made some of them louder.</p>
-    <div class="triad" id="triad"></div>
-    <div class="oracle"><span id="oracleText"></span><span class="sig">— Elpis</span></div>
-    <div class="links"><button id="copyBtn">copy your reading</button><button id="shareReading">share your patron on X</button><button onclick="openChat()">write to her about it</button></div>
-    </div>
-  </section>
-
-  <section class="pantheon fade" id="pantheon">
-    <div class="eyebrow">Appendix</div>
-    <h2 class="h">The twelve, as inner figures</h2>
-    <p class="intro">Each god's gift, and the shadow it casts when it is left to run everything. After Jung, and Bolen's <i>Goddesses in Everywoman</i> (1984) and <i>Gods in Everyman</i> (1989).</p>
-    <figure class="figure"><img src="img/council.jpg" alt="Raphael's Council of the Gods: the Olympians gathered on clouds" loading="lazy"><figcaption>Raphael and workshop, <i>The Council of the Gods</i>, 1517–18. Loggia of Cupid and Psyche, Villa Farnesina, Rome</figcaption></figure>
-    <div class="gods" id="gods"></div>
-  </section>
-
-  <section class="notes fade">
-    <div>
-      <h4>The ancient sources</h4>
-      <ul>
-        <li>Hesiod, <i>Works and Days</i> 90–201, the jar and the five ages</li>
-        <li>Hesiod, <i>Theogony</i> 453–567, the stone and the stolen fire</li>
-        <li>Pausanias 10.24.6, the stone at Delphi</li>
-        <li>Apollodorus, <i>Library</i> 1.7.2 and 2.5.11, the flood; Prometheus freed</li>
-        <li>Ovid, <i>Metamorphoses</i> I, Deucalion and Pyrrha</li>
-        <li>Plutarch, <i>Theseus</i> 19–20; Catullus 64, Ariadne</li>
-      </ul>
-      <h4 style="margin-top:26px">Further reading</h4>
-      <ul>
-        <li>Morford, Lenardon &amp; Sham, <i>Classical Mythology</i></li>
-        <li>Katerina Servi, <i>Greek Mythology</i></li>
-        <li>Edith Hamilton, <i>Mythology</i></li>
-        <li>Apollodorus, <i>The Library of Greek Mythology</i>, tr. Robin Hard</li>
-        <li>Robert Graves, <i>The Greek Myths</i></li>
-        <li>Stephen Fry, <i>Heroes</i> and <i>Troy</i></li>
-        <li>Apollonius of Rhodes, <i>Argonautica</i>, tr. Richard Hunter</li>
-        <li>Homer, <i>Iliad</i>, tr. Martin Hammond; <i>Odyssey</i>, tr. Emily Wilson</li>
-        <li>Virgil, <i>Aeneid</i>, tr. David West</li>
-      </ul>
-    </div>
-    <div>
-      <h4>What is invented</h4>
-      <ul>
-        <li>The witness, and every object she leaves, are mine. The myths around her are not.</li>
-        <li>The reading borrows from Jung, Bolen, and C. R. Snyder's work on hope. It is meant for reflection, not diagnosis.</li>
-        <li>When you write to her, the replies are written by an AI (Claude). She only knows the ages you have opened, so she cannot give the ending away.</li>
-      </ul>
-    </div>
-  </section>
-</main>
-
-<section class="credits" id="credits">
-  <div class="t">The Last Thing in the Jar</div>
-  <div class="ep">Episode I · The Five Ages</div>
-  <dl>
-    <dt>Written and made by</dt><dd>Karnika Sehgal</dd>
-    <dt>The Witness</dt><dd>Elpis, voiced by Claude</dd>
-    <dt>Paintings</dt><dd>Michelangelo · Raphael · Annibale Carracci · Piero di Cosimo</dd>
-    <dt>From the stories told by</dt><dd>Hesiod · Ovid · Apollodorus · Plutarch · Pausanias</dd>
-    <dt>Swallowed during filming</dt><dd>One stone, and five of Cronus’s children</dd>
-  </dl>
-  <div class="next">Elpis returns in Episode II: <i>The Heroes</i><small>Heracles · the Argonauts · Troy · Odysseus</small></div>
-  <a class="share" id="shareCredits" href="#" target="_blank" rel="noopener">Share it on X</a>
-  <p class="small">Paintings are public domain, except the Sistine ceiling photograph (<a href="https://commons.wikimedia.org/wiki/File:CAPPELLA_SISTINA_Ceiling.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY-SA 3.0).<br>The witness and her relics are invented. The myths are not.</p>
-</section>
-
-<button class="write" id="writeBtn" onclick="openChat()">Write to the witness</button>
-<div class="chat" id="chat" role="dialog" aria-label="Letters to the witness">
-  <div class="chat-h"><div><b id="chatName">The Witness</b><small id="chatSub"></small></div><button onclick="closeChat()" aria-label="Close">×</button></div>
-  <div class="log" id="log"></div>
-  <div class="chips" id="chips"></div>
-  <form id="chatForm"><input id="chatIn" placeholder="Write something…" autocomplete="off" maxlength="1200"><button>Send</button></form>
-</div>
-<div class="note" id="note"></div>
-
-<script src="story.js"></script>
-<script src="app.js"></script>
+<audio id="voice" preload="auto"></audio>
+<script src="film.js"></script>
+<script src="player.js"></script>
 </body>
 </html>
