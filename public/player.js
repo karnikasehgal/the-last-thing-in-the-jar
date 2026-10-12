@@ -26,7 +26,7 @@ function frameFor(img, [cx, cy, z]) {
 // Credits for library paintings come from each folder's manifest.
 const CREDITS = {};
 async function loadLibrary() {
-  for (const dir of ["styx", "gods", "act1", "act2", "act3", "act4", "act5"]) {
+  for (const dir of ["styx", "gods"]) {
     try {
       const m = await (await fetch(`img/lib/${dir}/manifest.json`)).json();
       for (const e of Array.isArray(m) ? m : Object.values(m)) {
@@ -534,7 +534,7 @@ $("#againBtn").onclick = () => { state = {choices:{}, reached:0}; save(); locati
   show(lookFor("start"), 60000);
   const fromHash = /^#act-(\d)$/.exec(location.hash);
   const startAt = fromHash ? Math.min(+fromHash[1], state.reached) : (state.reached > 0 && state.reached < ACTS.length ? state.reached : 0);
-  if (startAt > 0) { $("#playBtn").textContent = `Continue: ${ACTS[startAt].title}`; $("#restartBtn").hidden = false; }
+  if (startAt > 0) { $("#playBtn").textContent = `Continue the film: ${ACTS[startAt].title}`; $("#restartBtn").hidden = false; }
   if (state.reached > 0) $("#chapBtn").hidden = false;
   overlay("start");
   const go = i => { score.start(); playFrom(i); };

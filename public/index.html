@@ -69,6 +69,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #start h1{font-family:var(--fell);font-weight:400;font-size:clamp(44px,8vw,104px);line-height:1;margin:12px 0 36px;text-shadow:0 2px 30px rgba(0,0,0,.6)}
 .big{font-family:var(--sc);letter-spacing:.16em;font-size:17px;border:1px solid rgba(242,232,213,.6);padding:13px 34px;transition:.35s}
 .big:hover{background:var(--cream);color:#000}
+a.big{color:var(--cream);text-decoration:none;display:inline-block}
+#start .big{min-width:240px;margin:6px}
 .small{display:block;margin:16px auto 0;font-style:italic;font-size:15px;color:var(--cream-dim)}
 .small:hover{color:var(--cream)}
 #start .fine{margin-top:40px;font-size:14px;font-style:italic;color:var(--cream-dim);line-height:1.6;text-shadow:0 1px 8px #000}
@@ -202,7 +204,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <div class="ov" id="start"><div>
   <div class="over">a short film you can play</div>
   <h1>The Coin</h1>
-  <button class="big" id="playBtn">Play</button>
+  <button class="big" id="playBtn">Watch the film</button>
+  <a class="big" href="play/">Play the game</a>
   <button class="small" id="restartBtn" hidden>start from the beginning</button>
   <button class="small" id="chapBtn" hidden>chapters</button>
   <div class="fine">Episode I of The Last Thing in the Jar · about ten minutes · sound on<br>Shot entirely on Renaissance paintings</div>
@@ -220,6 +223,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     <button class="big" id="talkBtn">Talk to the cast</button>
     <button class="big" id="shareBtn">Share on X</button>
     <button class="big" id="againBtn">Watch again</button>
+    <a class="big" href="play/" style="text-align:center;min-width:260px">Play the game</a>
     <button class="small" id="endChapBtn">chapters</button>
   </div>
   <p class="note">Mikon, his olive pit and the oar are invented. Everyone he meets is from the ancient stories: Homer, Virgil, Ovid, Apuleius, Apollodorus, Aristophanes. Voices are AI. The cast and the Oracle answer with AI. <a href="https://github.com/karnikasehgal/the-last-thing-in-the-jar" target="_blank" rel="noopener">Sources and code</a>.</p>
