@@ -24,7 +24,7 @@ const flat = v => V(v.x, 0, v.z);
 const SHORE = 22, DEEP = 29;
 const PLACES = {
   start: V(-31, 0, 4), hermes: V(-27, 0, 5.2), elpenor: V(-6, 0, 15.5),
-  altar: V(56, 0, 9), chairs: V(56, 0, -1), dogHome: V(72, 0, 12), dock: V(0, 0, 35), boat: V(0, 0, 37.5)
+  altar: V(56, 0, 9), chairs: V(56, 0, -1), dogHome: V(72, 0, 12), coinSpot: V(69.4, 0, 13.6), dock: V(0, 0, 35), boat: V(0, 0, 37.5)
 };
 const onDock = p => Math.abs(p.x) < 1.5 && p.z > SHORE - .5 && p.z < 36;
 const inWater = p => p.z > SHORE && !onDock(p);
@@ -116,7 +116,9 @@ const boxes = [];     // [x0, z0, x1, z1]
 function solid(x, z, r = .35) {
   for (const [cx, cz, cr] of circles) if ((x - cx) ** 2 + (z - cz) ** 2 < (cr + r) ** 2) return true;
   for (const [x0, z0, x1, z1] of boxes) if (x > x0 - r && x < x1 + r && z > z0 - r && z < z1 + r) return true;
-  if (z < .4 || x < -38 || x > 82 || z > DEEP) return true;
+  if (z < .4 || x < -38 || x > 82) return true;
+  if (onDock({x, z})) return z > 36.2;   // you can walk the whole dock, right up to the boat
+  if (z > DEEP) return true;
   return false;
 }
 
@@ -246,7 +248,18 @@ function makeCoin(at, y = 1) {
   m.add(new THREE.PointLight(0xffd27a, 4, 4, 2));
   scene.add(m); coins.push(m); return m;
 }
-makeCoin(PLACES.altar, STEP + 1.25);
+makeCoin(PLACES.coinSpot, .14);
+// the honey cake: an offering left on the altar, and the only thing the dog loves more than coins
+let cake = null;
+function placeCake() {
+  if (cake) scene.remove(cake);
+  cake = new THREE.Group();
+  const bun = new THREE.Mesh(new THREE.CylinderGeometry(.2, .23, .12, 18), new THREE.MeshStandardMaterial({color: 0xb07a3a, roughness: .7}));
+  const glaze = new THREE.Mesh(new THREE.CylinderGeometry(.19, .2, .03, 18), new THREE.MeshStandardMaterial({color: 0xe0a640, roughness: .25, metalness: .1, emissive: 0x3a2004}));
+  glaze.position.y = .07; cake.add(bun, glaze); cake.add(new THREE.PointLight(0xffb050, 2.5, 3, 2));
+  cake.position.set(PLACES.altar.x, STEP + 1.17, PLACES.altar.z); scene.add(cake);
+}
+placeCake();
 
 /* ---------- people ---------- */
 const gltf = new GLTFLoader();
@@ -339,7 +352,7 @@ function placePeople() {
 const hound = makeHound(scene);
 const dog = {pos: PLACES.dogHome.clone(), yaw: Math.PI * .8, mode: "sleep", speed: 0, calmAt: 0, noiseUntil: 0, growl: 0};
 function animateDog(dt, now) {
-  const gait = dog.mode === "sleep" ? "sleep" : dog.speed > 4 ? "run" : dog.speed > .3 ? "walk" : "idle";
+  const gait = (dog.mode === "sleep" || dog.mode === "drugged") ? "sleep" : dog.speed > 4 ? "run" : dog.speed > .3 ? "walk" : "idle";
   animateHound(hound, {mode: gait, speed: dog.speed, x: dog.pos.x, z: dog.pos.z, yaw: dog.yaw, hunting: dog.mode === "hunt"}, dt, now);
 }
 
@@ -382,10 +395,21 @@ function toast(msg, ms = 2800) { const t = $("#toast"); t.textContent = msg; t.c
 function paintStats() { $("#stats").innerHTML = `caught by the dog: ${me.caught}<br>splashed: ${me.splashed}`; }
 const GOALS = [
   {label: "Talk to Hermes, the man waiting in the arcade", at: () => NPC.hermes.pos},
-  {label: () => me.met.elpenor ? "Get the coin from the altar in the temple, at the far end of the arcade" : "Find a coin. Ask the sailor sitting by the river", at: () => me.met.elpenor ? PLACES.altar : NPC.elpenor.pos},
-  {label: "Get the coin to Charon's ferry. Don't get caught.", at: () => PLACES.dock}
+  {label: "Find a coin. Ask the sailor sitting by the river", at: () => NPC.elpenor.pos},
+  {label: "Get the honey cake from the altar in the old temple, at the far end of the arcade", at: () => PLACES.altar},
+  {label: "Throw the honey cake to the dog. He sleeps in the cave past the temple", at: () => PLACES.dogHome},
+  {label: "He's asleep. Take the coin from the cave, quickly", at: () => PLACES.coinSpot},
+  {label: "Get the coin to the end of the dock, where Charon is. The river is safe", at: () => PLACES.dock}
 ];
-const goal = () => GOALS[Math.min(me.stage, GOALS.length - 1)];
+function stageNow() {
+  if (!me.met.hermes) return 0;
+  if (me.coin) return 5;
+  if (dog.mode === "drugged") return 4;
+  if (me.cake) return 3;
+  if (me.met.elpenor || me.met.theseus) return 2;
+  return 1;
+}
+const goal = () => GOALS[stageNow()];
 function paintGoal() { const l = goal().label; $("#goal").innerHTML = `<small>what to do</small>${typeof l === "function" ? l() : l}`; }
 
 /* ---------- conversations: spoken out loud, with the camera on whoever is talking ---------- */
@@ -469,21 +493,19 @@ async function conversation(id) {
     me.choices.elpenor = [{Hermes: 2, Athena: 1}, {Demeter: 2, Hera: 1}, {Dionysus: 2, Apollo: 1}][k];
     if (k === 1) await say("elpenor", "e5", "Nobody's ever said that to me.");
     if (k === 2) await say("elpenor", "e6", "Bit late, mate.");
-    await say("elpenor", "e3", "There's a coin on the altar in the old temple, at the far end of the arcade.", "altar");
-    await say("elpenor", "e4", "The dog sleeps right behind it. Grab the coin, then run for the river. He won't follow you in.", "grotto");
+    await say("elpenor", "e3", "There's one coin down here nobody's spent. The dog sleeps on it. In his cave, past the old temple.", "grotto");
+    await say("elpenor", "e4", "You can't just grab it. He'll smell it and wake up. You have to put him to sleep first.");
+    await say("elpenor", "e7", "Honey cake. Dogs can't resist it. Out like a lamp. There's one on the altar in the temple. Somebody left it as an offering.", "altar");
+    await say("elpenor", "e8", "Throw it near him, grab the coin, and run for the river. He can't swim.", "river");
   } else if (id === "theseus") {
     await say("theseus", "t1", "Don't sit down.");
     await say("pirithous", "p1", "Seriously. Don't.");
     await say("mikon", "m3", "Are you two stuck to those chairs?");
     await say("theseus", "t2", "We came down here to kidnap the Queen of the Dead. Long story. Then we sat down.");
-    await say("theseus", "t5", "I've got a coin in my belt. I can't reach it. I can't reach anything.");
-    const k = await choose([{t: "Take his coin. He's not using it."}, {t: "Try to pull them off the chairs."}, {t: "Leave them. They're heroes, they'll figure it out."}]);
-    me.choices.theseus = [{Ares: 2, Hermes: 1}, {Artemis: 2, Hera: 1}, {Apollo: 2, Zeus: 1}][k];
-    if (k === 0) {
-      await say("theseus", "t3", "Fine. Take it. Quietly.");
-      if (!me.coin && me.theseusCoin) { me.theseusCoin = false; pickCoin(); await say("theseus", "t4", "That was not quietly."); }
-    }
-    if (k === 1) { await say("mikon", "m4", "On three. One, two..."); await say("pirithous", "p2", "No. No. It's fused. I'm part chair now."); me.met.theseus = true; endTalk(); wakeDog("The screaming woke something up.", 10); return; }
+    const k = await choose([{t: "Ask them how to get past the dog."}, {t: "Try to pull them off the chairs."}, {t: "Leave them. They're heroes, they'll figure it out."}]);
+    me.choices.theseus = [{Athena: 2, Hermes: 1}, {Artemis: 2, Hera: 1}, {Apollo: 2, Zeus: 1}][k];
+    if (k === 0) { await say("theseus", "t6", "Honey cake. Throw him one and he sleeps like a baby. Three babies.", "altar"); await say("pirithous", "p4", "The Sibyl did it. Everybody does it. Except us. We just sat down."); }
+    if (k === 1) { await say("mikon", "m4", "On three. One, two..."); await say("pirithous", "p2", "No. No. It's fused. I'm part chair now."); me.met.theseus = true; endTalk(); wakeDog("The screaming woke the dog. Hide in the river.", 10); return; }
     if (k === 2) await say("pirithous", "p3", "Guys?");
   } else if (id === "charon") {
     if (!me.coin) {
@@ -522,9 +544,30 @@ function hermesLeaves() {
 /* ---------- the coin and the dog ---------- */
 function pickCoin(mesh) {
   if (mesh) { scene.remove(mesh); coins = coins.filter(c => c !== mesh); }
-  me.coin = true; me.stage = 2; sound.chime(); paintGoal();
+  me.coin = true; sound.chime(); paintGoal();
   $("#carry").classList.add("on");
-  wakeDog("It smells the coin.");
+  if (dog.mode === "drugged") toast("Got it. Run. When he wakes up, he'll smell it.");
+  else wakeDog("He smelled the coin. RUN.");
+}
+function pickCake() {
+  scene.remove(cake); cake = null; me.cake = true; sound.chime(); paintGoal();
+  toast("A honey cake. Sticky. The dog will love it.");
+}
+function throwCake() {
+  me.cake = false;
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(.2, .23, .14, 14), new THREE.MeshStandardMaterial({color: 0xc08a40, emissive: 0x3a2004}));
+  const from = V(me.pos.x, 1.3, me.pos.z), to = V(dog.pos.x + 1.2, .3, dog.pos.z);
+  c.position.copy(from); scene.add(c);
+  const t0 = performance.now();
+  (function fly() {
+    const k = Math.min(1, (performance.now() - t0) / 700);
+    c.position.lerpVectors(from, to, k); c.position.y += Math.sin(k * Math.PI) * 2; c.rotation.x += .3;
+    if (k < 1) requestAnimationFrame(fly); else scene.remove(c);
+  })();
+  setTimeout(() => {
+    dog.mode = "drugged"; dog.drugUntil = performance.now() + 25000; dog.noiseUntil = 0;
+    toast("He ate it. He's out cold. You've got about 25 seconds."); paintGoal();
+  }, 750);
 }
 function dropCoin() {
   if (!me.coin) return;
@@ -535,10 +578,21 @@ function dropCoin() {
   dog.calmAt = performance.now() + 2500;
 }
 function wakeDog(msg, secs) {
+  if (dog.mode === "drugged") return;
   if (secs) dog.noiseUntil = performance.now() + secs * 1000;
   if (dog.mode !== "hunt") { dog.mode = "hunt"; sound.bark(); toast(msg); }
 }
 function updateDog(dt, now) {
+  if (dog.mode === "drugged") {
+    dog.speed = 0;
+    const left = Math.ceil((dog.drugUntil - now) / 1000);
+    $("#carry").textContent = `The dog is asleep: ${Math.max(0, left)} seconds`; $("#carry").classList.add("on");
+    if (now > dog.snore) { sound.growl(.25); dog.snore = now + 2600; }
+    if (now < dog.drugUntil) { paint.uniforms.danger.value *= .9; $("#danger").classList.remove("on"); return; }
+    dog.mode = "sleep"; $("#carry").textContent = "You're carrying a coin. Something can smell it."; $("#carry").classList.toggle("on", me.coin);
+    if (me.coin) wakeDog("He's awake. And he smells the coin.");
+    paintGoal();
+  }
   const wanted = me.coin || now < dog.noiseUntil;
   if (dog.mode === "hunt" && !wanted && now > dog.calmAt) dog.mode = "home";
   let target = null, speed = 0;
@@ -578,10 +632,11 @@ async function caught() {
   await new Promise(r => setTimeout(r, 2300));
   canvas.classList.remove("caught"); camShot.active = false;
   if (me.coin) { me.coin = false; $("#carry").classList.remove("on"); }
-  coins.forEach(c => scene.remove(c)); coins = []; makeCoin(PLACES.altar, STEP + 1.25);
+  coins.forEach(c => scene.remove(c)); coins = []; makeCoin(PLACES.coinSpot, .14);
+  me.cake = false; placeCake();
   dog.pos.copy(PLACES.dogHome); dog.mode = "sleep"; dog.noiseUntil = 0;
   me.pos.copy(me.met.elpenor ? V(-6, 0, 12) : PLACES.start); me.yaw = -Math.PI / 2; me.pitch = -.04;
-  me.stage = Math.min(me.stage, 1); paintGoal();
+  paintGoal();
   playing = true; grabMouse();
 }
 
@@ -645,17 +700,21 @@ if (touchMode) {
 
 /* ---------- what's nearby ---------- */
 function nearby() {
-  for (const c of coins) if (flat(c.position).distanceTo(flat(me.pos)) < 1.8) return {kind: "coin", obj: c, label: "pick up the coin"};
   const near = (p, r) => flat(p).distanceTo(flat(me.pos)) < r;
+  if (me.cake && dog.mode !== "drugged" && near(dog.pos, 8)) return {kind: "throw", label: "throw the honey cake to the dog"};
+  for (const c of coins) if (flat(c.position).distanceTo(flat(me.pos)) < 1.8) return {kind: "coin", obj: c, label: "take the coin"};
+  if (cake && near(PLACES.altar, 2.4)) return {kind: "cake", label: "take the honey cake"};
   if (!NPC.hermes.leaving && NPC.hermes.root.visible && near(NPC.hermes.pos, 3.2)) return {kind: "talk", id: "hermes", label: "talk to Hermes"};
   if (near(NPC.elpenor.pos, 3)) return {kind: "talk", id: "elpenor", label: "talk to Elpenor"};
   if (near(PLACES.chairs, 3.6)) return {kind: "talk", id: "theseus", label: "talk to Theseus and Pirithous"};
-  if (near(NPC.charon.pos, 4.2)) return {kind: "talk", id: "charon", label: "talk to Charon"};
+  if (near(NPC.charon.pos, 4.2)) return {kind: "talk", id: "charon", label: me.coin ? "give Charon the coin" : "talk to Charon"};
   return null;
 }
 function interact() {
   const n = nearby(); if (!n) return;
   if (n.kind === "coin") { if (me.coin) return toast("One coin is plenty."); pickCoin(n.obj); }
+  else if (n.kind === "cake") pickCake();
+  else if (n.kind === "throw") throwCake();
   else conversation(n.id);
 }
 
@@ -760,10 +819,12 @@ function drawMap(cv) {
   g.strokeStyle = ink; g.strokeRect(X(45), Y(-5), X(67) - X(45), Y(13) - Y(-5));
   for (const [x, z] of [[46, -4], [46, 3], [46, 12], [66, -4], [66, 3], [66, 12], [51, -4.5], [56, -4.5], [61, -4.5], [51, 12.5], [61, 12.5]]) { g.beginPath(); g.arc(X(x), Y(z), 5, 0, 7); g.fill(); }
   label("THE OLD TEMPLE", X(56), Y(-1.8), 24);
-  g.fillStyle = "#b8862a"; g.beginPath(); g.arc(X(PLACES.altar.x), Y(PLACES.altar.z), 9, 0, 7); g.fill();
-  label("a coin, on the altar", X(56), Y(11.4), 20, true);
+  g.fillStyle = "#c08a40"; g.beginPath(); g.arc(X(PLACES.altar.x), Y(PLACES.altar.z), 9, 0, 7); g.fill();
+  label("a honey cake, on the altar", X(56), Y(11.4), 20, true);
   g.fillStyle = "rgba(40,25,20,.75)"; g.beginPath(); g.ellipse(X(72.5), Y(12), 42, 30, 0, 0, 7); g.fill();
-  label("where the dog sleeps", X(72.5), Y(18.5), 21, true, "#7a2414");
+  label("the dog sleeps here,", X(72.5), Y(18.2), 21, true, "#7a2414");
+  label("on the only coin", X(72.5), Y(20.4), 21, true, "#7a2414");
+  g.fillStyle = "#b8862a"; g.beginPath(); g.arc(X(PLACES.coinSpot.x), Y(PLACES.coinSpot.z), 8, 0, 7); g.fill();
   // people
   const who = (x, z, t) => { g.fillStyle = "#2a3a5e"; g.beginPath(); g.arc(X(x), Y(z), 7, 0, 7); g.fill(); label(t, X(x), Y(z) - 14, 19, true, "#2a3a5e"); };
   if (NPC.hermes?.root.visible) who(NPC.hermes.pos.x, NPC.hermes.pos.z, "Hermes");
