@@ -523,10 +523,6 @@ $("#talkBtn").onclick = openTalk;
 addEventListener("keydown", e => { if (e.key === "Escape") $("#talk").classList.remove("on"); });
 
 /* ---------- start ---------- */
-const shareText = () => state.choices[4] !== undefined
-  ? `I spent a hundred years on the bank of the River Styx without a coin. Apparently I'm most like ${ranked()[0]}.`
-  : "A short film you can play: one man, no coin, a hundred years on the bank of the River Styx.";
-$("#shareBtn").onclick = () => open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(location.origin + "/")}`, "_blank", "noopener");
 $("#againBtn").onclick = () => { state = {choices:{}, reached:0}; save(); location.hash = ""; location.reload(); };
 
 (async function boot() {

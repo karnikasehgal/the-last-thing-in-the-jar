@@ -203,13 +203,33 @@ async function voice(request, env) {
   }
 }
 
+// The film and the game live at separate addresses. Locally, everything is served together.
+const GAME_HOST = "coin.klickbaitbyk.com";
+const FILM_HOST = "film.klickbaitbyk.com";
+const FILM_ONLY = /^\/(index\.html|film\.js|player\.js|shots\.js|audio\/|api\/)/;
+const notFound = () => new Response("Not found", { status: 404 });
+
+function route(request, env) {
+  const url = new URL(request.url);
+  const at = path => env.ASSETS.fetch(new Request(new URL(path, url), request));
+  if (url.hostname === GAME_HOST) {
+    if (url.pathname === "/") return at("/play/");
+    if (url.pathname === "/manifest.webmanifest") return at("/play/manifest.webmanifest");
+    if (url.pathname === "/play/" || url.pathname === "/play/index.html") return Response.redirect(url.origin + "/", 301);
+    if (FILM_ONLY.test(url.pathname)) return notFound();
+  }
+  if (url.hostname === FILM_HOST && url.pathname.startsWith("/play/")) return notFound();
+  return env.ASSETS.fetch(request);
+}
+
 export default {
   async fetch(request, env, ctx) {
-    const { pathname } = new URL(request.url);
+    const { pathname, hostname } = new URL(request.url);
+    if (hostname === GAME_HOST && pathname.startsWith("/api/")) return notFound();
     if (pathname === "/api/echo") return handle(request, env, ctx, "echo");
     if (pathname === "/api/reading") return handle(request, env, ctx, "reading");
     if (pathname === "/api/voice") return voice(request, env);
     if (pathname === "/api/status") return json({ ai: Boolean(env.ANTHROPIC_API_KEY || env.AI) });
-    return env.ASSETS.fetch(request);
+    return route(request, env);
   },
 };
