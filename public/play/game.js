@@ -9,6 +9,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { makeHound, animateHound } from "./hound.js";
+import { makeCastMember, oar } from "./people.js";
 
 const $ = s => document.querySelector(s);
 const LIB = "../img/lib/";
@@ -299,81 +300,26 @@ placeCake();
 const gltf = new GLTFLoader();
 const ASSETS = {}, CLIPS = {};
 async function loadAssets(progress) {
-  const list = ["male_peasant", "male_ranger", "head_male", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims"];
+  const list = ["head_male", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims"];
   let done = 0;
   await Promise.all(list.map(async n => { ASSETS[n] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
 }
-// Recolour the clothes but keep their folds; leave skin alone.
-function tintCloth(mat, hex, amount = .6) {
-  mat = mat.clone();
-  const tint = new THREE.Color(hex);
-  mat.onBeforeCompile = sh => {
-    sh.uniforms.uTint = {value: tint}; sh.uniforms.uAmt = {value: amount};
-    sh.fragmentShader = "uniform vec3 uTint; uniform float uAmt;\n" + sh.fragmentShader.replace("#include <map_fragment>",
-      `#include <map_fragment>
-       float lum = dot(diffuseColor.rgb, vec3(.299,.587,.114));
-       diffuseColor.rgb = mix(diffuseColor.rgb, uTint * (lum * 2.1), uAmt);`);
-  };
-  mat.customProgramCacheKey = () => "tint" + hex;
-  return mat;
-}
-function makePerson({body, cloth, hide = [], hair = [], hairColor = 0x2a1d14, scale = 1}) {
-  const root = SkeletonUtils.clone(ASSETS[body].scene);
-  const bones = {}; root.traverse(o => { if (o.isBone) bones[o.name] = o; });
-  root.traverse(o => {
-    if (!o.isMesh) return;
-    o.frustumCulled = false;
-    if (hide.some(h => o.name.includes(h))) { o.visible = false; return; }
-    const mats = Array.isArray(o.material) ? o.material : [o.material];
-    const out = mats.map(m => /Peasant|Ranger/.test(m.name) ? tintCloth(m, cloth) : m);
-    o.material = Array.isArray(o.material) ? out : out[0];
-  });
-  // The outfits are clothes and hands only, so each person borrows a head from the base body:
-  // keep just the triangles above the collar, plus the eyes and eyebrows.
-  {
-    const parts = []; SkeletonUtils.clone(ASSETS.head_male.scene).traverse(o => { if (o.isSkinnedMesh) parts.push(o); });
-    for (const o of parts) {
-      if (/Sphere|Retopology/.test(o.name)) {
-        const geo = o.geometry.clone(), pos = geo.attributes.position, idx = geo.index.array, keep = [];
-        for (let i = 0; i < idx.length; i += 3) if (pos.getY(idx[i]) > 1.57 && pos.getY(idx[i + 1]) > 1.57 && pos.getY(idx[i + 2]) > 1.57) keep.push(idx[i], idx[i + 1], idx[i + 2]);
-        geo.setIndex(keep); o.geometry = geo;
-      }
-      o.bind(new THREE.Skeleton(o.skeleton.bones.map(b => bones[b.name] || b), o.skeleton.boneInverses), o.bindMatrix);
-      o.frustumCulled = false; root.add(o);
-    }
-  }
-  for (const h of hair) {
-    const parts = []; SkeletonUtils.clone(ASSETS[h].scene).traverse(o => { if (o.isSkinnedMesh) parts.push(o); });
-    for (const o of parts) {
-      o.bind(new THREE.Skeleton(o.skeleton.bones.map(b => bones[b.name] || b), o.skeleton.boneInverses), o.bindMatrix);
-      o.material = o.material.clone(); o.material.color = new THREE.Color(hairColor); o.frustumCulled = false;
-      root.add(o);
-    }
-  }
-  root.scale.setScalar(scale);
-  const mixer = new THREE.AnimationMixer(root);
-  const person = {root, mixer, bones, action: null, current: null, play(name, fade = .35) {
-    const clip = CLIPS[name]; if (!clip || this.current === name) return;
-    const a = mixer.clipAction(clip); a.reset().fadeIn(fade).play();
-    if (this.action) this.action.fadeOut(fade);
-    this.action = a; this.current = name;
-  }};
-  scene.add(root);
-  return person;
-}
 const NPC = {};
 function placePeople() {
-  NPC.hermes = Object.assign(makePerson({body: "male_peasant", cloth: 0xd9cdb4, hair: ["hair_simpleparted"], hairColor: 0x6b4a2a}),
+  const cast = (id, opts) => makeCastMember(id, {ASSETS, CLIPS, scene, ...opts});
+  NPC.hermes = Object.assign(cast("hermes"),
     {name: "Hermes", idle: "Idle_Loop", talk: "Idle_Talking_Loop", pos: PLACES.hermes.clone(), face: true});
-  NPC.elpenor = Object.assign(makePerson({body: "male_peasant", cloth: 0x5d6f80, hair: ["hair_buzzed"], hairColor: 0x2b2018}),
+  NPC.elpenor = Object.assign(cast("elpenor", {scale: .96}),
     {name: "Elpenor", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(-6, 0, 16.05), yaw: Math.PI, seatY: .5});
-  NPC.theseus = Object.assign(makePerson({body: "male_ranger", cloth: 0x8f2f22, hide: ["Pauldron", "Bracer", "Hood", "Belt"], hair: ["hair_simpleparted"], hairColor: 0x3a2516}),
+  NPC.theseus = Object.assign(cast("theseus"),
     {name: "Theseus", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(54.6, 0, PLACES.chairs.z + .1), yaw: 0, seatY: STEP + .5});
-  NPC.pirithous = Object.assign(makePerson({body: "male_peasant", cloth: 0xa9823a, hair: ["hair_long", "hair_beard"], hairColor: 0x1d140d}),
+  NPC.pirithous = Object.assign(cast("pirithous"),
     {name: "Pirithous", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(57.4, 0, PLACES.chairs.z + .1), yaw: 0, seatY: STEP + .5});
-  NPC.charon = Object.assign(makePerson({body: "male_ranger", cloth: 0x1c1a19, hide: ["Pauldron", "Bracer", "Belt"], hair: ["hair_beard", "hair_long"], hairColor: 0x9a948a, scale: 1.12}),
+  NPC.charon = Object.assign(cast("charon", {scale: 1.08}),
     {name: "Charon", idle: "Idle_Torch_Loop", talk: "Idle_Talking_Loop", pos: V(0, 0, 37.2), yaw: Math.PI, seatY: .25, face: true});
+  // Elpenor's oar, the one he asked to be buried with, leaning on the bench beside him.
+  const o = oar(); o.position.set(-7.3, 1.05, 16.4); o.rotation.set(.12, 0, -.32); scene.add(o);
   for (const p of Object.values(NPC)) {
     p.root.position.set(p.pos.x, p.seatY || 0, p.pos.z);
     p.root.rotation.y = p.yaw ?? 0;
@@ -901,4 +847,4 @@ $("#begin").onclick = () => {
 };
 
 // For testing only: /play/?debug exposes the game state in the console.
-if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }};
+if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }};
