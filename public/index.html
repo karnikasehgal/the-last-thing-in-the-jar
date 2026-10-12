@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Last Thing in the Jar</title>
-<meta name="description" content="A short film you can play. Five ordinary people with five terrible jobs, in five ages of Greek myth.">
-<meta property="og:title" content="The Last Thing in the Jar">
-<meta property="og:description" content="A short film you can play. A courier, a potter, a carpenter, a janitor and an intern, in five ages of Greek myth. Shot entirely on Renaissance frescoes.">
-<meta property="og:image" content="https://elpis.karnika-portfolio.workers.dev/og.jpg">
+<title>The Coin</title>
+<meta name="description" content="A short film you can play. One man, no coin, a hundred years on the bank of the River Styx.">
+<meta property="og:title" content="The Coin">
+<meta property="og:description" content="A short film you can play. One man, no coin, a hundred years on the bank of the River Styx. Shot entirely on Renaissance paintings.">
+<meta property="og:image" content="https://the-coin.karnika-portfolio.workers.dev/og.jpg">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://elpis.karnika-portfolio.workers.dev/">
+<meta property="og:url" content="https://the-coin.karnika-portfolio.workers.dev/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://elpis.karnika-portfolio.workers.dev/og.jpg">
+<meta name="twitter:image" content="https://the-coin.karnika-portfolio.workers.dev/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
@@ -51,6 +51,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 #sub{position:fixed;left:50%;bottom:calc(var(--bar) + 30px);transform:translateX(-50%);z-index:9;width:min(860px,calc(100vw - 40px));text-align:center;font-size:clamp(18px,2vw,24px);line-height:1.45;text-shadow:0 0 2px #000,0 2px 10px #000,0 0 30px rgba(0,0,0,.9);transition:opacity .5s;pointer-events:none}
 #sub.off{opacity:0}
+#sub .who{display:block;font-family:var(--sc);font-weight:400;letter-spacing:.16em;font-size:.62em;color:var(--cream-dim);margin-bottom:2px}
 
 #tag{position:fixed;left:6vw;bottom:calc(var(--bar) + 15vh);z-index:9;opacity:0;transform:translateY(8px);transition:opacity 1.4s,transform 1.4s;text-shadow:0 2px 16px rgba(0,0,0,.9);pointer-events:none}
 #tag.on{opacity:1;transform:none}
@@ -200,11 +201,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 <div class="ov" id="start"><div>
   <div class="over">a short film you can play</div>
-  <h1>The Last Thing in the Jar</h1>
+  <h1>The Coin</h1>
   <button class="big" id="playBtn">Play</button>
   <button class="small" id="restartBtn" hidden>start from the beginning</button>
   <button class="small" id="chapBtn" hidden>chapters</button>
-  <div class="fine">Five acts · about twelve minutes · sound on<br>Shot entirely on Renaissance frescoes from the Vatican and Rome</div>
+  <div class="fine">Episode I of The Last Thing in the Jar · about ten minutes · sound on<br>Shot entirely on Renaissance paintings</div>
 </div></div>
 
 <div class="ov black" id="title"><div></div></div>
@@ -214,14 +215,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <div class="ov dim" id="form"><div class="sheet"></div></div>
 <div class="ov" id="credits"><div class="roll"></div><button class="skipc" id="skipCredits">skip credits ›</button></div>
 <div class="ov dim" id="end"><div>
-  <h2>The Last Thing in the Jar</h2>
+  <h2>The Coin</h2>
   <div class="menu">
     <button class="big" id="talkBtn">Talk to the cast</button>
     <button class="big" id="shareBtn">Share on X</button>
     <button class="big" id="againBtn">Watch again</button>
     <button class="small" id="endChapBtn">chapters</button>
   </div>
-  <p class="note">The courier, the potter, the carpenter, the janitor and the intern are invented. The myths around them are not: Hesiod, Apollodorus, Ovid, Plutarch, Pausanias, Catullus. Voices are AI (Deepgram Aura on Cloudflare). The cast and the Oracle answer with AI. <a href="https://github.com/karnikasehgal/the-last-thing-in-the-jar" target="_blank" rel="noopener">Sources and code</a>.</p>
+  <p class="note">Mikon, his olive pit and the oar are invented. Everyone he meets is from the ancient stories: Homer, Virgil, Ovid, Apuleius, Apollodorus, Aristophanes. Voices are AI. The cast and the Oracle answer with AI. <a href="https://github.com/karnikasehgal/the-last-thing-in-the-jar" target="_blank" rel="noopener">Sources and code</a>.</p>
 </div></div>
 <div class="ov dim" id="chapters"><div><h2>Chapters</h2><div class="list"></div><button class="small" id="chapClose">close</button></div></div>
 
@@ -235,6 +236,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 <audio id="voice" preload="auto"></audio>
 <script src="film.js"></script>
+<script src="shots.js"></script>
 <script src="player.js"></script>
 </body>
 </html>

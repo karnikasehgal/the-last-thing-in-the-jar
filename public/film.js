@@ -1,146 +1,186 @@
-// THE LAST THING IN THE JAR: the screenplay.
-// Each act follows one ordinary person doing their job while a myth happens around them.
-// Nobody explains anything. Viewers piece it together.
+// THE LAST THING IN THE JAR · Episode I: The Coin
+// The screenplay lives in docs/episode-1-the-coin.md. This is the same script, ready to play.
 //
-// A shot is {img, a:[x, y, zoom], b:[x, y, zoom], line}. x and y are where the camera looks,
-// as fractions of the painting (0 to 1). zoom is how much of the painting's width fills the
-// screen (1 = all of it, 0.25 = a close-up). The camera drifts from a to b while the line plays.
-// Each spoken line has an id; its audio lives at audio/<id>.mp3 (made by scripts/voice/make.mjs).
+// A shot is one spoken line: {id, who, line, see:[...]}.
+//   who  = a key in CAST (sets the voice and the name over the subtitle). Leave it out for silent beats.
+//   see  = what the camera shows while the line plays, in order, as named looks from SHOTS (shots.js).
+//          Several looks = quick cuts within the line.
+//   id   = the recording: audio/<id>.mp3 (made by scripts/voice/make.mjs).
 
-const PAINTINGS = {
-  ceiling:   {src:"img/ceiling.jpg",   credit:"Michelangelo, ceiling of the Sistine Chapel, 1508–12. Vatican. Photo: Wikimedia Commons, CC BY-SA 3.0"},
-  golden:    {src:"img/golden.jpg",    credit:"Michelangelo, The Delphic Sibyl, 1509. Sistine Chapel, Vatican"},
-  silver:    {src:"img/silver.jpg",    credit:"Piero di Cosimo, The Myth of Prometheus, c. 1515. Alte Pinakothek, Munich"},
-  bronze:    {src:"img/bronze.jpg",    credit:"Michelangelo, The Deluge, 1508–09. Sistine Chapel, Vatican. (He painted Noah's flood; the Greeks told the same story about Deucalion.)"},
-  heroic:    {src:"img/heroic.jpg",    credit:"Annibale Carracci, The Triumph of Bacchus and Ariadne, 1597–1602. Palazzo Farnese, Rome"},
-  iron:      {src:"img/iron.jpg",      credit:"Raphael, Hope, from the Baglioni Altarpiece, 1507. Pinacoteca Vaticana"},
-  parnassus: {src:"img/parnassus.jpg", credit:"Raphael, The Parnassus, 1511. Stanza della Segnatura, Vatican"},
-  council:   {src:"img/council.jpg",   credit:"Raphael and workshop, The Council of the Gods, 1517–18. Villa Farnesina, Rome"}
+const CAST = {
+  mikon:     {name:"Mikon",     voice:"apollo"},
+  hermes:    {name:"Hermes",    voice:"hermes"},
+  charon:    {name:"Charon",    voice:"saturn"},
+  shade:     {name:"A shade",   voice:"draco"},
+  orpheus:   {name:"Orpheus",   voice:"orpheus"},
+  theseus:   {name:"Theseus",   voice:"mars"},
+  pirithous: {name:"Pirithous", voice:"aries"},
+  hades:     {name:"Hades",     voice:"pluto"},
+  heracles:  {name:"Heracles",  voice:"atlas"},
+  elpenor:   {name:"Elpenor",   voice:"orion"},
+  sibyl:     {name:"The Sibyl", voice:"athena"}
 };
 
-const ACTS = [
-  {
-    id:"golden", num:"I", age:"The Golden Age", place:"Crete",
-    who:{name:"Eudoros", greek:"Εὔδωρος", job:"a courier", voice:"apollo"},
-    shots:[
-      {id:"e1", img:"golden", a:[.5,.5,1], b:[.5,.42,.7], line:"Golden Age. No taxes, no winters, nobody gets old. Great time to be alive. Terrible time to be a courier, because nobody needs anything."},
-      {id:"e2", img:"golden", a:[.52,.4,.42], b:[.52,.36,.28], line:"So when a lady at the palace waves me over at midnight, I'm not asking questions. Well. I'm asking one."},
-      {id:"e3", img:"golden", a:[.36,.48,.4], b:[.33,.45,.32], line:"Why is the baby so heavy? She says, he's big for his age. He is a rock. I'm pretty sure he's a literal rock."},
-      {id:"e4", img:"golden", a:[.36,.35,.34], b:[.4,.33,.28], line:"Delivery to the king. Signature required. I've heard things about this king. I've heard he eats his kids. Could be worse. Could be me."},
-      {id:"e5", img:"golden", a:[.45,.12,.5], b:[.45,.1,.4], line:"I seal the blanket with clay. My thumb slips and leaves a print. Whatever. Nobody checks the seal."}
-    ],
-    q:"Cronus's guard looks at the bundle. Then at you. “That baby looks weird.”",
-    opts:[
-      {t:"Straight face. “They're all lumpy at this age.”", g:{Hermes:2, Athena:1}, reply:{id:"e-a", line:"They're all lumpy at this age, I tell him. He nods like a man who has never held a baby. We're fine."}},
-      {t:"Tell him the truth and hope he's a dad.", g:{Apollo:2, Hera:1, Zeus:1}, reply:{id:"e-b", line:"Turns out the guard has kids too. He goes very quiet, and waves me through."}},
-      {t:"Start crying. Loudly. Proud uncle energy.", g:{Aphrodite:2, Dionysus:1, Demeter:1}, reply:{id:"e-c", line:"I cry. Loudly. He's so uncomfortable he waves me through just to make it stop."}}
-    ],
-    after:[
-      {id:"e6", img:"golden", a:[.52,.36,.26], b:[.52,.38,.36], line:"The king doesn't sign. Doesn't even look. Just swallows it. Whole. Tip was zero."},
-      {id:"e7", img:"golden", a:[.5,.45,.7], b:[.5,.5,1], line:"Somewhere in a cave on this island, a real baby is screaming his head off. Not my problem. I'm off the clock."}
-    ],
-    card:{text:"Years later, the baby in the cave, Zeus, made Cronus cough the stone back up.\nIt was set up at Delphi, the centre of the world, and rubbed with oil every day for a thousand years.\nNobody asked about the thumbprint.", src:"Hesiod, Theogony 453–500 · Pausanias 10.24.6"},
-    relic:{name:"Stone, in baby clothes", note:"clay seal, one thumbprint", mark:"Ε"}
-  },
-  {
-    id:"silver", num:"II", age:"The Silver Age", place:"Mekone, near Corinth",
-    who:{name:"Lyka", greek:"Λύκα", job:"a potter", voice:"andromeda"},
-    shots:[
-      {id:"l1", img:"silver", a:[.5,.5,1], b:[.45,.5,.75], line:"Silver Age. Everyone around here acts about twelve years old, for about a hundred years. I make pots. Pots don't whine."},
-      {id:"l2", img:"silver", a:[.24,.72,.45], b:[.2,.74,.36], line:"My neighbour's making people out of clay again. Nice guy. Weird hobby. Calls himself Prometheus. Big ideas. No oven."},
-      {id:"l3", img:"silver", a:[.49,.45,.4], b:[.49,.35,.3], line:"Tonight he buys a fennel stalk off me. The giant hollow kind. Asks if it'll hold a hot coal. I say, a coal from where? He points up."},
-      {id:"l4", img:"silver", a:[.8,.18,.34], b:[.86,.13,.24], line:"So that's where he's going."},
-      {id:"l5", img:"silver", a:[.74,.66,.4], b:[.76,.64,.3], line:"Then an order comes in from upstairs. One storage jar. Big. Sealed. A wedding gift for a lovely young woman named Pandora. Do not open."},
-      {id:"l6", img:"silver", a:[.28,.2,.3], b:[.24,.17,.2], line:"Who sends a sealed jar as a wedding present? Rich people. Rich people do."}
-    ],
-    q:"Olympus wants the jar sealed tight. No questions. You're the potter.",
-    opts:[
-      {t:"Put a little something in the bottom for luck. Tradition.", g:{Demeter:2, Hephaestus:1, Aphrodite:1}, reply:{id:"l-a", line:"A tiny clay bird, tucked under the rim. You never send a jar out empty. Bad luck."}},
-      {t:"Build it exactly to spec. The client is always right.", g:{Zeus:2, Apollo:1, Hera:1}, reply:{id:"l-b", line:"Built to spec. And, fine, a tiny clay bird under the rim. I'm not a monster. Tradition."}},
-      {t:"Make the lid a little loose. Things should be able to get out.", g:{Dionysus:2, Hermes:1, Artemis:1}, reply:{id:"l-c", line:"A lid that sits a bit loose. And a tiny clay bird under the rim, for luck. Tradition."}}
-    ],
-    after:[
-      {id:"l7", img:"silver", a:[.4,.47,.4], b:[.49,.4,.5], line:"Next morning there's a fire in every house on the street, and my neighbour's gone. Chained to a mountain, they say. Over a fennel stalk."},
-      {id:"l8", img:"silver", a:[.5,.5,.7], b:[.5,.5,1], line:"And the jar? Delivered. Signed for. I'm sure it's fine."}
-    ],
-    card:{text:"Pandora lifted the lid. Sickness, toil and grief flew out into the world.\nOne thing stayed behind, under the rim of the jar.", src:"Hesiod, Works and Days 90–99 · Theogony 565–567 · It was a jar, not a box. The box is a Renaissance mistranslation."},
-    relic:{name:"Rim of a storage jar", note:"tiny clay bird baked underneath", mark:"Λ"}
-  },
-  {
-    id:"bronze", num:"III", age:"The Bronze Age", place:"Phthia, Thessaly",
-    who:{name:"Pamphilos", greek:"Πάμφιλος", job:"a carpenter", voice:"aries"},
-    shots:[
-      {id:"p1", img:"bronze", a:[.5,.5,.85], b:[.42,.52,.6], line:"Bronze Age. Everyone's built like a door and wants to fight about it. Good for business, though. Everybody needs a new door."},
-      {id:"p2", img:"bronze", a:[.4,.34,.34], b:[.39,.32,.24], line:"Today, a rush job. Old man named Deucalion wants a chest. Not a boat, he says. A chest. Big enough for two adults and nine days of bread."},
-      {id:"p3", img:"bronze", a:[.32,.52,.38], b:[.28,.5,.3], line:"I say, expecting weather? He says his dad told him to build it. His dad is Prometheus. The one on the mountain. So. Yes. Expecting weather."},
-      {id:"p4", img:"bronze", a:[.6,.6,.26], b:[.6,.57,.18], line:"Pitch on every seam. Air holes in the lid. And because I'm a professional, I carve my usual note inside the lid. Stuck? Look down. It means check the floor for the latch. Customers love it."},
-      {id:"p5", img:"bronze", a:[.3,.32,.34], b:[.28,.3,.26], line:"It starts raining while I'm still sanding."}
-    ],
-    q:"The chest holds two. A neighbour is banging on your door, begging to come.",
-    opts:[
-      {t:"Offer her the space. Somebody can squeeze.", g:{Demeter:2, Artemis:1}, reply:{id:"p-a", line:"I offer. She looks at the size of it and says she'll take her chances with the hills. Smart woman. I hope."}},
-      {t:"Two means two. Nail the lid down.", g:{Poseidon:2, Ares:1, Zeus:1}, reply:{id:"p-b", line:"Two means two. I nail it shut and I don't look at her. I'm still not looking at her."}},
-      {t:"Give her your hammer and shout instructions through the rain.", g:{Hephaestus:2, Athena:2}, reply:{id:"p-c", line:"I give her my spare hammer and shout instructions through the rain. Last I saw, she had most of a raft."}}
-    ],
-    after:[
-      {id:"p6", img:"bronze", a:[.49,.48,.3], b:[.49,.46,.22], line:"Nine days later I'm sitting on a roof, counting. I scratch a mark on a plank every morning. Out loud. Somebody should be counting."},
-      {id:"p7", img:"bronze", a:[.8,.5,.36], b:[.5,.5,.85], line:"Could be worse. I've got a plank."}
-    ],
-    card:{text:"The chest came to rest on Mount Parnassus. An oracle told them to throw the bones of their mother over their shoulders.\nDeucalion looked down.\nThe mother was the Earth. Her bones were stones. The stones he threw became men, and the ones Pyrrha threw became women.", src:"Apollodorus 1.7.2 · Ovid, Metamorphoses I"},
-    relic:{name:"Chest lid, oak", note:"carved inside: STUCK? LOOK DOWN.", mark:"Π"}
-  },
-  {
-    id:"heroic", num:"IV", age:"The Age of Heroes", place:"Knossos, Crete",
-    who:{name:"Ion", greek:"Ἴων", job:"a night janitor", voice:"orion"},
-    shots:[
-      {id:"i1", img:"heroic", a:[.7,.45,.4], b:[.66,.42,.3], line:"Age of Heroes. Every week some guy with great hair shows up and wants to kill something. Then I clean up."},
-      {id:"i2", img:"heroic", a:[.42,.8,.34], b:[.4,.78,.26], line:"I'm on nights at the Labyrinth. Daedalus designed it. Daedalus has never had to mop it."},
-      {id:"i3", img:"heroic", a:[.5,.5,1], b:[.5,.5,.8], line:"I get lost every single shift. So I tie red yarn to the front door and unroll it as I go. My mum knits. I have a lot of yarn."},
-      {id:"i4", img:"heroic", a:[.38,.4,.3], b:[.36,.36,.2], line:"Tonight the king's daughter, Ariadne, catches me coming out. She stares at the yarn. Does that work? Every time, princess."},
-      {id:"i5", img:"heroic", a:[.22,.45,.32], b:[.2,.42,.24], line:"She wants a ball. It's for a friend. The friend is the Athenian in the cells with the jawline. I've seen how this goes."}
-    ],
-    q:"Ariadne wants your yarn for a prisoner named Theseus.",
-    opts:[
-      {t:"Give her the red one. Love is love.", g:{Aphrodite:2, Dionysus:1}, reply:{id:"i-a", line:"I give her the red one. Love is love. Mum would want me to."}},
-      {t:"Give it, and tell her he's going to leave her.", g:{Artemis:2, Hera:2}, reply:{id:"i-b", line:"I give it to her and say, he's going to leave you on an island. She laughs. I don't."}},
-      {t:"Union rates. Two drachmas.", g:{Hermes:2, Ares:1}, reply:{id:"i-c", line:"Two drachmas. Union rates. She pays three. I feel bad about it for exactly one minute."}}
-    ],
-    after:[
-      {id:"i6", img:"heroic", a:[.8,.82,.36], b:[.82,.82,.26], line:"Next night: no bull, no Athenians, no princess. Just my yarn, unrolled all the way to the middle and back. Easiest shift I've ever had."},
-      {id:"i7", img:"heroic", a:[.22,.15,.26], b:[.22,.13,.18], line:"Could be worse."}
-    ],
-    card:{text:"Theseus killed the Minotaur, followed the thread out, and sailed away with Ariadne.\nHe left her asleep on the island of Naxos.\nDionysus found her there, married her, and set her crown among the stars. You can still see it: Corona Borealis.", src:"Plutarch, Theseus 19–20 · Catullus 64"},
-    relic:{name:"Red wool, mostly unrolled", note:"label: ION'S. DO NOT TOUCH.", mark:"Ι"}
-  },
-  {
-    id:"iron", num:"V", age:"The Iron Age", place:"Vatican City, last Tuesday",
-    who:{name:"Sofia", greek:"Σοφία", job:"an intern", voice:"luna"},
-    shots:[
-      {id:"s1", img:"ceiling", a:[.15,.5,.4], b:[.4,.5,.4], line:"Iron Age. That's us. The poet Hesiod said it's the worst one. Work all day, worry all night. He'd have loved my internship."},
-      {id:"s2", img:"ceiling", a:[.6,.5,.45], b:[.85,.5,.38], line:"Vatican Museums, night shift. I'm cataloguing a crate from the basement that's been down there since before electricity. No donor. No paperwork."},
-      {id:"s3", img:"golden", a:[.33,.47,.4], b:[.33,.45,.3], line:"Item one. A stone, wrapped in what used to be baby clothes. Clay seal, with a little mark on it. Like an E."},
-      {id:"s4", img:"silver", a:[.49,.4,.4], b:[.49,.36,.3], line:"Item two. Part of a big jar. There's a tiny clay bird stuck under the rim. Potter's mark looks like an upside down V."},
-      {id:"s5", img:"bronze", a:[.39,.34,.3], b:[.39,.32,.22], line:"Item three. An oak lid. Someone carved, stuck, look down, inside it. In Greek. That's either very deep, or about a latch."},
-      {id:"s6", img:"heroic", a:[.36,.38,.28], b:[.36,.36,.2], line:"Item four. Red yarn. The label says, Ion's, do not touch. Sorry, Ion."},
-      {id:"s7", img:"iron", a:[.15,.5,.34], b:[.15,.48,.26], line:"Two thousand years of nobody opening this crate, and they give it to the intern."}
-    ],
-    q:"The crate has no donor. The form needs a name.",
-    opts:[
-      {t:"Write “unknown”, sign it, go home.", g:{Apollo:1, Zeus:1, Hera:1}, reply:{id:"s-a", line:"Donor: unknown. I sign it and go home. Could be worse."}},
-      {t:"Stay late and work out who sent it.", g:{Athena:2, Artemis:1, Hephaestus:1}, reply:{id:"s-b", line:"I stay until four in the morning reading Hesiod. I don't find a name. I find a lot of jars."}},
-      {t:"Keep the little bird. Nobody will miss a bird.", g:{Poseidon:2, Dionysus:1, Ares:1}, reply:{id:"s-c", line:"I keep the bird. Nobody's going to miss a bird. It lives on my desk now."}}
-    ],
-    after:[
-      {id:"s8", img:"iron", a:[.5,.5,.8], b:[.53,.3,.24], line:"On the way out I cut through the Pinacoteca. There's a little panel I've never noticed. A woman, hands together, looking up. The label just says, Hope."},
-      {id:"s9", img:"iron", a:[.53,.32,.2], b:[.53,.3,.16], line:"Funny. Felt like she was looking at me."}
-    ],
-    card:null,
-    relic:{name:"Inventory form, crate 7", note:"catalogued by S.", mark:"Σ"}
-  }
-];
+const FILM = {
+  title:"The Coin",
+  episode:"Episode I: The Last Thing in the Jar",
 
-// The Oracle reads the visitor's choices back to them at the end.
-const ORACLE = {voice:"thalia", img:"parnassus", frames:[[.5,.45,.85],[.53,.42,.3],[.28,.4,.3],[.5,.45,.7]]};
+  cold:[
+    {id:"c01", who:"mikon", line:"Okay. Okay okay okay. I have it. I actually have it.", see:["river dark", "charon face", "crowd of shades"]},
+    {id:"c02", who:"mikon", line:"Do not drop it. Do not drop the...", see:["coin", "river dark"]},
+    {sfx:"splash", see:["river dark"]},
+    {id:"c03", who:"mikon", line:"...Every time.", see:["mikon face"]}
+  ],
+  after:"One hundred years earlier.",
+
+  acts:[
+    {
+      id:"bank", num:"I", label:"Day one", title:"The Bank",
+      shots:[
+        {id:"a01", who:"mikon", line:"My cousin's wedding. Great food. I'm on my fourth plate of olives, which is three more than I should be on.", see:["banquet wide", "banquet faces", "mikon face"]},
+        {id:"a02", who:"mikon", line:"Here is a thing nobody tells you about olives.", see:["banquet faces"]},
+        {id:"a03", who:"mikon", line:"They have pits.", see:["funeral bier"], pause:900},
+        {id:"a04", who:"hermes", line:"Right. Here's you. River's there, boat's there, ferryman's that one. Coin?", see:["hermes leading souls", "hermes face", "charon boat"]},
+        {id:"a05", who:"mikon", line:"Sorry?", see:["mikon face"]},
+        {id:"a06", who:"hermes", line:"The coin. They put a coin in your mouth. For the fare.", see:["hermes face", "coin"]},
+        {id:"a07", who:"mikon", line:"I think there was a wedding on.", see:["mikon face"]},
+        {id:"a08", who:"hermes", line:"Ah. Hundred years, then. Rules are rules. Lovely to meet you.", see:["hermes face", "hermes leading souls"]},
+        {id:"a09", who:"mikon", line:"Hi! Quick question about the...", see:["charon boat"]},
+        {id:"a10", who:"charon", line:"Coin.", see:["charon face"]},
+        {id:"a11", who:"mikon", line:"I don't have a...", see:["mikon face"]},
+        {sfx:"splash", see:["charon oar", "river dark"]},
+        {id:"a12", who:"mikon", line:"Okay. That's fine. That's fine. Ninety-nine years and three hundred and sixty-four days.", see:["crowd of shades", "mikon face"]}
+      ],
+      q:"A hundred years is a long time. What's the plan?",
+      opts:[
+        {t:"Make friends. You'll be here a while.", g:{Aphrodite:2, Dionysus:1},
+          reply:[{id:"a13", who:"mikon", line:"Hi, I'm Mikon. What are you in for?", see:["crowd of shades"]}, {id:"a14", who:"mikon", line:"Okay. We'll circle back.", see:["shade face"]}]},
+        {t:"Start looking for a coin. They have to drop somewhere.", g:{Hermes:2, Hephaestus:1},
+          reply:[{id:"a15", who:"mikon", line:"People die rich all the time. Somebody's going to drop one.", see:["riverbank mud", "mikon face"]}]},
+        {t:"Ask Charon nicely. Every day.", g:{Hera:2, Apollo:1},
+          reply:[{id:"a16", who:"mikon", line:"Morning, Charon!", see:["charon boat"]}, {id:"a17", who:"charon", line:"Coin.", see:["charon face"]}, {id:"a18", who:"mikon", line:"Tomorrow, then!", see:["mikon face"]}]}
+      ]
+    },
+    {
+      id:"singer", num:"II", label:"Year nine", title:"The Singer",
+      shots:[
+        {id:"b01", who:"mikon", line:"Who is that.", see:["orpheus walking", "crowd of shades"]},
+        {id:"b02", who:"shade", line:"Orpheus. His wife died. He's come to sing her back.", see:["shade face", "orpheus face"]},
+        {id:"b03", who:"mikon", line:"Can you do that?", see:["mikon face"]},
+        {sfx:"lyre", see:["orpheus playing", "orpheus face", "hades and persephone"]},
+        {id:"b04", who:"mikon", line:"Charon's crying. I didn't know he had... water.", see:["charon face", "mikon face"]}
+      ],
+      q:"Charon is weeping. Nobody's watching the boat.",
+      opts:[
+        {t:"Sneak on.", g:{Ares:2, Hermes:1},
+          reply:[{sfx:"splash", see:["charon boat", "charon oar"]}, {id:"b05", who:"mikon", line:"So close.", see:["mikon face"]}]},
+        {t:"Ask Orpheus for a coin.", g:{Athena:2, Zeus:1},
+          reply:[{id:"b06", who:"mikon", line:"Sorry, huge fan, quick one, do you have a spare...", see:["orpheus walking"]}, {id:"b07", who:"orpheus", line:"I'm getting my wife.", see:["orpheus face"]}, {id:"b08", who:"mikon", line:"Totally. Totally. Good luck.", see:["mikon face"]}]},
+        {t:"Sing along.", g:{Dionysus:2, Apollo:1, Aphrodite:1},
+          reply:[{id:"b09", who:"mikon", line:"La la laaa, la la la...", see:["mikon face", "crowd of shades"]}, {id:"b10", who:"shade", line:"Please don't.", see:["shade face"]}]}
+      ],
+      after:[
+        {id:"b11", who:"mikon", line:"He's coming back. On his own.", see:["orpheus looks back", "eurydice lost"]},
+        {id:"b12", who:"mikon", line:"He looked back. Yeah. I'd have looked back too.", see:["orpheus face", "mikon face"], pause:900}
+      ]
+    },
+    {
+      id:"chairs", num:"III", label:"Year twenty-three", title:"The Chairs",
+      shots:[
+        {id:"d01", who:"theseus", line:"Down, in, grab the queen, out. Easy.", see:["theseus face", "two heroes"]},
+        {id:"d02", who:"mikon", line:"Sorry, grab who?", see:["mikon face"]},
+        {id:"d03", who:"pirithous", line:"Persephone. I'm going to marry her.", see:["pirithous face", "persephone face"]},
+        {id:"d04", who:"mikon", line:"She's married. To Hades. Who is... the guy who owns all this.", see:["hades face", "underworld wide"]},
+        {id:"d05", who:"pirithous", line:"For now.", see:["pirithous face"]},
+        {sfx:"splash", see:["charon boat", "mikon face"]},
+        {id:"d06", who:"hades", line:"Please. Sit. You must be tired.", see:["hades and persephone", "hades face"]}
+      ],
+      q:"You can hear it from the bank. Two stone chairs. Do you shout a warning?",
+      opts:[
+        {t:"“DON'T SIT DOWN!”", g:{Artemis:2, Hera:1},
+          reply:[{id:"d07", who:"mikon", line:"Don't sit down! Don't sit...", see:["mikon face"]}, {id:"d08", who:"mikon", line:"...Okay.", see:["two heroes"]}]},
+        {t:"Stay out of it. They're heroes, they'll figure it out.", g:{Apollo:2, Zeus:1},
+          reply:[{id:"d09", who:"mikon", line:"They're heroes. They'll figure it out.", see:["mikon face", "two heroes"]}]},
+        {t:"“Is anyone else seeing this?”", g:{Hermes:1, Demeter:1, Dionysus:1},
+          reply:[{id:"d10", who:"mikon", line:"Is anyone else seeing this?", see:["mikon face"]}, {id:"d11", who:"shade", line:"Yes.", see:["shade face"]}, {id:"d12", who:"mikon", line:"Should we...", see:["mikon face"]}, {id:"d13", who:"shade", line:"No.", see:["shade face"]}]}
+      ],
+      after:[
+        {id:"d14", who:"theseus", line:"I can't get up.", see:["theseus face"]},
+        {id:"d15", who:"pirithous", line:"Why can't I get up?", see:["pirithous face"]},
+        {id:"d16", who:"mikon", line:"Because you sat down in the house of the god of death!", see:["mikon face", "hades face"]}
+      ]
+    },
+    {
+      id:"dog", num:"IV", label:"Year forty", title:"The Dog",
+      shots:[
+        {sfx:"bark", see:["underworld wide"]},
+        {sfx:"hit", see:["cerberus heads"], cut:true},
+        {id:"f01", who:"mikon", line:"Nope. Nope nope nope.", see:["mikon face", "cerberus heads"]},
+        {id:"f02", who:"heracles", line:"Who's a good boy. Who's a good, big, three-headed...", see:["heracles face", "heracles and cerberus"]},
+        {sfx:"rumble", see:["heracles and cerberus", "cerberus heads"]},
+        {id:"f03", who:"charon", line:"Coin.", see:["charon face"]},
+        {id:"f04", who:"heracles", line:"No.", see:["heracles face"]},
+        {id:"f05", who:"mikon", line:"Oh, so that works?", see:["charon boat", "mikon face"]}
+      ],
+      q:"Heracles doesn't pay. Heracles just goes.",
+      opts:[
+        {t:"Try it yourself. “No.”", g:{Ares:2, Zeus:1},
+          reply:[{id:"f06", who:"mikon", line:"No.", see:["mikon face"]}, {id:"f07", who:"charon", line:"Coin.", see:["charon face"]}, {id:"f08", who:"mikon", line:"Okay, yeah, no, that's fair.", see:["mikon face"]}, {sfx:"splash", see:["charon oar"]}]},
+        {t:"Ask Heracles to take you with him.", g:{Aphrodite:1, Hera:1, Poseidon:1},
+          reply:[{id:"f09", who:"heracles", line:"Can't, mate. Got a dog to carry.", see:["heracles and cerberus", "cerberus heads"]}]},
+        {t:"Hide behind a rock until the dog is gone.", g:{Athena:1, Artemis:1, Poseidon:1},
+          reply:[{id:"f10", who:"mikon", line:"Rock. Rock rock rock.", see:["underworld wide"]}, {sfx:"bark", see:["cerberus heads"], cut:true}, {id:"f11", who:"mikon", line:"I'll hide behind a different rock.", see:["mikon face"]}]}
+      ],
+      after:[
+        {id:"f12", who:"pirithous", line:"Guys?", see:["pirithous face"], pause:900}
+      ]
+    },
+    {
+      id:"coin", num:"V", label:"Year one hundred", title:"The Coin",
+      shots:[
+        {id:"g01", who:"elpenor", line:"Where am I.", see:["elpenor face"]},
+        {id:"g02", who:"mikon", line:"Dead! Welcome. How'd you go?", see:["mikon face"]},
+        {id:"g03", who:"elpenor", line:"Fell off a roof. I was asleep up there. Somebody shouted, I got up, I forgot I was on a roof.", see:["elpenor face", "odysseus and the dead"]},
+        {id:"g04", who:"mikon", line:"Olive pit.", see:["mikon face"], pause:700},
+        {id:"g05", who:"elpenor", line:"Odysseus! It's me! Go back and bury me! Put my oar on top, so people know I was a rower!", see:["odysseus and the dead", "odysseus face"]},
+        {id:"g06", who:"mikon", line:"That's great. That's great for you. Could you ask him if he has a coin?", see:["mikon face", "crowd of shades"]},
+        {id:"g07", who:"sibyl", line:"Keep walking. Don't make eye contact with the unburied. They'll talk to you.", see:["aeneas and sibyl", "sibyl face"]},
+        {id:"g08", who:"mikon", line:"Hi! I'm unburied!", see:["mikon face"]},
+        {id:"g09", who:"sibyl", line:"See.", see:["sibyl face"]},
+        {id:"g10", who:"mikon", line:"A coin. A branch. A song. A dog. Everybody's got something.", see:["golden bough", "charon boat"]},
+        {sfx:"splash", see:["charon oar"]},
+        {id:"g11", who:"mikon", line:"Two. She's got two.", see:["psyche face", "psyche with charon"]},
+        {id:"g12", who:"mikon", line:"Miss! Miss! Sorry! Could you possibly...", see:["mikon old", "psyche with charon"]},
+        {id:"g13", who:"mikon", line:"No, I get it. You're not allowed. Somebody told you not to. Somebody's always told you not to.", see:["psyche face", "mikon old"], pause:900},
+        {id:"g14", who:"charon", line:"Time.", see:["charon face"]},
+        {id:"g15", who:"mikon", line:"Sorry?", see:["mikon old"]},
+        {id:"g16", who:"charon", line:"A hundred years. Get in.", see:["charon face", "charon boat"]}
+      ],
+      q:"You can finally cross. There's a kid on the bank with no coin.",
+      opts:[
+        {t:"Get in the boat. A hundred years. You earned it.", g:{Zeus:1, Apollo:1, Hephaestus:1},
+          reply:[{id:"g17", who:"mikon", line:"It goes faster than you'd think. Make friends. Watch out for the oar.", see:["mikon old", "charon boat"]}]},
+        {t:"Give the kid your place.", g:{Demeter:2, Hera:1},
+          reply:[{id:"g18", who:"charon", line:"Doesn't work like that.", see:["charon face"]}, {id:"g19", who:"mikon", line:"Then I'll wait with him.", see:["mikon old"]}, {id:"g20", who:"charon", line:"...Both of you. Get in.", see:["charon face", "charon boat"]}]},
+        {t:"Stay. You've got a good spot now.", g:{Poseidon:2, Dionysus:1, Hephaestus:1},
+          reply:[{id:"g21", who:"mikon", line:"You know what? I've got a rock. I've got a view. I've seen Heracles. Next century.", see:["mikon old", "river wide"]}]}
+      ],
+      after:[
+        {sfx:"oar", see:["charon oar", "river wide"]},
+        {id:"g22", who:"mikon", line:"Huh. Could be worse.", see:["mikon old"], pause:1200}
+      ]
+    }
+  ],
+
+  // Silent, on black, after the last act.
+  card:{text:"Virgil wrote that the unburied wait a hundred years on the bank.\nApuleius wrote that Psyche was told to ignore an old man begging from the river.\nNobody wrote down his name.", src:"Virgil, Aeneid 6 · Apuleius, Metamorphoses 6.18–19"},
+
+  // After the credits.
+  sting:{see:["river wide"], text:"Mikon's rock, on the bank. A coin is lying on it."}
+};
+
+// The Oracle reads the player's choices back to them at the end.
+const ORACLE = {voice:"thalia"};
 
 const GODS = {
   Zeus:{gk:"Ζεύς", a:"The Sovereign", gift:"Vision and decisiveness: builds the kingdom, makes the call.", shadow:"Confuses being in charge with being close. Can't hear no."},
@@ -158,4 +198,4 @@ const GODS = {
 };
 const GOD_LIST = Object.keys(GODS);
 
-if (typeof module !== "undefined") module.exports = {PAINTINGS, ACTS, ORACLE};
+if (typeof module !== "undefined") module.exports = {CAST, FILM, ORACLE};

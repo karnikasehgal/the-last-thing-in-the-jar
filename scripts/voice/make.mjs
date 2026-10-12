@@ -7,16 +7,19 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const { ACTS } = new Function(readFileSync(join(root, "public/film.js"), "utf8") + ";return {ACTS};")();
+const { CAST, FILM } = new Function(readFileSync(join(root, "public/film.js"), "utf8") + ";return {CAST, FILM};")();
 const out = join(root, "public/audio");
 mkdirSync(out, { recursive: true });
 const force = process.argv.includes("--force");
 
-const jobs = [];
-for (const act of ACTS) {
-  const lines = [...act.shots, ...act.opts.map((o) => o.reply), ...act.after];
-  for (const l of lines) jobs.push({ id: l.id, text: l.line, voice: act.who.voice });
+// Every spoken line in the film, in running order, voiced by whoever says it.
+const shots = [...FILM.cold];
+for (const act of FILM.acts) {
+  shots.push(...act.shots);
+  for (const o of act.opts) shots.push(...[o.reply].flat());
+  shots.push(...(act.after || []));
 }
+const jobs = shots.filter((s) => s.id && s.line).map((s) => ({ id: s.id, text: s.line, voice: CAST[s.who]?.voice || "apollo" }));
 
 let made = 0;
 for (const j of jobs) {
@@ -26,7 +29,12 @@ for (const j of jobs) {
     method: "POST",
     body: JSON.stringify({ model: "@cf/deepgram/aura-2-en", input: { text: j.text, speaker: j.voice } }),
   });
-  if (!res.ok) { console.error(`✗ ${j.id}: ${res.status} ${await res.text()}`); continue; }
+  if (!res.ok) {
+    const why = await res.text();
+    console.error(`✗ ${j.id}: ${res.status} ${why.slice(0, 160)}`);
+    if (/allocation|neurons|4006/.test(why)) { console.error("Daily free allowance used up. Run again tomorrow; finished lines are kept."); break; }
+    continue;
+  }
   writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   made++;
   console.log(`✓ ${j.id} (${j.voice})`);

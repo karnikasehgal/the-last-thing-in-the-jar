@@ -1,58 +1,38 @@
-# The Last Thing in the Jar
+# The Coin
 
-**A short film you can play.** Five ordinary people with five terrible jobs, in five ages of Greek myth, shot entirely on Renaissance frescoes from the Vatican and Rome.
+**A short film you can play.** Episode I of *The Last Thing in the Jar*.
 
-Inspired by Zach Cregger's *Resident Evil* (2026), which skips the famous heroes and follows a courier doing his job across town while the legend happens around him. Nobody here announces they're important. They just work, complain, and leave things behind that the heroes later use.
+Live: https://the-coin.karnika-portfolio.workers.dev
 
-| Act | Age | Who you follow | What happens around them |
-|---|---|---|---|
-| I | Golden | Eudoros, a courier | delivers a "baby" to Cronus. It's a rock. |
-| II | Silver | Lyka, a potter | sells Prometheus a fennel stalk; makes Pandora's jar |
-| III | Bronze | Pamphilos, a carpenter | builds Deucalion's flood chest; carves "Stuck? Look down." inside the lid |
-| IV | Heroes | Ion, a night janitor | gets lost in the Labyrinth every shift, so he carries red yarn. Ariadne notices. |
-| V | Iron | Sofia, a Vatican intern | catalogues an old crate with no donor |
+Mikon chokes on an olive pit at his cousin's wedding and arrives at the River Styx without the coin for the ferry. The rule is a hundred years on the bank. So he waits, and for a century he watches the famous visitors go past: Orpheus singing the ferryman to tears, Theseus and Pirithous getting stuck to their chairs, Heracles walking off with the three-headed dog, Elpenor (who fell off a roof in the *Odyssey*), Aeneas with his golden branch, and Psyche, who is carrying two coins and has been told not to help him.
 
-There's something none of them notice. The film never says what it is.
+Inspired by Zach Cregger's *Resident Evil* (2026), which skips the famous heroes and follows an ordinary man through the edges of the legend. Mikon is the old man Psyche is warned to ignore in Apuleius. Nobody ever wrote down his name.
 
 ## How it plays
-- Press play and watch: the camera moves across the paintings, each character speaks in their own voice with subtitles, and a quiet score changes key with each act.
-- At one moment in each act the film stops and you choose what the character does. Your choice changes what they say, and builds a profile across the twelve Olympians.
-- Each act ends on a silent-film intertitle with what the ancient sources say happened next, and the item that character left behind.
-- At the end the Oracle at Delphi reads your choices back to you (AI), then the credits roll.
-- Afterwards you can **talk to the cast** (AI). Each character only knows their own act and has no idea they were part of anything.
+- Press play and watch. The camera cuts across Renaissance paintings, every character speaks in their own voice with subtitles, and a quiet score changes with each act.
+- Five times the film stops and you choose what Mikon does.
+- At the end the Oracle tells you which Greek god you're most like, from your choices (AI).
+- Afterwards you can talk to Mikon, Charon, Elpenor or Heracles (AI).
 
-## Stack
-- `public/film.js`: **the screenplay.** Every shot, camera move, line, choice and intertitle. Edit this to change the story.
-- `public/player.js` + `public/index.html`: the player (camera, voices, subtitles, choices, credits, chat)
-- `public/audio/`: recorded lines, one mp3 per line id
-- `scripts/voice/`: records the lines with Workers AI text-to-speech (Deepgram Aura 2). Start `npx wrangler dev --port 8799` in that folder, then run `node scripts/voice/make.mjs`. Delete an mp3 to re-record that line.
-- `src/worker.js`: Cloudflare Worker with `/api/echo` (talk to the cast), `/api/reading` (the Oracle) and `/api/voice` (the Oracle's voice)
-- `wrangler.jsonc`: config (rate limit: 12 AI calls per visitor per minute)
+## How it's made
+- `docs/episode-1-the-coin.md`: the screenplay.
+- `public/film.js`: the same script, ready to play: every line, who says it, and what the camera shows.
+- `public/shots.js`: the named camera positions on each painting.
+- `public/player.js`, `public/index.html`: the player.
+- `public/img/lib/`: the paintings, each folder with a `manifest.json` (artist, title, date, location, licence, source).
+- `public/audio/`: one recording per line. `scripts/voice/` records them with Workers AI text-to-speech.
+- `src/worker.js`: Cloudflare Worker for the AI cast, the Oracle's reading and its voice.
 
-## Live
-https://elpis.karnika-portfolio.workers.dev
-
-## Run locally
+## Run it
 ```bash
 npm install
 npx wrangler dev
 ```
-Open http://localhost:8787. To use Claude, put `ANTHROPIC_API_KEY=...` in `.dev.vars` (git-ignored). Without it, the AI runs on Cloudflare Workers AI.
-
-## Deploy
-```bash
-npx wrangler secret put ANTHROPIC_API_KEY   # optional
-npx wrangler deploy
-```
-
-## Design
-Paintings are public domain via Wikimedia Commons, except the Sistine ceiling photo (CC BY-SA 3.0, credited on the page). `public/og.jpg` is the share card.
-
-Soft and quiet on purpose: fresco plaster, sepia ink, sinopia red and faded lapis, arched niches from Italian Renaissance architecture, IM Fell (a 17th-century typeface) and Cardo (made for classicists, with proper Greek).
 
 ## Sources
-Hesiod, *Works and Days* 90–201 and *Theogony* 453–567 · Apollodorus 1.7.2 · Ovid, *Metamorphoses* I · Plutarch, *Theseus* 19–20 · Catullus 64 · Pausanias 10.24.6. The five characters and the things they leave behind are invented; the myths are not.
+Aristophanes, *Frogs*; Virgil, *Aeneid* 6 and *Georgics* 4; Ovid, *Metamorphoses* 10; Apollodorus, *Library* 2.5.12 and *Epitome* 1.24; Homer, *Odyssey* 10 to 12; Apuleius, *Metamorphoses* 6. Mikon, his olive pit and the oar are invented.
 
-Further reading: Morford, Lenardon & Sham, *Classical Mythology* · Katerina Servi, *Greek Mythology* · Edith Hamilton, *Mythology* · Apollodorus, tr. Robin Hard · Robert Graves, *The Greek Myths* · Stephen Fry, *Heroes* and *Troy* · Apollonius, *Argonautica*, tr. Richard Hunter · Homer, *Iliad*, tr. Martin Hammond, and *Odyssey*, tr. Emily Wilson · Virgil, *Aeneid*, tr. David West.
+## Picture credits
+Paintings are public domain unless noted. Photographs under Creative Commons are credited on screen and in each `manifest.json` (photographers include Sailko, ArchaiOptix, Alvesgaspar, Carole Raddato, Kent Wang, Francesco Bini and Marie-Lan Nguyen). Agostino Carracci's *Pluto* is in an Italian state museum, which requires permission for commercial reproduction.
 
 Made by Karnika Sehgal.

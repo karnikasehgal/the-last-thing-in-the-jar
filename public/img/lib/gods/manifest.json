@@ -1,0 +1,186 @@
+{
+  "Zeus": {
+    "file": "zeus.jpg",
+    "title": "Jupiter hurling thunderbolts (Fall of the Giants, Sala dei Giganti)",
+    "artist": "Giulio Romano and Rinaldo Mantovano",
+    "year": "1532–1535",
+    "location": "Sala dei Giganti, Palazzo Te, Mantua",
+    "license": "CC BY 3.0",
+    "author": "Sailko (photograph)",
+    "commons": "https://commons.wikimedia.org/wiki/File:Giulio_romano_e_rinaldo_mantovano,_caduta_dei_giganti,_1532-35,_02_giove.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.45, 0.5, 0.85]},
+      {"name": "face", "f": [0.43, 0.36, 0.25]}
+    ]
+  },
+  "Hera": {
+    "file": "hera.jpg",
+    "title": "Juno Showering Gifts on Venetia",
+    "artist": "Paolo Veronese",
+    "year": "1554–1556",
+    "location": "Palazzo Ducale, Venice",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Paolo_Veronese_-_Juno_Showering_Gifts_on_Venetia_-_WGA24937.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.2, 1.0]},
+      {"name": "face", "f": [0.3, 0.11, 0.5]}
+    ]
+  },
+  "Poseidon": {
+    "file": "poseidon.jpg",
+    "title": "Portrait of Andrea Doria as Neptune",
+    "artist": "Bronzino (Agnolo di Cosimo)",
+    "year": "c. 1545–1546",
+    "location": "Pinacoteca di Brera, Milan",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Andrea_Doria_as_Neptune._Bronzino_(Agnolo_di_Cosimo)_c._1545-6._Paolo_Giovo_collection._Pinacoteca_di_Brera.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.4, 1.0]},
+      {"name": "face", "f": [0.42, 0.16, 0.6]}
+    ]
+  },
+  "Demeter": {
+    "file": "demeter.jpg",
+    "title": "Ceres with Two Putti (Cerere con due putti)",
+    "artist": "Alessandro Varotari, il Padovanino",
+    "year": null,
+    "location": "Ca' Rezzonico (Pinacoteca Egidio Martini), Venice",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Ca%27_Rezzonico_-_Cerere_con_due_Putti_(Inv.042)_-_Alessandro_Varotari_detto_il_Padovanino.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.55, 0.5, 0.9]},
+      {"name": "face", "f": [0.56, 0.18, 0.3]}
+    ]
+  },
+  "Athena": {
+    "file": "athena.jpg",
+    "title": "Pallas Athena",
+    "artist": "Attributed to Rembrandt",
+    "year": "c. 1655",
+    "location": "Museu Calouste Gulbenkian, Lisbon",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Pallas_Athena_Rembrandt.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.42, 1.0]},
+      {"name": "face", "f": [0.52, 0.3, 0.55]}
+    ]
+  },
+  "Apollo": {
+    "file": "apollo.jpg",
+    "title": "The Parnassus (detail: Apollo)",
+    "artist": "Raphael",
+    "year": "1510–1511",
+    "location": "Stanza della Segnatura, Vatican Palace, Vatican City",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Rapha%C3%ABl_-_Le_Parnasse_(d%C3%A9tail_Apollon).jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.55, 0.7]},
+      {"name": "face", "f": [0.485, 0.43, 0.2]}
+    ]
+  },
+  "Artemis": {
+    "file": "artemis.jpg",
+    "title": "Diana the Huntress",
+    "artist": "Cavalier d'Arpino (Giuseppe Cesari)",
+    "year": "1601–1603",
+    "location": null,
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Cavalier_d%27Arpino_-_Diane_the_Huntress_-_Google_Art_Project.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.45, 1.0]},
+      {"name": "face", "f": [0.48, 0.18, 0.65]}
+    ]
+  },
+  "Ares": {
+    "file": "ares.jpg",
+    "title": "Mars Resting (El dios Marte)",
+    "artist": "Diego Velázquez",
+    "year": "c. 1638–1641",
+    "location": "Museo del Prado, Madrid",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Vel%C3%A1zquez_-_Dios_Marte_(Museo_del_Prado,_1639-41).jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.4, 1.0]},
+      {"name": "face", "f": [0.5, 0.15, 0.6]}
+    ]
+  },
+  "Aphrodite": {
+    "file": "aphrodite.jpg",
+    "title": "The Birth of Venus",
+    "artist": "Sandro Botticelli",
+    "year": "c. 1485",
+    "location": "Uffizi Gallery, Florence",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_ProjectFXD.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.5, 1.0]},
+      {"name": "figure", "f": [0.53, 0.4, 0.45]},
+      {"name": "face", "f": [0.535, 0.15, 0.18]}
+    ]
+  },
+  "Hephaestus": {
+    "file": "hephaestus.jpg",
+    "title": "Vulcan's Forge",
+    "artist": "Giorgio Vasari",
+    "year": "c. 1540–1560",
+    "location": "Uffizi Gallery, Florence",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Giorgio_Vasari_002.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.55, 1.0]},
+      {"name": "face", "f": [0.585, 0.6, 0.3]}
+    ]
+  },
+  "Hermes": {
+    "file": "hermes.jpg",
+    "title": "Mercury (Loggia di Psiche)",
+    "artist": "Raphael and workshop",
+    "year": "1517–1518",
+    "location": "Villa Farnesina, Rome",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Raffael,_Loggia_di_Psiche,_Villa_Farnesina,_Rome_05.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.45, 0.8]},
+      {"name": "face", "f": [0.54, 0.19, 0.22]}
+    ]
+  },
+  "Dionysus": {
+    "file": "dionysus.jpg",
+    "title": "Bacchus",
+    "artist": "Caravaggio",
+    "year": "c. 1595–1597",
+    "location": "Uffizi Gallery, Florence",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Bacchus-Caravaggio_(1598).jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.5, 1.0]},
+      {"name": "face", "f": [0.48, 0.24, 0.45]}
+    ]
+  },
+  "Delphi": {
+    "file": "delphi.jpg",
+    "title": "View of Delphi with a Procession",
+    "artist": "Claude Lorrain",
+    "year": "1673",
+    "location": "Art Institute of Chicago",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Claude_Lorrain_-_View_of_Delphi_with_a_Procession_-_1941.1020_-_Art_Institute_of_Chicago.jpg",
+    "frames": [
+      {"name": "wide", "f": [0.5, 0.5, 1.0]},
+      {"name": "temple", "f": [0.31, 0.2, 0.3]},
+      {"name": "procession", "f": [0.62, 0.75, 0.45]}
+    ]
+  }
+}

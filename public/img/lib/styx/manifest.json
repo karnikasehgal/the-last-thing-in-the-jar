@@ -1,0 +1,2559 @@
+[
+  {
+    "file": "last-judgment.jpg",
+    "title": "The Last Judgment",
+    "artist": "Michelangelo",
+    "year": "1536–1541",
+    "location": "Sistine Chapel (altar wall), Vatican City",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Last_Judgement_(Michelangelo).jpg",
+    "shows": "The whole altar-wall fresco: Christ in judgment, the saints, the trumpeting angels, the dead rising at left and Charon's boat and Minos at the lower right.",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "christ face",
+        "f": [
+          0.465,
+          0.275,
+          0.12
+        ]
+      },
+      {
+        "name": "christ and mary",
+        "f": [
+          0.46,
+          0.32,
+          0.3
+        ]
+      },
+      {
+        "name": "trumpeting angels",
+        "f": [
+          0.52,
+          0.68,
+          0.3
+        ]
+      },
+      {
+        "name": "the damned falling",
+        "f": [
+          0.8,
+          0.68,
+          0.35
+        ]
+      },
+      {
+        "name": "dead rising from graves",
+        "f": [
+          0.15,
+          0.85,
+          0.3
+        ]
+      },
+      {
+        "name": "charon's boat",
+        "f": [
+          0.66,
+          0.86,
+          0.35
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.572,
+          0.814,
+          0.1
+        ]
+      },
+      {
+        "name": "minos face",
+        "f": [
+          0.93,
+          0.89,
+          0.1
+        ]
+      }
+    ]
+  },
+  {
+    "file": "last-judgment-charon.jpg",
+    "title": "The Last Judgment (detail: Charon's boat, crop of the full fresco)",
+    "artist": "Michelangelo",
+    "year": "1536–1541",
+    "location": "Sistine Chapel (altar wall), Vatican City",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Last_Judgement_(Michelangelo).jpg",
+    "shows": "Charon raising his oar to drive the damned out of his boat; a soul clutches his face in terror (cropped by us from the full-wall image; the altar crucifix and candles intrude at lower left).",
+    "beat": "2",
+    "note": "Cropped by us from the full-wall image of the Commons file.",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon with oar",
+        "f": [
+          0.27,
+          0.4,
+          0.4
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.287,
+          0.28,
+          0.15
+        ]
+      },
+      {
+        "name": "terrified soul face",
+        "f": [
+          0.535,
+          0.5,
+          0.15
+        ]
+      },
+      {
+        "name": "the damned in the boat",
+        "f": [
+          0.6,
+          0.55,
+          0.5
+        ]
+      },
+      {
+        "name": "man staring back",
+        "f": [
+          0.88,
+          0.42,
+          0.18
+        ]
+      }
+    ]
+  },
+  {
+    "file": "charon-michelangelo.jpg",
+    "title": "The Last Judgment (detail: Charon the ferryman)",
+    "artist": "Michelangelo",
+    "year": "1535–1541",
+    "location": "Sistine Chapel (altar wall), Vatican City",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Michelangelo_Buonarroti_003.jpg",
+    "shows": "Older, darker (pre-restoration) reproduction of Charon swinging his oar over the boatload of damned souls.",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon",
+        "f": [
+          0.3,
+          0.35,
+          0.45
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.33,
+          0.09,
+          0.15
+        ]
+      },
+      {
+        "name": "screaming soul face",
+        "f": [
+          0.72,
+          0.46,
+          0.15
+        ]
+      },
+      {
+        "name": "boat of souls",
+        "f": [
+          0.65,
+          0.6,
+          0.55
+        ]
+      }
+    ]
+  },
+  {
+    "file": "minos-michelangelo.jpg",
+    "title": "The Last Judgment (detail: Minos)",
+    "artist": "Michelangelo",
+    "year": "1536–1541",
+    "location": "Sistine Chapel (altar wall), Vatican City",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Michelangelo-minos2.jpg",
+    "shows": "Minos, judge of the underworld, with ass's ears and a serpent coiled around him, surrounded by demons.",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "minos face",
+        "f": [
+          0.6,
+          0.16,
+          0.3
+        ]
+      },
+      {
+        "name": "minos with serpent",
+        "f": [
+          0.6,
+          0.45,
+          0.75
+        ]
+      },
+      {
+        "name": "terrified demon face",
+        "f": [
+          0.31,
+          0.16,
+          0.25
+        ]
+      },
+      {
+        "name": "grinning demon",
+        "f": [
+          0.2,
+          0.76,
+          0.3
+        ]
+      },
+      {
+        "name": "demons top right",
+        "f": [
+          0.82,
+          0.12,
+          0.35
+        ]
+      }
+    ]
+  },
+  {
+    "file": "patinir-styx.jpg",
+    "title": "Landscape with Charon Crossing the Styx",
+    "artist": "Joachim Patinir",
+    "year": "1520–1524",
+    "location": "Museo del Prado, Madrid",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Crossing_the_River_Styx.jpg",
+    "shows": "Charon rows a soul across a broad river between Paradise (left) and the burning mouth of Hell guarded by Cerberus (right).",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon in boat",
+        "f": [
+          0.503,
+          0.62,
+          0.18
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.508,
+          0.548,
+          0.1
+        ]
+      },
+      {
+        "name": "hell gate and cerberus",
+        "f": [
+          0.82,
+          0.56,
+          0.25
+        ]
+      },
+      {
+        "name": "burning hell",
+        "f": [
+          0.88,
+          0.3,
+          0.3
+        ]
+      },
+      {
+        "name": "paradise angels",
+        "f": [
+          0.27,
+          0.56,
+          0.25
+        ]
+      },
+      {
+        "name": "river vista",
+        "f": [
+          0.5,
+          0.4,
+          0.55
+        ]
+      }
+    ]
+  },
+  {
+    "file": "signorelli-damned.jpg",
+    "title": "The Damned (Cappella di San Brizio)",
+    "artist": "Luca Signorelli",
+    "year": "1499–1505",
+    "location": "Cappella di San Brizio, Orvieto Cathedral",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Luca_Signorelli_001.jpg",
+    "shows": "Winged demons seize and torment a heaving mass of naked damned souls while armoured archangels look on.",
+    "beat": "9",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "archangels",
+        "f": [
+          0.68,
+          0.3,
+          0.4
+        ]
+      },
+      {
+        "name": "demon carrying a woman",
+        "f": [
+          0.5,
+          0.4,
+          0.25
+        ]
+      },
+      {
+        "name": "writhing crowd",
+        "f": [
+          0.5,
+          0.72,
+          0.5
+        ]
+      },
+      {
+        "name": "crowd close left",
+        "f": [
+          0.3,
+          0.72,
+          0.3
+        ]
+      },
+      {
+        "name": "crowd close right",
+        "f": [
+          0.72,
+          0.7,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "signorelli-resurrection.jpg",
+    "title": "Resurrection of the Flesh (detail)",
+    "artist": "Luca Signorelli",
+    "year": "1499–1502",
+    "location": "Cappella di San Brizio, Orvieto Cathedral",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Duomo_Orvieto,_Resurrezione_della_carne,_particle.jpg",
+    "shows": "Under a trumpeting angel, the dead climb out of the earth and regain their bodies beside skeletons.",
+    "beat": "9",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "trumpeting angel",
+        "f": [
+          0.45,
+          0.18,
+          0.5
+        ]
+      },
+      {
+        "name": "embracing risen souls",
+        "f": [
+          0.49,
+          0.56,
+          0.35
+        ]
+      },
+      {
+        "name": "man looking up face",
+        "f": [
+          0.71,
+          0.655,
+          0.15
+        ]
+      },
+      {
+        "name": "skeletons",
+        "f": [
+          0.92,
+          0.62,
+          0.22
+        ]
+      },
+      {
+        "name": "emerging from the earth",
+        "f": [
+          0.43,
+          0.72,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "giordano-charon.jpg",
+    "title": "Charon's Boat (Gallery ceiling, Palazzo Medici-Riccardi)",
+    "artist": "Luca Giordano",
+    "year": "1684–1686",
+    "location": "Galleria, Palazzo Medici-Riccardi, Florence",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Luca_Giordano_009.jpg",
+    "shows": "Charon poles his boat as souls clamber aboard, with Death wielding a scythe, three-headed Cerberus on the rocks, and Night spreading her starry mantle above.",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.41,
+          0.52,
+          0.14
+        ]
+      },
+      {
+        "name": "charon and boat",
+        "f": [
+          0.42,
+          0.66,
+          0.45
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.68,
+          0.67,
+          0.18
+        ]
+      },
+      {
+        "name": "death with scythe",
+        "f": [
+          0.21,
+          0.5,
+          0.18
+        ]
+      },
+      {
+        "name": "souls clambering aboard",
+        "f": [
+          0.25,
+          0.7,
+          0.35
+        ]
+      },
+      {
+        "name": "night with starry mantle",
+        "f": [
+          0.69,
+          0.22,
+          0.35
+        ]
+      }
+    ]
+  },
+  {
+    "file": "charon-lekythos.jpg",
+    "title": "White-ground lekythos: Charon receiving Hermes and a dead woman",
+    "artist": "Thanatos Painter",
+    "year": null,
+    "location": "Staatliche Antikensammlungen, Munich (AS 2777)",
+    "license": "CC BY-SA 4.0",
+    "author": "ArchaiOptix",
+    "commons": "https://commons.wikimedia.org/wiki/File:Thanatos_Painter_ARV_1228_11_Charon_receiving_Hermes_and_a_deceased_woman_(02).jpg",
+    "shows": "Athenian funerary oil-flask painted with Charon in his pointed cap, standing in his boat with his punt pole (this view shows Charon only).",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.855,
+          0.42,
+          0.2
+        ]
+      },
+      {
+        "name": "charon in boat",
+        "f": [
+          0.8,
+          0.6,
+          0.45
+        ]
+      }
+    ]
+  },
+  {
+    "file": "mercury-farnesina.jpg",
+    "title": "Mercury (Loggia di Psiche spandrel)",
+    "artist": "Raphael and workshop",
+    "year": "1517–1518",
+    "location": "Loggia di Psiche, Villa Farnesina, Rome",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Raffael,_Loggia_di_Psiche,_Villa_Farnesina,_Rome_05.jpg",
+    "shows": "Winged-hatted Mercury flies down with his trumpet through a garlanded spandrel, flanked by putti.",
+    "beat": "1",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "mercury",
+        "f": [
+          0.5,
+          0.45,
+          0.5
+        ]
+      },
+      {
+        "name": "mercury face",
+        "f": [
+          0.53,
+          0.21,
+          0.15
+        ]
+      },
+      {
+        "name": "putto left",
+        "f": [
+          0.1,
+          0.42,
+          0.25
+        ]
+      },
+      {
+        "name": "putto right",
+        "f": [
+          0.88,
+          0.42,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "zurbaran-cerberus.jpg",
+    "title": "Hercules and Cerberus",
+    "artist": "Francisco de Zurbarán",
+    "year": "1634",
+    "location": "Museo del Prado, Madrid",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:H%C3%A9rcules_y_el_Cancerbero,_por_Zurbar%C3%A1n.jpg",
+    "shows": "Hercules raises his club and drags the three-headed Cerberus on a chain by the fiery mouth of the underworld.",
+    "beat": "3",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "hercules face",
+        "f": [
+          0.62,
+          0.1,
+          0.15
+        ]
+      },
+      {
+        "name": "hercules",
+        "f": [
+          0.62,
+          0.45,
+          0.55
+        ]
+      },
+      {
+        "name": "cerberus heads",
+        "f": [
+          0.3,
+          0.47,
+          0.35
+        ]
+      },
+      {
+        "name": "cerberus snarling head",
+        "f": [
+          0.32,
+          0.54,
+          0.18
+        ]
+      },
+      {
+        "name": "hellfire",
+        "f": [
+          0.17,
+          0.33,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "andokides-cerberus.jpg",
+    "title": "Heracles and Cerberus (bilingual amphora, red-figure side)",
+    "artist": "Andokides Painter",
+    "year": "c. 530–520 BC",
+    "location": "Musée du Louvre, Paris (F 204)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Herakles_Kerberos_Louvre_F204.jpg",
+    "shows": "Heracles in his lion skin crouches to coax the two-headed Cerberus on a chain beneath a tree.",
+    "beat": "3",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "heracles face",
+        "f": [
+          0.5,
+          0.34,
+          0.18
+        ]
+      },
+      {
+        "name": "cerberus heads",
+        "f": [
+          0.61,
+          0.5,
+          0.3
+        ]
+      },
+      {
+        "name": "chain",
+        "f": [
+          0.4,
+          0.84,
+          0.25
+        ]
+      },
+      {
+        "name": "heracles and dog",
+        "f": [
+          0.5,
+          0.55,
+          0.65
+        ]
+      }
+    ]
+  },
+  {
+    "file": "sarcophagus-cerberus.jpg",
+    "title": "Roman strigilated sarcophagus: Hercules leading Cerberus from the gate of Hades",
+    "artist": null,
+    "year": "2nd half of the 2nd century AD",
+    "location": "Centrale Montemartini (Musei Capitolini), Rome",
+    "license": "CC BY-SA 2.0",
+    "author": "Carole Raddato from FRANKFURT, Germany",
+    "commons": "https://commons.wikimedia.org/wiki/File:Sarcophagus_with_Hercules_and_Cerberus_going_out_of_the_Underworld_from_the_gate_of_Hades_(Hercules%27_Twelfth_Labor)_,_2nd_half_of_2nd_century_AD,_Centrale_Montemartini,_Rome_(31800026294).jpg",
+    "shows": "A marble relief of Hercules with club and lion skin stepping out of the half-open door of Hades with Cerberus at his feet.",
+    "beat": "3",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "gate of hades",
+        "f": [
+          0.52,
+          0.5,
+          0.45
+        ]
+      },
+      {
+        "name": "hercules face",
+        "f": [
+          0.6,
+          0.27,
+          0.12
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.545,
+          0.75,
+          0.15
+        ]
+      }
+    ]
+  },
+  {
+    "file": "giulio-orpheus-pluto.jpg",
+    "title": "Orpheus Interceding with Pluto and Proserpina for Eurydice (drawing)",
+    "artist": "Giulio Romano",
+    "year": "1527",
+    "location": "Musée du Louvre, Paris (shown in the 2024 exhibition 'L'incanto di Orfeo', Palazzo Medici-Riccardi, Florence)",
+    "license": "CC BY-SA 4.0",
+    "author": "Francesco Bini",
+    "commons": "https://commons.wikimedia.org/wiki/File:Giulio_romano,_orfeo_intercede_con_plutone_e_proserpina_in_favore_di_euridice,_1527_(louvre).jpg",
+    "shows": "Orpheus kneels with his lyre before enthroned Pluto and Proserpina, Cerberus at their feet, a snake-haired Fury above and bound shades at right.",
+    "beat": "4",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "pluto and proserpina",
+        "f": [
+          0.27,
+          0.3,
+          0.35
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.248,
+          0.2,
+          0.13
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.288,
+          0.216,
+          0.13
+        ]
+      },
+      {
+        "name": "orpheus with lyre",
+        "f": [
+          0.62,
+          0.55,
+          0.4
+        ]
+      },
+      {
+        "name": "orpheus face",
+        "f": [
+          0.635,
+          0.39,
+          0.13
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.25,
+          0.6,
+          0.3
+        ]
+      },
+      {
+        "name": "snake-haired head",
+        "f": [
+          0.43,
+          0.12,
+          0.2
+        ]
+      },
+      {
+        "name": "bound shades",
+        "f": [
+          0.88,
+          0.4,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "bernini-proserpina.jpg",
+    "title": "The Rape of Proserpina",
+    "artist": "Gian Lorenzo Bernini",
+    "year": "1621–1622",
+    "location": "Galleria Borghese, Rome",
+    "license": "CC BY-SA 4.0",
+    "author": "Alvesgaspar",
+    "commons": "https://commons.wikimedia.org/wiki/File:Rape_of_Prosepina_September_2015-3a.jpg",
+    "shows": "Marble group of crowned Pluto seizing Proserpina as she pushes against his face, with three-headed Cerberus at his side.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "statue",
+        "f": [
+          0.5,
+          0.52,
+          0.85
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.27,
+          0.29,
+          0.25
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.66,
+          0.2,
+          0.25
+        ]
+      },
+      {
+        "name": "both heads",
+        "f": [
+          0.47,
+          0.25,
+          0.6
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.69,
+          0.6,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "bernini-proserpina-hand.jpg",
+    "title": "The Rape of Proserpina (detail: Pluto's hand)",
+    "artist": "Gian Lorenzo Bernini",
+    "year": "1621–1622",
+    "location": "Galleria Borghese, Rome",
+    "license": "CC BY-SA 4.0",
+    "author": "Alvesgaspar",
+    "commons": "https://commons.wikimedia.org/wiki/File:Rape_of_Prosepina_September_2015-2b.jpg",
+    "shows": "Close-up of Pluto's fingers pressing into Proserpina's marble thigh.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "hand",
+        "f": [
+          0.53,
+          0.37,
+          0.45
+        ]
+      },
+      {
+        "name": "fingers close",
+        "f": [
+          0.55,
+          0.45,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "titian-orpheus.jpg",
+    "title": "Orpheus and Eurydice",
+    "artist": "Titian",
+    "year": "c. 1508–1510",
+    "location": "Accademia Carrara, Bergamo",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Vecellio_Tiziano_detto_Tiziano_(1489_ca._-_1576)_-_Orfeo_ed_Euridice_-_81LC00179_-_Accademia_Carrara.jpg",
+    "shows": "Eurydice recoils from the snake's bite at left; at right, by a burning gateway of the underworld, Orpheus leads her and turns back as she slips away.",
+    "beat": "4",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "eurydice bitten",
+        "f": [
+          0.14,
+          0.68,
+          0.35
+        ]
+      },
+      {
+        "name": "eurydice face",
+        "f": [
+          0.106,
+          0.543,
+          0.14
+        ]
+      },
+      {
+        "name": "snake",
+        "f": [
+          0.4,
+          0.83,
+          0.25
+        ]
+      },
+      {
+        "name": "orpheus and eurydice at hell's gate",
+        "f": [
+          0.83,
+          0.58,
+          0.3
+        ]
+      },
+      {
+        "name": "burning gate of hell",
+        "f": [
+          0.84,
+          0.2,
+          0.32
+        ]
+      },
+      {
+        "name": "dark rock",
+        "f": [
+          0.5,
+          0.4,
+          0.5
+        ]
+      }
+    ]
+  },
+  {
+    "file": "brueghel-orpheus-pluto.jpg",
+    "title": "Orpheus before Pluto and Proserpina in the Underworld",
+    "artist": "Jan Brueghel the Younger (as given on Commons)",
+    "year": "1669 (as given on Commons)",
+    "location": null,
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Plutone,_Proserpina_e_Orfeo.jpg",
+    "shows": "Orpheus plays his harp before crowned Pluto and Proserpina in a cavernous, fire-lit underworld teeming with monsters, demons and tormented souls.",
+    "beat": "4",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "pluto and proserpina",
+        "f": [
+          0.09,
+          0.64,
+          0.25
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.1,
+          0.557,
+          0.1
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.046,
+          0.565,
+          0.1
+        ]
+      },
+      {
+        "name": "orpheus playing",
+        "f": [
+          0.26,
+          0.64,
+          0.25
+        ]
+      },
+      {
+        "name": "orpheus face",
+        "f": [
+          0.245,
+          0.56,
+          0.1
+        ]
+      },
+      {
+        "name": "burning river city",
+        "f": [
+          0.64,
+          0.36,
+          0.4
+        ]
+      },
+      {
+        "name": "monsters foreground",
+        "f": [
+          0.2,
+          0.88,
+          0.35
+        ]
+      },
+      {
+        "name": "souls in the lake",
+        "f": [
+          0.55,
+          0.55,
+          0.4
+        ]
+      }
+    ]
+  },
+  {
+    "file": "rubens-orpheus.jpg",
+    "title": "Orpheus and Eurydice",
+    "artist": "Peter Paul Rubens",
+    "year": "1636–1638",
+    "location": "Museo del Prado, Madrid",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Orpheus_and_Eurydice_by_Peter_Paul_Rubens.jpg",
+    "shows": "Orpheus leads Eurydice out of the underworld while Pluto and a dark-veiled Proserpina watch from their throne, Cerberus at their feet.",
+    "beat": "4",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "orpheus and eurydice leaving",
+        "f": [
+          0.2,
+          0.45,
+          0.45
+        ]
+      },
+      {
+        "name": "orpheus face",
+        "f": [
+          0.072,
+          0.19,
+          0.13
+        ]
+      },
+      {
+        "name": "eurydice face",
+        "f": [
+          0.26,
+          0.205,
+          0.13
+        ]
+      },
+      {
+        "name": "pluto and proserpina",
+        "f": [
+          0.68,
+          0.4,
+          0.5
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.586,
+          0.204,
+          0.13
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.73,
+          0.214,
+          0.13
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.73,
+          0.84,
+          0.2
+        ]
+      }
+    ]
+  },
+  {
+    "file": "carracci-pluto.jpg",
+    "title": "Pluto",
+    "artist": "Agostino Carracci",
+    "year": "1591–1593",
+    "location": "Galleria Estense, Modena",
+    "license": "CC BY-SA 4.0",
+    "author": "Sailko",
+    "commons": "https://commons.wikimedia.org/wiki/File:Agostino_carracci,_plutone,_1591-93.jpg",
+    "shows": "Brooding, bearded Pluto seated on clouds with the key of the underworld, three-headed Cerberus snarling beside him (photographed in its gilt frame).",
+    "beat": "5",
+    "note": "Commons page carries the Italian cultural-heritage (ita-mibac) restriction notice: commercial reproduction of works in Italian state museums may require authorisation.",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "painting",
+        "f": [
+          0.5,
+          0.5,
+          0.74
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.65,
+          0.286,
+          0.15
+        ]
+      },
+      {
+        "name": "pluto with key",
+        "f": [
+          0.65,
+          0.35,
+          0.4
+        ]
+      },
+      {
+        "name": "cerberus heads",
+        "f": [
+          0.72,
+          0.64,
+          0.35
+        ]
+      },
+      {
+        "name": "white cerberus head",
+        "f": [
+          0.81,
+          0.61,
+          0.15
+        ]
+      },
+      {
+        "name": "snarling head",
+        "f": [
+          0.648,
+          0.68,
+          0.15
+        ]
+      }
+    ]
+  },
+  {
+    "file": "giordano-proserpina.jpg",
+    "title": "The Rape of Proserpina (Gallery ceiling, Palazzo Medici-Riccardi)",
+    "artist": "Luca Giordano",
+    "year": "c. 1684–1686",
+    "location": "Galleria, Palazzo Medici-Riccardi, Florence",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Luca_Giordano_016.jpg",
+    "shows": "Crowned Pluto carries off Proserpina, arm flung skyward, as her companions cry out among scattered flowers.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "pluto seizing proserpina",
+        "f": [
+          0.46,
+          0.5,
+          0.35
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.42,
+          0.37,
+          0.12
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.53,
+          0.36,
+          0.12
+        ]
+      },
+      {
+        "name": "horrified companion",
+        "f": [
+          0.75,
+          0.58,
+          0.14
+        ]
+      },
+      {
+        "name": "spilled flowers",
+        "f": [
+          0.47,
+          0.88,
+          0.3
+        ]
+      },
+      {
+        "name": "flying harpy",
+        "f": [
+          0.39,
+          0.12,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "hades-persephone-kylix.jpg",
+    "title": "Persephone and Hades (tondo of an Attic red-figure kylix)",
+    "artist": "Codrus Painter",
+    "year": "c. 440–430 BC",
+    "location": "British Museum, London (E 82)",
+    "license": "CC BY 2.5",
+    "author": "Marie-Lan Nguyen (User:Jastrow), 2007",
+    "commons": "https://commons.wikimedia.org/wiki/File:Persephone_Hades_BM_Vase_E82.jpg",
+    "shows": "Hades reclines on a banqueting couch holding out a drinking cup while Persephone sits facing him.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "the couple",
+        "f": [
+          0.5,
+          0.45,
+          0.7
+        ]
+      },
+      {
+        "name": "hades face",
+        "f": [
+          0.68,
+          0.31,
+          0.18
+        ]
+      },
+      {
+        "name": "persephone face",
+        "f": [
+          0.32,
+          0.3,
+          0.18
+        ]
+      },
+      {
+        "name": "the offered cup",
+        "f": [
+          0.47,
+          0.33,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "herakles-peirithoos.jpg",
+    "title": "Red-figure lekythos: Herakles taking leave of Peirithoos in Hades",
+    "artist": "Alkimachos Painter",
+    "year": null,
+    "location": null,
+    "license": "CC BY-SA 4.0",
+    "author": "ArchaiOptix",
+    "commons": "https://commons.wikimedia.org/wiki/File:Alkimachos_Painter_ARV_532_57_Herakles_and_Peirithoos_in_Hades.jpg",
+    "shows": "Herakles in his lion skin clasps hands with a seated bearded man in a petasos holding a sceptre, interpreted as Peirithoos left behind in Hades (or Theseus/Admetos being brought out).",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "handshake scene",
+        "f": [
+          0.5,
+          0.52,
+          0.6
+        ]
+      },
+      {
+        "name": "herakles face",
+        "f": [
+          0.6,
+          0.41,
+          0.18
+        ]
+      },
+      {
+        "name": "seated man",
+        "f": [
+          0.36,
+          0.53,
+          0.3
+        ]
+      },
+      {
+        "name": "clasped hands",
+        "f": [
+          0.44,
+          0.52,
+          0.18
+        ]
+      }
+    ]
+  },
+  {
+    "file": "theseus-peirithoos-relief.jpg",
+    "title": "Relief with Herakles, Theseus and Peirithoos",
+    "artist": null,
+    "year": null,
+    "location": "Torlonia Collection (MT 377)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Reluef_with_Herakles_Theseus_Peirithoos_Torlonia_Collection_MT377.jpg",
+    "shows": "Marble relief of three heroes: Herakles with his club and the apples, a seated cloaked youth and a standing youth with a staff and sword, the trio linked to Theseus and Peirithoos in the underworld.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "three heroes",
+        "f": [
+          0.5,
+          0.5,
+          0.85
+        ]
+      },
+      {
+        "name": "herakles face",
+        "f": [
+          0.295,
+          0.23,
+          0.15
+        ]
+      },
+      {
+        "name": "seated hero face",
+        "f": [
+          0.483,
+          0.325,
+          0.15
+        ]
+      },
+      {
+        "name": "standing hero face",
+        "f": [
+          0.74,
+          0.225,
+          0.15
+        ]
+      }
+    ]
+  },
+  {
+    "file": "odysseus-tiresias.jpg",
+    "title": "Odysseus consulting the shade of Tiresias (Lucanian red-figure calyx-krater)",
+    "artist": "Dolon Painter",
+    "year": null,
+    "location": "Cabinet des médailles, Bibliothèque nationale de France, Paris (De Ridder 422)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Calyx-krater_BnF_De_Ridder422_side_A_n01.jpg",
+    "shows": "Odysseus sits on rocks, sword drawn over the slaughtered ram, as the head of the seer Tiresias rises from the ground, flanked by two companions.",
+    "beat": "6",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "odysseus face",
+        "f": [
+          0.483,
+          0.31,
+          0.15
+        ]
+      },
+      {
+        "name": "tiresias head and slain ram",
+        "f": [
+          0.33,
+          0.86,
+          0.3
+        ]
+      },
+      {
+        "name": "sword over the sacrifice",
+        "f": [
+          0.4,
+          0.75,
+          0.3
+        ]
+      },
+      {
+        "name": "odysseus seated",
+        "f": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "name": "companion left face",
+        "f": [
+          0.233,
+          0.225,
+          0.13
+        ]
+      },
+      {
+        "name": "companion right face",
+        "f": [
+          0.737,
+          0.23,
+          0.13
+        ]
+      }
+    ]
+  },
+  {
+    "file": "nekyia-sisyphus.jpg",
+    "title": "Nekyia: Sisyphus in the Underworld (Attic black-figure amphora)",
+    "artist": "Swing Painter",
+    "year": "c. 530 BC",
+    "location": "Staatliche Antikensammlungen, Munich (1494)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Nekyia_Staatliche_Antikensammlungen_1494_full.jpg",
+    "shows": "In the underworld, Persephone watches Sisyphus shoulder his boulder while a brooding shade (Ajax) stands behind her.",
+    "beat": "9",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "underworld frieze",
+        "f": [
+          0.5,
+          0.53,
+          0.8
+        ]
+      },
+      {
+        "name": "sisyphus with boulder",
+        "f": [
+          0.69,
+          0.55,
+          0.35
+        ]
+      },
+      {
+        "name": "persephone",
+        "f": [
+          0.43,
+          0.42,
+          0.3
+        ]
+      },
+      {
+        "name": "persephone face",
+        "f": [
+          0.48,
+          0.38,
+          0.12
+        ]
+      },
+      {
+        "name": "shade face",
+        "f": [
+          0.24,
+          0.37,
+          0.12
+        ]
+      }
+    ]
+  },
+  {
+    "file": "brueghel-aeneas.jpg",
+    "title": "Aeneas and the Cumaean Sibyl in the Underworld",
+    "artist": "Jan Brueghel the Elder",
+    "year": "c. 1604",
+    "location": "Slovak National Gallery, Bratislava (O 3003)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Jan_Brueghel_st._-_Aneas_and_the_Cumean_Sybil_in_the_Underworld_-_O_3003_-_Slovak_National_Gallery.jpg",
+    "shows": "Armoured Aeneas and the Sibyl walk through a ruined, fire-lit underworld of monsters, Death, Sleep and the Elm of False Dreams, beside a glowing river crowded with souls.",
+    "beat": "7",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "aeneas and the sibyl",
+        "f": [
+          0.367,
+          0.72,
+          0.22
+        ]
+      },
+      {
+        "name": "aeneas face",
+        "f": [
+          0.353,
+          0.66,
+          0.1
+        ]
+      },
+      {
+        "name": "sibyl face",
+        "f": [
+          0.38,
+          0.665,
+          0.1
+        ]
+      },
+      {
+        "name": "elm of false dreams",
+        "f": [
+          0.72,
+          0.13,
+          0.3
+        ]
+      },
+      {
+        "name": "river of souls",
+        "f": [
+          0.75,
+          0.58,
+          0.35
+        ]
+      },
+      {
+        "name": "death the skeleton",
+        "f": [
+          0.08,
+          0.68,
+          0.18
+        ]
+      },
+      {
+        "name": "burning tower",
+        "f": [
+          0.88,
+          0.27,
+          0.25
+        ]
+      },
+      {
+        "name": "harpy",
+        "f": [
+          0.455,
+          0.65,
+          0.15
+        ]
+      },
+      {
+        "name": "starving man",
+        "f": [
+          0.69,
+          0.71,
+          0.2
+        ]
+      }
+    ]
+  },
+  {
+    "file": "swanenburgh-charon.jpg",
+    "title": "The Sibyl Showing Aeneas the Underworld (Charon's boat)",
+    "artist": "Jacob van Swanenburgh",
+    "year": "c. 1620",
+    "location": null,
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Jacob_van_Swanenburg_-_The_Sibyl_showing_Aeneas_the_Underworld_Charon%27s_boat.jpg",
+    "shows": "A burning infernal city: Charon's ship packed with naked souls, crowds on the shore, demons dragging the damned and a gaping hell-mouth, with a chariot in the smoky sky.",
+    "beat": "2",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon's ship of souls",
+        "f": [
+          0.2,
+          0.45,
+          0.35
+        ]
+      },
+      {
+        "name": "souls on the shore",
+        "f": [
+          0.44,
+          0.6,
+          0.3
+        ]
+      },
+      {
+        "name": "hell-mouth",
+        "f": [
+          0.78,
+          0.77,
+          0.45
+        ]
+      },
+      {
+        "name": "inside the hell-mouth",
+        "f": [
+          0.8,
+          0.85,
+          0.3
+        ]
+      },
+      {
+        "name": "demons dragging the damned",
+        "f": [
+          0.24,
+          0.82,
+          0.35
+        ]
+      },
+      {
+        "name": "burning city",
+        "f": [
+          0.38,
+          0.37,
+          0.4
+        ]
+      },
+      {
+        "name": "chariot in the sky",
+        "f": [
+          0.36,
+          0.12,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "testa-aeneas-styx.jpg",
+    "title": "Aeneas on the Bank of the River Styx",
+    "artist": "Pietro Testa",
+    "year": null,
+    "location": null,
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:PIETRO_TESTA_AENEAS_ON_THE_BANK_OF_THE_RIVER_STYX.jpg",
+    "shows": "The Sibyl holds out the golden bough to a scowling Charon in his boat while helmeted Aeneas stands beside her and a naked shade pleads from the bank.",
+    "beat": "7",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "charon face",
+        "f": [
+          0.147,
+          0.32,
+          0.14
+        ]
+      },
+      {
+        "name": "golden bough",
+        "f": [
+          0.215,
+          0.5,
+          0.14
+        ]
+      },
+      {
+        "name": "sibyl face",
+        "f": [
+          0.4,
+          0.28,
+          0.12
+        ]
+      },
+      {
+        "name": "aeneas face",
+        "f": [
+          0.525,
+          0.27,
+          0.13
+        ]
+      },
+      {
+        "name": "pleading shade face",
+        "f": [
+          0.86,
+          0.52,
+          0.14
+        ]
+      },
+      {
+        "name": "charon in his boat",
+        "f": [
+          0.2,
+          0.55,
+          0.45
+        ]
+      },
+      {
+        "name": "sibyl and aeneas",
+        "f": [
+          0.48,
+          0.4,
+          0.4
+        ]
+      }
+    ]
+  },
+  {
+    "file": "romanelli-aeneas.jpg",
+    "title": "Aeneas and the Cumaean Sibyl Entering the Infernal Regions (drawing)",
+    "artist": "Giovanni Francesco Romanelli",
+    "year": "1610–1662",
+    "location": "The Metropolitan Museum of Art, New York",
+    "license": "CC0 1.0",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Aeneas_and_the_Cumaean_Sibyl_Entering_the_Infernal_Regions_MET_DP811379.jpg",
+    "shows": "The Sibyl, bough in hand, leads helmeted Aeneas towards a dark cave where Cerberus waits, a companion with spear and shield behind them and a round temple on the hill.",
+    "beat": "7",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "drawing",
+        "f": [
+          0.5,
+          0.48,
+          0.84
+        ]
+      },
+      {
+        "name": "sibyl and aeneas",
+        "f": [
+          0.44,
+          0.58,
+          0.35
+        ]
+      },
+      {
+        "name": "sibyl face",
+        "f": [
+          0.414,
+          0.451,
+          0.12
+        ]
+      },
+      {
+        "name": "aeneas face",
+        "f": [
+          0.461,
+          0.451,
+          0.12
+        ]
+      },
+      {
+        "name": "golden bough",
+        "f": [
+          0.397,
+          0.538,
+          0.14
+        ]
+      },
+      {
+        "name": "cerberus at the cave",
+        "f": [
+          0.17,
+          0.47,
+          0.3
+        ]
+      },
+      {
+        "name": "putto",
+        "f": [
+          0.47,
+          0.13,
+          0.25
+        ]
+      },
+      {
+        "name": "temple",
+        "f": [
+          0.86,
+          0.25,
+          0.2
+        ]
+      }
+    ]
+  },
+  {
+    "file": "raphael-psyche-vase.jpg",
+    "title": "Venus and Psyche (Loggia di Psiche spandrel)",
+    "artist": "Raphael and workshop",
+    "year": "1517–1518",
+    "location": "Loggia di Psiche, Villa Farnesina, Rome",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Raffaello_Sanzio_-_Venus_and_Psyche_-_WGA18855.jpg",
+    "shows": "Psyche, back from the underworld, kneels and gazes up at Venus as she hands over the jar from Proserpina; two doves fly at right.",
+    "beat": "8",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "venus and psyche",
+        "f": [
+          0.5,
+          0.45,
+          0.7
+        ]
+      },
+      {
+        "name": "psyche face",
+        "f": [
+          0.58,
+          0.398,
+          0.18
+        ]
+      },
+      {
+        "name": "venus face",
+        "f": [
+          0.382,
+          0.296,
+          0.18
+        ]
+      },
+      {
+        "name": "the jar",
+        "f": [
+          0.455,
+          0.387,
+          0.15
+        ]
+      },
+      {
+        "name": "doves",
+        "f": [
+          0.83,
+          0.24,
+          0.35
+        ]
+      }
+    ]
+  },
+  {
+    "file": "giulio-psyche-proserpina.jpg",
+    "title": "Psyche before Proserpina (lunette, Camera di Amore e Psiche)",
+    "artist": "Giulio Romano, Rinaldo Mantovano and Benedetto Pagni",
+    "year": "1526–1528",
+    "location": "Camera di Amore e Psiche, Palazzo Te, Mantua",
+    "license": "CC BY 3.0",
+    "author": "Sailko",
+    "commons": "https://commons.wikimedia.org/wiki/File:Giulio_romano,_rinaldo_mantovano_e_benedetto_pagni,_camera_di_amore_e_psiche,_1526-28,_lunette,_11_psiche_davanti_a_proserpina.jpg",
+    "shows": "In the underworld, Proserpina hands Psyche the jar of beauty while white-bearded Pluto, a second old god, a snake-haired Fury, a demon and a wolfish Cerberus crowd around.",
+    "beat": "8",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "lunette",
+        "f": [
+          0.5,
+          0.47,
+          0.7
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.405,
+          0.33,
+          0.12
+        ]
+      },
+      {
+        "name": "psyche face",
+        "f": [
+          0.56,
+          0.435,
+          0.12
+        ]
+      },
+      {
+        "name": "pluto face",
+        "f": [
+          0.47,
+          0.316,
+          0.12
+        ]
+      },
+      {
+        "name": "fury face",
+        "f": [
+          0.675,
+          0.405,
+          0.12
+        ]
+      },
+      {
+        "name": "the jar handed over",
+        "f": [
+          0.455,
+          0.465,
+          0.18
+        ]
+      },
+      {
+        "name": "cerberus",
+        "f": [
+          0.28,
+          0.57,
+          0.2
+        ]
+      },
+      {
+        "name": "demon face",
+        "f": [
+          0.31,
+          0.42,
+          0.12
+        ]
+      }
+    ]
+  },
+  {
+    "file": "ghirlanda-psyche-charon.jpg",
+    "title": "Story of Cupid and Psyche: Psyche gives honey-cake to Cerberus, visits the Fates and Charon",
+    "artist": "Agostino Ghirlanda and workshop",
+    "year": null,
+    "location": "Palazzo Franchetti, Salone degli Dei dell'Olimpo (Hall of Eros and Psyche)",
+    "license": "CC BY 3.0",
+    "author": "Sailko",
+    "commons": "https://commons.wikimedia.org/wiki/File:Agostino_ghirlanda_e_bottega,_salone_degli_dei_dell%27olimpo,_storie_di_amore_e_psiche_21_psiche_d%C3%A0_miele_a_cerbero,_visita_le_parche_e_caronte.jpg",
+    "shows": "Psyche kneels to feed a honey-cake to three-headed Cerberus at the underworld gate, with the Fates spinning and Charon's ferry in the distance; framed in painted ceiling ornament.",
+    "beat": "8",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "panel",
+        "f": [
+          0.47,
+          0.33,
+          0.55
+        ]
+      },
+      {
+        "name": "psyche feeding cerberus",
+        "f": [
+          0.5,
+          0.4,
+          0.45
+        ]
+      },
+      {
+        "name": "psyche face",
+        "f": [
+          0.49,
+          0.33,
+          0.12
+        ]
+      },
+      {
+        "name": "cerberus heads",
+        "f": [
+          0.567,
+          0.42,
+          0.15
+        ]
+      },
+      {
+        "name": "charon's ferry",
+        "f": [
+          0.38,
+          0.32,
+          0.15
+        ]
+      },
+      {
+        "name": "the fates spinning",
+        "f": [
+          0.325,
+          0.417,
+          0.15
+        ]
+      }
+    ]
+  },
+  {
+    "file": "raphael-wedding-banquet.jpg",
+    "title": "The Wedding Banquet of Cupid and Psyche (Loggia di Psiche vault)",
+    "artist": "Raphael and workshop",
+    "year": "1517–1518",
+    "location": "Loggia di Psiche, Villa Farnesina, Rome",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Raffaello,_banchetto_nuziale_01.jpg",
+    "shows": "The gods feast on clouds at a long table for the wedding of Cupid and Psyche: Horae scatter flowers, Graces anoint the couple, Ganymede and putti pour wine, dancers and musicians at left; framed by garlands and painted spandrels.",
+    "beat": "10",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "banquet panel",
+        "f": [
+          0.54,
+          0.52,
+          0.88
+        ]
+      },
+      {
+        "name": "head of the table",
+        "f": [
+          0.6,
+          0.47,
+          0.4
+        ]
+      },
+      {
+        "name": "jupiter at table",
+        "f": [
+          0.605,
+          0.41,
+          0.15
+        ]
+      },
+      {
+        "name": "cupid and psyche reclining",
+        "f": [
+          0.84,
+          0.48,
+          0.22
+        ]
+      },
+      {
+        "name": "horae scattering flowers",
+        "f": [
+          0.55,
+          0.33,
+          0.3
+        ]
+      },
+      {
+        "name": "dancing woman",
+        "f": [
+          0.3,
+          0.5,
+          0.2
+        ]
+      },
+      {
+        "name": "wine-pourer and putti",
+        "f": [
+          0.87,
+          0.6,
+          0.25
+        ]
+      },
+      {
+        "name": "toast",
+        "f": [
+          0.56,
+          0.5,
+          0.25
+        ]
+      }
+    ]
+  },
+  {
+    "file": "diver-symposium.jpg",
+    "title": "Symposium scene, Tomb of the Diver (side-wall detail)",
+    "artist": null,
+    "year": "5th century BC",
+    "location": "Museo Archeologico Nazionale di Paestum",
+    "license": "CC BY-SA 2.0",
+    "author": "Carole Raddato",
+    "commons": "https://commons.wikimedia.org/wiki/File:Detail_from_lateral_walls_of_the_Tomb_of_the_Diver_depicting_a_symposium_scene,_5th_century_BC,_Paestum_Archaeological_Museum.jpg",
+    "shows": "Two wreathed banqueters recline on a couch above a low table: one raises a lyre-like object (or plays kottabos), the bearded one holds a shallow wine cup.",
+    "beat": "10",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "two banqueters",
+        "f": [
+          0.52,
+          0.38,
+          0.6
+        ]
+      },
+      {
+        "name": "young banqueter face",
+        "f": [
+          0.47,
+          0.2,
+          0.15
+        ]
+      },
+      {
+        "name": "bearded banqueter face",
+        "f": [
+          0.71,
+          0.17,
+          0.15
+        ]
+      },
+      {
+        "name": "wine cup",
+        "f": [
+          0.67,
+          0.37,
+          0.15
+        ]
+      },
+      {
+        "name": "table",
+        "f": [
+          0.47,
+          0.75,
+          0.45
+        ]
+      }
+    ]
+  },
+  {
+    "file": "prothesis-pinax.jpg",
+    "title": "Funerary plaque (pinax) with prothesis",
+    "artist": "Sappho Painter",
+    "year": "c. 500 BC",
+    "location": "Musée du Louvre, Paris (MNB 905)",
+    "license": "Public domain",
+    "author": null,
+    "commons": "https://commons.wikimedia.org/wiki/File:Pinax_prothesis_Louvre_MNB905.jpg",
+    "shows": "Attic black-figure plaque of the laying-out of the dead: the body lies on a bier while named mourners, the mother among them, tear their hair and touch the head; men approach at left.",
+    "beat": "10",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "the bier",
+        "f": [
+          0.55,
+          0.45,
+          0.55
+        ]
+      },
+      {
+        "name": "mourners at the head",
+        "f": [
+          0.72,
+          0.35,
+          0.35
+        ]
+      },
+      {
+        "name": "mother cradling the head",
+        "f": [
+          0.7,
+          0.38,
+          0.2
+        ]
+      },
+      {
+        "name": "mourning men at left",
+        "f": [
+          0.18,
+          0.4,
+          0.35
+        ]
+      },
+      {
+        "name": "raised hands",
+        "f": [
+          0.43,
+          0.2,
+          0.3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "obol-athens.jpg",
+    "title": "Silver obol of Athens (reverse: owl)",
+    "artist": null,
+    "year": "c. 450–425 BC",
+    "location": "Münzkabinett, Staatliche Museen zu Berlin",
+    "license": "CC BY-SA 4.0",
+    "author": "ArchaiOptix",
+    "commons": "https://commons.wikimedia.org/wiki/File:Athens_-_450-425_BC_-_silver_obol_-_head_of_Athena_-_owl_-_Berlin_MK_AM.jpg",
+    "shows": "A tiny (10 mm) Athenian silver obol, the coin placed with the dead for Charon's fare, showing Athena's owl, an olive sprig and the letters ΑΘΕ.",
+    "beat": "10",
+    "note": "Source image is 974 px square; it has been upscaled to 1800 px, so close frames will be soft.",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "coin",
+        "f": [
+          0.5,
+          0.47,
+          0.55
+        ]
+      },
+      {
+        "name": "owl",
+        "f": [
+          0.45,
+          0.45,
+          0.3
+        ]
+      },
+      {
+        "name": "owl eyes",
+        "f": [
+          0.52,
+          0.36,
+          0.18
+        ]
+      }
+    ]
+  },
+  {
+    "file": "bernini-proserpina-face.jpg",
+    "title": "The Rape of Proserpina (detail: Proserpina's head)",
+    "artist": "Gian Lorenzo Bernini",
+    "year": "1621–1622",
+    "location": "Galleria Borghese, Rome",
+    "license": "CC BY-SA 2.0",
+    "author": "Kent Wang from Barcelona, Spain",
+    "commons": "https://commons.wikimedia.org/wiki/File:Abduction_of_Proserpina_(52888383749).jpg",
+    "shows": "Proserpina's marble face tilted back in anguish, lips parted and a tear on her cheek, against the gilded Borghese ceiling.",
+    "beat": "5",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "proserpina face",
+        "f": [
+          0.42,
+          0.27,
+          0.3
+        ]
+      },
+      {
+        "name": "eyes and tear",
+        "f": [
+          0.45,
+          0.2,
+          0.18
+        ]
+      },
+      {
+        "name": "parted lips",
+        "f": [
+          0.36,
+          0.33,
+          0.15
+        ]
+      },
+      {
+        "name": "flowing hair",
+        "f": [
+          0.72,
+          0.55,
+          0.4
+        ]
+      }
+    ]
+  },
+  {
+    "file": "hermes-lekythos.jpg",
+    "title": "White-ground lekythos: Hermes Psychopompos and a woman at a tomb",
+    "artist": "Phiale Painter",
+    "year": null,
+    "location": null,
+    "license": "CC BY-SA 4.0",
+    "author": "ArchaiOptix",
+    "commons": "https://commons.wikimedia.org/wiki/File:Phiale_Painter_ARV_1022_138_Hermes_psychopompos_and_woman_at_tomb_(03).jpg",
+    "shows": "Hermes as guide of souls, in pilos cap and with his herald's staff, sits on rocks and points the way; the dead woman stands at the edge of this view.",
+    "beat": "1",
+    "frames": [
+      {
+        "name": "wide",
+        "f": [
+          0.5,
+          0.5,
+          1
+        ]
+      },
+      {
+        "name": "hermes",
+        "f": [
+          0.43,
+          0.55,
+          0.6
+        ]
+      },
+      {
+        "name": "hermes face",
+        "f": [
+          0.38,
+          0.35,
+          0.18
+        ]
+      },
+      {
+        "name": "pointing hand",
+        "f": [
+          0.63,
+          0.52,
+          0.18
+        ]
+      },
+      {
+        "name": "herald's staff",
+        "f": [
+          0.58,
+          0.65,
+          0.22
+        ]
+      }
+    ]
+  }
+]
