@@ -8,6 +8,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { makeHound, animateHound } from "./hound.js";
 
 const $ = s => document.querySelector(s);
 const LIB = "../img/lib/";
@@ -334,85 +335,12 @@ function placePeople() {
   }
 }
 
-/* ---------- Cerberus: three heads on long necks, made of shadow and smoke ---------- */
-function makeHound() {
-  const g = new THREE.Group();
-  const skin = new THREE.MeshStandardMaterial({color: 0x0b0908, roughness: 1, emissive: 0x120403});
-  const rim = new THREE.MeshBasicMaterial({color: 0x8a2a10, transparent: true, opacity: .42, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending});
-  const glow = (m, s = 1.16) => { const r = new THREE.Mesh(m.geometry, rim); r.scale.setScalar(s); m.add(r); return m; };
-  const body = glow(new THREE.Mesh(new THREE.CapsuleGeometry(.55, 2.1, 6, 14), skin)); body.rotation.z = Math.PI / 2; body.scale.set(1, 1, .8);
-  const torso = new THREE.Group(); torso.add(body); torso.position.y = 1.25; g.add(torso);
-  for (let i = 0; i < 6; i++) { const rib = new THREE.Mesh(new THREE.TorusGeometry(.5, .035, 4, 14, Math.PI), skin); rib.position.set(-.5 + i * .22, -.05, 0); rib.rotation.y = Math.PI / 2; torso.add(rib); }
-  const legs = [];
-  for (const [x, z] of [[.95, .42], [.95, -.42], [-.95, .42], [-.95, -.42]]) {
-    const hip = new THREE.Group(); hip.position.set(x, 1.15, z); g.add(hip);
-    const upper = glow(new THREE.Mesh(new THREE.CylinderGeometry(.11, .08, 1.05, 6), skin)); upper.position.y = -.5; hip.add(upper);
-    const knee = new THREE.Group(); knee.position.y = -1.0; hip.add(knee);
-    const lower = glow(new THREE.Mesh(new THREE.CylinderGeometry(.07, .045, 1.0, 6), skin)); lower.position.y = -.48; knee.add(lower);
-    const paw = new THREE.Mesh(new THREE.SphereGeometry(.1, 6, 4), skin); paw.position.y = -.98; paw.scale.set(1.6, .5, 1); knee.add(paw);
-    legs.push({hip, knee, front: x > 0, side: z > 0 ? 1 : -1});
-  }
-  const heads = [];
-  const eyeMat = new THREE.MeshBasicMaterial({color: 0xff5a1f});
-  for (const [z, yaw] of [[-.38, -.45], [0, 0], [.38, .45]]) {
-    const neck = new THREE.Group(); neck.position.set(1.25, 1.45, z); neck.rotation.y = yaw; g.add(neck);
-    const n = glow(new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, .95, 7), skin)); n.rotation.z = -1.05; n.position.set(.38, .22, 0); neck.add(n);
-    const head = new THREE.Group(); head.position.set(.8, .46, 0); neck.add(head);
-    const skull = glow(new THREE.Mesh(new THREE.ConeGeometry(.2, 1.0, 7), skin)); skull.rotation.z = -Math.PI / 2; skull.position.x = .42; skull.scale.set(1, 1, .8); head.add(skull);
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(.22, 8, 6), skin); crown.scale.set(1.1, .85, .9); head.add(crown);
-    const jaw = new THREE.Group(); jaw.position.set(.02, -.1, 0); head.add(jaw);
-    const j = new THREE.Mesh(new THREE.ConeGeometry(.12, .86, 6), skin); j.rotation.z = -Math.PI / 2; j.position.x = .4; j.scale.set(1, 1, .7); jaw.add(j);
-    const toothMat = new THREE.MeshBasicMaterial({color: 0xd9cbb0});
-    for (let t = 0; t < 4; t++) for (const s of [-1, 1]) { const tooth = new THREE.Mesh(new THREE.ConeGeometry(.018, .09, 4), toothMat); tooth.position.set(.2 + t * .13, .05, s * .06); jaw.add(tooth); }
-    for (const s of [-1, 1]) {
-      const ear = glow(new THREE.Mesh(new THREE.ConeGeometry(.08, .45, 4), skin)); ear.position.set(-.08, .3, s * .13); ear.rotation.z = .45; head.add(ear);
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(.022, 6, 4), eyeMat); eye.position.set(.22, .08, s * .1); head.add(eye);
-    }
-    heads.push({neck, head, jaw, seed: Math.random() * 10});
-  }
-  const eyesLight = new THREE.PointLight(0xff4a1a, 3, 6, 2); eyesLight.position.set(2, 1.8, 0); g.add(eyesLight);
-  const backLight = new THREE.PointLight(0x9a2a14, 9, 7, 1.6); backLight.position.set(-1.5, 2.6, 0); g.add(backLight);
-  const smokeTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(20,10,8,.9)"); gr.addColorStop(1, "rgba(20,10,8,0)"); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
-  const N = 70, life = new Float32Array(N);
-  for (let i = 0; i < N; i++) life[i] = Math.random();
-  const smokeGeo = new THREE.BufferGeometry(); smokeGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(N * 3), 3));
-  const smoke = new THREE.Points(smokeGeo, new THREE.PointsMaterial({map: smokeTex, size: 1.3, transparent: true, depthWrite: false, opacity: .75}));
-  scene.add(smoke);
-  g.scale.setScalar(1.15);
-  scene.add(g);
-  return {g, legs, heads, torso, smoke, life, N, eyesLight};
-}
-const hound = makeHound();
-const dog = {pos: PLACES.dogHome.clone(), yaw: Math.PI * .8, mode: "sleep", speed: 0, calmAt: 0, noiseUntil: 0, growl: 0, phase: 0};
-
-function animateHound(dt, now) {
-  const h = hound, moving = dog.speed > .3, sleeping = dog.mode === "sleep";
-  dog.phase += dt * (moving ? dog.speed * 2.1 : 1);
-  h.g.position.set(dog.pos.x, sleeping ? -.55 : 0, dog.pos.z);
-  h.g.rotation.y = -dog.yaw + Math.PI / 2;
-  h.torso.position.y = sleeping ? 1.0 : 1.25 + Math.sin(dog.phase * 2) * (moving ? .06 : .02);
-  for (const l of h.legs) {
-    const ph = dog.phase + (l.front ? 0 : Math.PI) + (l.side > 0 ? Math.PI / 2 : 0);
-    if (sleeping) { l.hip.rotation.z = l.front ? 1.1 : -1.1; l.knee.rotation.z = l.front ? -2.2 : 2.2; continue; }
-    l.hip.rotation.z = (moving ? Math.sin(ph) * .55 : Math.sin(now / 900 + l.side) * .04) + (l.front ? -.1 : .15);
-    l.knee.rotation.z = moving ? Math.max(0, Math.sin(ph + 1.2)) * .9 + .15 : .2;
-  }
-  for (const [i, hd] of h.heads.entries()) {
-    const t = now / 1000 + hd.seed;
-    if (sleeping) { hd.neck.rotation.z = -.9; hd.jaw.rotation.z = 0; continue; }
-    hd.neck.rotation.z = (moving ? -.35 : -.1) + Math.sin(t * (moving ? 6 : 1.5)) * .12;
-    hd.neck.rotation.x = Math.sin(t * 2.3 + i) * .18;
-    hd.jaw.rotation.z = -Math.max(0, Math.sin(t * (dog.mode === "hunt" ? 7 : 1.2))) * (dog.mode === "hunt" ? .55 : .15);
-  }
-  h.eyesLight.intensity = sleeping ? .3 : 3 + Math.sin(now / 80) * .5;
-  const p = h.smoke.geometry.attributes.position;
-  for (let i = 0; i < h.N; i++) {
-    h.life[i] += dt * (.35 + (i % 5) * .05);
-    if (h.life[i] > 1) { h.life[i] = 0; p.setXYZ(i, dog.pos.x + (Math.random() - .5) * 2.4, (sleeping ? .5 : 1.2) + Math.random() * .6, dog.pos.z + (Math.random() - .5) * 1.4); }
-    else p.setY(i, p.getY(i) + dt * .8);
-  }
-  p.needsUpdate = true;
-  h.smoke.material.opacity = sleeping ? .4 : .8;
+/* ---------- Cerberus (built in hound.js) ---------- */
+const hound = makeHound(scene);
+const dog = {pos: PLACES.dogHome.clone(), yaw: Math.PI * .8, mode: "sleep", speed: 0, calmAt: 0, noiseUntil: 0, growl: 0};
+function animateDog(dt, now) {
+  const gait = dog.mode === "sleep" ? "sleep" : dog.speed > 4 ? "run" : dog.speed > .3 ? "walk" : "idle";
+  animateHound(hound, {mode: gait, speed: dog.speed, x: dog.pos.x, z: dog.pos.z, yaw: dog.yaw, hunting: dog.mode === "hunt"}, dt, now);
 }
 
 /* ---------- the player ---------- */
@@ -453,12 +381,12 @@ let toastT;
 function toast(msg, ms = 2800) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), ms); }
 function paintStats() { $("#stats").innerHTML = `caught by the dog: ${me.caught}<br>splashed: ${me.splashed}`; }
 const GOALS = [
-  {label: "Talk to the man in the light tunic", at: () => NPC.hermes.pos},
-  {label: "Find a coin. Somebody by the river might know where.", at: () => me.met.elpenor ? PLACES.altar : NPC.elpenor.pos},
+  {label: "Talk to Hermes, the man waiting in the arcade", at: () => NPC.hermes.pos},
+  {label: () => me.met.elpenor ? "Get the coin from the altar in the temple, at the far end of the arcade" : "Find a coin. Ask the sailor sitting by the river", at: () => me.met.elpenor ? PLACES.altar : NPC.elpenor.pos},
   {label: "Get the coin to Charon's ferry. Don't get caught.", at: () => PLACES.dock}
 ];
 const goal = () => GOALS[Math.min(me.stage, GOALS.length - 1)];
-function paintGoal() { $("#goal").innerHTML = `<small>what to do</small>${goal().label}`; }
+function paintGoal() { const l = goal().label; $("#goal").innerHTML = `<small>what to do</small>${typeof l === "function" ? l() : l}`; }
 
 /* ---------- conversations: spoken out loud, with the camera on whoever is talking ---------- */
 const voiceEl = $("#voice");
@@ -472,11 +400,22 @@ function frameOn(p, side = 1) { // over-the-shoulder close-up
   camShot.look.copy(head).setY(head.y - .05);
   camShot.active = true;
 }
-async function line(who, id, text) {
+// When someone mentions a place, the camera cuts to it, like a film.
+const CUTS = {
+  ferry:  {pos: V(4, 3, 28), look: V(0, 1.4, 37.5)},
+  charon: {pos: V(1.2, 2.3, 33.6), look: V(0, 2.1, 37.2)},
+  grotto: {pos: V(64, 3.2, 18), look: V(72, .6, 12)},
+  altar:  {pos: V(56, 2.3, 13.2), look: V(56, 1.7, 9)},
+  river:  {pos: V(-20, 3, 14), look: V(0, -.3, 40)},
+  chairs: {pos: V(56, 2.2, 4.5), look: V(56, 1.3, -1)}
+};
+function cutTo(name) { const c = CUTS[name]; camShot.pos.copy(c.pos); camShot.look.copy(c.look); camShot.active = true; camShot.snap = true; }
+async function line(who, id, text, cut) {
   const p = NPC[who];
   $("#sub b").textContent = p ? p.name : "Mikon";
   $("#sub span").textContent = text; $("#sub").classList.add("on");
-  if (p) { frameOn(p, 1); p.play(p.talk); } else if (talkingTo) frameOn(talkingTo, -1);
+  if (cut) cutTo(cut); else if (p) frameOn(p, 1); else if (talkingTo) frameOn(talkingTo, -1);
+  if (p) p.play(p.talk);
   voiceEl.src = `voice/${id}.m4a`;
   const fallback = 900 + text.split(" ").length * 280;
   await new Promise(res => {
@@ -499,33 +438,45 @@ function choose(options) {
     choicePick = k => box.querySelector(`button[data-k="${k}"]`)?.click();
   });
 }
-function beginTalk(p) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; }
+const CARDS = {
+  hermes: ["Hermes", "Guide of the dead. Always in a hurry."],
+  elpenor: ["Elpenor", "Odysseus's youngest sailor. Fell off a roof."],
+  theseus: ["Theseus and Pirithous", "Two heroes who came to kidnap the Queen of the Dead. Then they sat down."],
+  charon: ["Charon", "Ferryman of the dead. One coin per crossing. No exceptions."]
+};
+function nameCard(id) {
+  if (me.met[id] || !CARDS[id]) return;
+  const c = $("#namecard"); c.querySelector("b").textContent = CARDS[id][0]; c.querySelector("span").textContent = CARDS[id][1];
+  c.classList.add("on"); setTimeout(() => c.classList.remove("on"), 4200);
+}
+function beginTalk(p, id) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; $("#toast").classList.remove("on"); clearTimeout(toastT); nameCard(id); }
 async function conversation(id) {
-  beginTalk(NPC[id]);
-  const say = (who, lid, text) => line(who, lid, text);
+  beginTalk(NPC[id], id);
+  const say = (who, lid, text, cut) => line(who, lid, text, cut);
   if (id === "hermes") {
-    await say("hermes", "h1", "Right. Here's you. Dead. Welcome.");
-    await say("hermes", "h2", "River's that way. The ferry's at the end of the dock. The ferryman's the cheerful one.");
-    await say("hermes", "h3", "He'll want a coin. You don't have a coin. So. Find a coin.");
-    await say("hermes", "h4", "One thing. There's a dog. Three heads, very good nose. He can smell coins.");
-    await say("mikon", "m1", "Wait. A dog? How big is the...");
-    await say("hermes", "h5", "He can't swim, though. Lovely to meet you.");
+    await say("hermes", "h1", "Right. You're dead. Welcome to the Underworld. I'm Hermes. I walk people in.");
+    await say("hermes", "h2", "That's the River Styx. To cross it, you take the ferry at the end of the dock.", "ferry");
+    await say("hermes", "h3", "The ferryman's called Charon. He wants one coin. You don't have one. So. Find a coin.", "charon");
+    await say("hermes", "h4", "Careful, though. There's a dog. Three heads. He sleeps in the cave past the old temple, and he can smell coins.", "grotto");
+    await say("mikon", "m1", "Wait. A three-headed dog can smell my coin?");
+    await say("hermes", "h5", "Your coin, specifically. If he comes for you, get in the river. He can't swim. Off you go.", "river");
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
-    await say("elpenor", "e1", "Oh. Hey. Are you dead too?");
-    await say("mikon", "m2", "Olive pit. You?");
+    await say("elpenor", "e1", "Oh. Hey. New? I'm Elpenor. I used to row for Odysseus.");
+    await say("mikon", "m2", "Mikon. Olive pit. You?");
     await say("elpenor", "e2", "Fell off a roof. Long story. Short roof.");
     const k = await choose([{t: "Ask if he's seen a coin anywhere."}, {t: "Tell him you'll get him out of here too."}, {t: "Tell him to stay off roofs."}]);
     me.choices.elpenor = [{Hermes: 2, Athena: 1}, {Demeter: 2, Hera: 1}, {Dionysus: 2, Apollo: 1}][k];
     if (k === 1) await say("elpenor", "e5", "Nobody's ever said that to me.");
     if (k === 2) await say("elpenor", "e6", "Bit late, mate.");
-    await say("elpenor", "e3", "There's an old coin on the altar in the temple. End of the arcade. Right next to where the dog sleeps.");
-    await say("elpenor", "e4", "If he wakes up, get in the river. He hates water.");
+    await say("elpenor", "e3", "There's a coin on the altar in the old temple, at the far end of the arcade.", "altar");
+    await say("elpenor", "e4", "The dog sleeps right behind it. Grab the coin, then run for the river. He won't follow you in.", "grotto");
   } else if (id === "theseus") {
     await say("theseus", "t1", "Don't sit down.");
     await say("pirithous", "p1", "Seriously. Don't.");
-    await say("mikon", "m3", "Are you two... stuck?");
-    await say("theseus", "t2", "We've been here a while. My coin's in my belt. I can't reach it. I can't reach anything.");
+    await say("mikon", "m3", "Are you two stuck to those chairs?");
+    await say("theseus", "t2", "We came down here to kidnap the Queen of the Dead. Long story. Then we sat down.");
+    await say("theseus", "t5", "I've got a coin in my belt. I can't reach it. I can't reach anything.");
     const k = await choose([{t: "Take his coin. He's not using it."}, {t: "Try to pull them off the chairs."}, {t: "Leave them. They're heroes, they'll figure it out."}]);
     me.choices.theseus = [{Ares: 2, Hermes: 1}, {Artemis: 2, Hera: 1}, {Apollo: 2, Zeus: 1}][k];
     if (k === 0) {
@@ -672,7 +623,7 @@ const touchMode = matchMedia("(pointer: coarse)").matches;
 if (touchMode) $("#keys").innerHTML = "<b>Left thumb</b><span>walk</span><b>Right thumb</b><span>look</span><b>use</b><span>talk, pick up</span><b>drop</b><span>drop the coin</span>";
 function grabMouse() { if (!touchMode && !talking && !ended) canvas.requestPointerLock?.(); }
 function releaseMouse() { if (document.pointerLockElement) document.exitPointerLock(); }
-document.addEventListener("pointerlockchange", () => { if (!document.pointerLockElement && playing && !talking && !ended && !touchMode) $("#paused").classList.add("on"); });
+document.addEventListener("pointerlockchange", () => { if (!document.pointerLockElement && playing && !talking && !ended && !touchMode && !$("#mapview").classList.contains("on")) $("#paused").classList.add("on"); });
 $("#resume").onclick = () => { $("#paused").classList.remove("on"); grabMouse(); };
 document.addEventListener("mousemove", e => { if (!document.pointerLockElement || !playing || talking) return; me.yaw -= e.movementX * .0022; me.pitch = Math.max(-1.2, Math.min(1.2, me.pitch - e.movementY * .0022)); });
 addEventListener("keydown", e => { keys[e.code] = true; if (!playing || talking) return; if (e.code === "KeyE") interact(); if (e.code === "KeyQ") dropCoin(); });
@@ -743,10 +694,11 @@ function tick(now) {
       const want = Math.atan2(me.pos.x - p.root.position.x, me.pos.z - p.root.position.z); let d = want - p.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); p.root.rotation.y += d * Math.min(1, dt * 3);
     }
   }
-  animateHound(dt, now);
+  animateDog(dt, now);
   // camera: first person, or a close-up during conversations
   fpPos.set(me.pos.x, inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
   if (camShot.active) {
+    if (camShot.snap) { camera.position.copy(camShot.pos); camera.lookAt(camShot.look); camShot.snap = false; }
     camera.position.lerp(camShot.pos, .12);
     const m = new THREE.Matrix4().lookAt(camera.position, camShot.look, V(0, 1, 0));
     camera.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(m), .15);
@@ -782,12 +734,72 @@ function tick(now) {
   } catch (e) { console.error(e); $("#loading").textContent = "Something didn't load. Try refreshing."; }
   paintGoal(); paintStats();
 })();
+/* ---------- the map: an old chart of the riverbank, drawn in code ---------- */
+function drawMap(cv) {
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height;
+  // world x -40..84 → map; world z -8..40 → map (river at the bottom)
+  const X = x => (x + 40) / 124 * W, Y = z => (z + 8) / 48 * H;
+  g.fillStyle = "#e6d8b8"; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(90,70,45,${Math.random() * .05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  // the river
+  g.fillStyle = "rgba(70,96,110,.55)"; g.fillRect(0, Y(SHORE), W, H - Y(SHORE));
+  g.strokeStyle = "rgba(40,60,70,.5)"; g.lineWidth = 2;
+  for (let k = 0; k < 7; k++) { g.beginPath(); for (let x = 0; x <= W; x += 20) g.lineTo(x, Y(SHORE + 2.5 + k * 2.4) + Math.sin(x / 40 + k) * 4); g.stroke(); }
+  g.strokeStyle = "#5a4630"; g.lineWidth = 3; g.beginPath(); g.moveTo(0, Y(SHORE)); g.lineTo(W, Y(SHORE)); g.stroke();
+  const ink = "#3a2a1c", label = (t, x, y, size = 26, it = false, color = ink) => { g.fillStyle = color; g.font = `${it ? "italic " : ""}${size}px "IM Fell English", Georgia, serif`; g.textAlign = "center"; g.fillText(t, x, y); };
+  // the arcade
+  g.fillStyle = "rgba(120,95,60,.18)"; g.fillRect(X(-37), Y(0), X(37) - X(-37), Y(8.5) - Y(0));
+  g.strokeStyle = ink; g.lineWidth = 2.5; g.strokeRect(X(-37), Y(0), X(37) - X(-37), Y(8.5) - Y(0));
+  g.fillStyle = ink; for (let x = -36; x <= 36; x += 6) { g.beginPath(); g.arc(X(x), Y(8), 5, 0, 7); g.fill(); }
+  label("THE ARCADE", X(0), Y(4.8), 28);
+  // the dock and the ferry
+  g.fillStyle = "#6b4e2e"; g.fillRect(X(-1.5), Y(SHORE - .5), X(1.5) - X(-1.5), Y(36) - Y(SHORE - .5));
+  g.beginPath(); g.ellipse(X(0), Y(37.8), 18, 34, 0, 0, 7); g.fill();
+  label("Charon's ferry", X(0) + 120, Y(36.5), 26, true);
+  // the temple and the dog's cave
+  g.strokeStyle = ink; g.strokeRect(X(45), Y(-5), X(67) - X(45), Y(13) - Y(-5));
+  for (const [x, z] of [[46, -4], [46, 3], [46, 12], [66, -4], [66, 3], [66, 12], [51, -4.5], [56, -4.5], [61, -4.5], [51, 12.5], [61, 12.5]]) { g.beginPath(); g.arc(X(x), Y(z), 5, 0, 7); g.fill(); }
+  label("THE OLD TEMPLE", X(56), Y(-1.8), 24);
+  g.fillStyle = "#b8862a"; g.beginPath(); g.arc(X(PLACES.altar.x), Y(PLACES.altar.z), 9, 0, 7); g.fill();
+  label("a coin, on the altar", X(56), Y(11.4), 20, true);
+  g.fillStyle = "rgba(40,25,20,.75)"; g.beginPath(); g.ellipse(X(72.5), Y(12), 42, 30, 0, 0, 7); g.fill();
+  label("where the dog sleeps", X(72.5), Y(18.5), 21, true, "#7a2414");
+  // people
+  const who = (x, z, t) => { g.fillStyle = "#2a3a5e"; g.beginPath(); g.arc(X(x), Y(z), 7, 0, 7); g.fill(); label(t, X(x), Y(z) - 14, 19, true, "#2a3a5e"); };
+  if (NPC.hermes?.root.visible) who(NPC.hermes.pos.x, NPC.hermes.pos.z, "Hermes");
+  who(-6, 16, "Elpenor");
+  who(56, -1, "Theseus & Pirithous");
+  label("THE RIVER STYX", X(30), Y(31), 30, false, "#2c4450");
+  label("the river is safe: the dog can't swim", X(30), Y(34.5), 20, true, "#2c4450");
+  // you
+  const mx = X(me.pos.x), my = Y(me.pos.z);
+  g.fillStyle = "#a2432c"; g.beginPath(); g.arc(mx, my, 10, 0, 7); g.fill();
+  g.strokeStyle = "#a2432c"; g.lineWidth = 4; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx - Math.sin(me.yaw) * 28, my - Math.cos(me.yaw) * 28); g.stroke();
+  label("you", mx, my + 32, 22, true, "#a2432c");
+  // where to go next
+  if (playing || me.stage === 0) { const goalAt = goal().at(); g.strokeStyle = "#b8862a"; g.lineWidth = 3; g.setLineDash([8, 8]); g.beginPath(); g.moveTo(mx, my); g.lineTo(X(goalAt.x), Y(goalAt.z)); g.stroke(); g.setLineDash([]); }
+  g.strokeStyle = ink; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
+}
+function toggleMap(on) {
+  const v = $("#mapview"), show = on ?? !v.classList.contains("on");
+  if (show) { drawMap($("#map2")); v.classList.add("on"); releaseMouse(); }
+  else { v.classList.remove("on"); if (playing && !talking) grabMouse(); }
+}
+addEventListener("keydown", e => { if (e.code === "KeyM" && (playing || $("#mapview").classList.contains("on")) && !talking) toggleMap(); });
+$("#mapview").addEventListener("click", () => toggleMap(false));
+$("#mapBtn").onclick = () => playing && !talking && toggleMap(true);
+
 $("#go").onclick = () => {
   sound.start(); actx.resume();
-  $("#start").classList.remove("on"); $("#bg").remove();
+  $("#start").classList.remove("on");
+  document.fonts.ready.then(() => drawMap($("#map1")));
+  $("#howto").classList.add("on");
+};
+$("#begin").onclick = () => {
+  $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
   playing = true; me.started = performance.now();
   grabMouse();
-  setTimeout(() => toast("Someone is waiting for you."), 700);
+  setTimeout(() => { if (!talking) toast("Hermes is waiting for you, just ahead."); }, 700);
 };
 
 // For testing only: /play/?debug exposes the game state in the console.
