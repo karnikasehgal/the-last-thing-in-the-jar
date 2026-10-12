@@ -8,7 +8,14 @@ Mikon chokes on an olive pit at his cousin's wedding and arrives at the River St
 
 Inspired by Zach Cregger's *Resident Evil* (2026), which skips the famous heroes and follows an ordinary man through the edges of the legend. Mikon is the old man Psyche is warned to ignore in Apuleius. Nobody ever wrote down his name.
 
-## How it plays
+## The game
+`/play` is a first-person version: an open riverbank in the Underworld built like an Italian loggia, with frescoed vaults and real water. Hermes tells you the rule out loud: no coin, no boat, and the dog can smell coins. Talk to Elpenor, Theseus and Pirithous and Charon (every line is spoken, and the camera cuts to whoever is talking), find a coin, and get it past Cerberus to the ferry. Cerberus can't swim.
+
+- 3D people: Quaternius *Universal Base Characters*, *Universal Animation Library* and *Modular Character Outfits: Fantasy* (all CC0), compressed into `public/play/assets/`.
+- Voices: recorded on-device with Kokoro (Apache 2.0) into `public/play/voice/`.
+- Cerberus is built in code (`makeHound` in `public/play/game.js`).
+
+## How the film plays
 - Press play and watch. The camera cuts across Renaissance paintings, every character speaks in their own voice with subtitles, and a quiet score changes with each act.
 - Five times the film stops and you choose what Mikon does.
 - At the end the Oracle tells you which Greek god you're most like, from your choices (AI).

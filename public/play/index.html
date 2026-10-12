@@ -13,130 +13,138 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 <style>
-:root{--cream:#f2e8d5;--dim:rgba(242,232,213,.65);--faint:rgba(242,232,213,.38);--paper:#efe6d4;--ink:#3a2e24;--red:#a2432c;--gold:#d6b25e;
+:root{--cream:#f2e8d5;--dim:rgba(242,232,213,.68);--faint:rgba(242,232,213,.38);--gold:#d6b25e;
   --body:"Cardo",Georgia,serif;--fell:"IM Fell English",Georgia,serif;--sc:"IM Fell English SC",Georgia,serif}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#000;color:var(--cream);font-family:var(--body);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 [hidden]{display:none!important}
-canvas#view{position:fixed;inset:0;width:100%;height:100%;display:block;transition:filter .25s}
-canvas#view.caught{filter:grayscale(1) contrast(1.3) brightness(.9)}
+canvas#view{position:fixed;inset:0;width:100%;height:100%;display:block;transition:filter .2s}
+canvas#view.caught{filter:grayscale(1) contrast(1.35)}
 
-/* HUD */
-.hud{position:fixed;inset:0;pointer-events:none;z-index:5}
-.rule{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-family:var(--fell);font-style:italic;font-size:20px;color:var(--cream);text-shadow:0 2px 12px #000;white-space:nowrap}
-.goal{position:absolute;top:18px;left:20px;font-family:var(--sc);letter-spacing:.12em;font-size:13px;color:var(--dim);text-shadow:0 1px 8px #000;max-width:40vw}
-.stats{position:absolute;top:18px;right:20px;font-family:var(--fell);font-style:italic;font-size:15px;color:var(--dim);text-align:right;text-shadow:0 1px 8px #000}
-.dot{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--cream);opacity:.7}
-.prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);font-family:var(--sc);letter-spacing:.14em;font-size:14px;padding:8px 14px;background:rgba(0,0,0,.55);border:1px solid var(--faint);opacity:0;transition:opacity .2s}
+.hud{position:fixed;inset:0;pointer-events:none;z-index:5;transition:opacity .4s}
+body.talking .hud .play-only{opacity:0}
+.rule{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-family:var(--fell);font-style:italic;font-size:19px;text-shadow:0 2px 12px #000;white-space:nowrap}
+.compass{position:absolute;top:46px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;font-family:var(--sc);letter-spacing:.12em;font-size:13px;color:var(--gold);text-shadow:0 1px 8px #000}
+.compass .arrow{display:inline-block;width:18px;height:18px;transition:transform .15s}
+.compass .arrow svg{width:18px;height:18px;fill:var(--gold);filter:drop-shadow(0 1px 4px #000)}
+.goal{position:absolute;top:16px;left:20px;font-family:var(--fell);font-style:italic;font-size:17px;color:var(--cream);text-shadow:0 1px 10px #000;max-width:34vw;line-height:1.35}
+.goal small{display:block;font-family:var(--sc);font-style:normal;letter-spacing:.14em;font-size:11px;color:var(--dim);margin-bottom:3px}
+.stats{position:absolute;top:16px;right:20px;font-family:var(--fell);font-style:italic;font-size:14px;color:var(--dim);text-align:right;text-shadow:0 1px 8px #000}
+.dot{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--cream);opacity:.65}
+.prompt{position:absolute;left:50%;top:60%;transform:translateX(-50%);font-family:var(--sc);letter-spacing:.14em;font-size:14px;padding:8px 14px;background:rgba(0,0,0,.55);border:1px solid var(--faint);opacity:0;transition:opacity .2s}
 .prompt.on{opacity:1}
-.carry{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-family:var(--fell);font-style:italic;font-size:18px;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;transition:opacity .4s}
+.carry{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-family:var(--fell);font-style:italic;font-size:18px;color:var(--gold);text-shadow:0 2px 10px #000;opacity:0;transition:opacity .4s}
 .carry.on{opacity:1}
-.toast{position:absolute;left:50%;top:30%;transform:translateX(-50%);font-family:var(--fell);font-size:clamp(22px,3vw,34px);text-align:center;text-shadow:0 2px 20px #000;opacity:0;transition:opacity .6s;width:min(90vw,800px)}
+.toast{position:absolute;left:50%;top:28%;transform:translateX(-50%);font-family:var(--fell);font-size:clamp(22px,3vw,32px);text-align:center;text-shadow:0 2px 20px #000;opacity:0;transition:opacity .6s;width:min(90vw,800px)}
 .toast.on{opacity:1}
-.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.6));transition:background .4s}
-.vignette.danger{background:radial-gradient(ellipse at center,transparent 35%,rgba(90,10,0,.55))}
+.danger{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(110,12,0,.5));opacity:0;transition:opacity .4s}
+.danger.on{opacity:1}
 
-/* dialogue, like an old adventure game */
-.talk{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(860px,calc(100vw - 24px));z-index:10;display:none;gap:18px;align-items:flex-start;background:rgba(14,11,9,.92);border:1px solid rgba(214,178,94,.45);padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.talk.on{display:flex}
-.talk .face{width:120px;height:150px;flex:none;object-fit:cover;border:3px solid #6b5432;box-shadow:inset 0 0 0 1px #000;background:#222}
-.talk .body{flex:1;min-width:0}
-.talk .who{font-family:var(--sc);letter-spacing:.14em;font-size:14px;color:var(--gold)}
-.talk .line{font-size:20px;line-height:1.45;margin-top:4px;min-height:2.9em}
-.talk .opts{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.talk .opts button{text-align:left;font-size:17px;padding:8px 12px;border:1px solid var(--faint);background:rgba(0,0,0,.3)}
-.talk .opts button:hover,.talk .opts button:focus-visible{border-color:var(--cream);outline:none}
-.talk .opts button b{font-family:var(--sc);color:var(--gold);margin-right:8px;font-weight:400}
-.talk .next{margin-top:8px;font-style:italic;font-size:14px;color:var(--faint)}
+/* film-style dialogue: letterbox, name, subtitle, choices */
+.bars::before,.bars::after{content:"";position:fixed;left:0;right:0;height:0;background:#000;z-index:8;transition:height .6s ease}
+.bars::before{top:0}.bars::after{bottom:0}
+body.talking .bars::before,body.talking .bars::after{height:10vh}
+.sub{position:fixed;left:50%;bottom:calc(10vh + 22px);transform:translateX(-50%);z-index:9;width:min(860px,calc(100vw - 32px));text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
+.sub.on{opacity:1}
+.sub b{display:block;font-family:var(--sc);font-weight:400;letter-spacing:.18em;font-size:13px;color:var(--gold);margin-bottom:4px}
+.sub span{font-size:clamp(19px,2.1vw,25px);line-height:1.4;text-shadow:0 0 2px #000,0 2px 12px #000,0 0 30px rgba(0,0,0,.9)}
+.choices{position:fixed;left:50%;bottom:calc(10vh + 18px);transform:translateX(-50%);z-index:10;width:min(640px,calc(100vw - 32px));display:none;flex-direction:column;gap:8px}
+.choices.on{display:flex}
+.choices button{text-align:left;font-size:18px;padding:11px 16px;border:1px solid var(--faint);background:rgba(10,8,6,.78);line-height:1.35}
+.choices button:hover,.choices button:focus-visible{border-color:var(--cream);outline:none}
+.choices button b{font-family:var(--sc);color:var(--gold);margin-right:10px;font-weight:400}
+.skiphint{position:fixed;right:22px;bottom:calc(10vh + 14px);z-index:9;font-family:var(--fell);font-style:italic;font-size:14px;color:var(--faint);opacity:0}
+body.talking .skiphint{opacity:1}
 
-/* full-screen cards */
-.card{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,rgba(0,0,0,.55),rgba(0,0,0,.92))}
+/* cards */
+.card{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,rgba(0,0,0,.5),rgba(0,0,0,.92))}
 .card.on{display:flex}
 .card h1{font-family:var(--fell);font-weight:400;font-size:clamp(52px,9vw,120px);line-height:1;text-shadow:0 2px 30px rgba(0,0,0,.7)}
 .card .over{font-family:var(--fell);font-style:italic;color:var(--dim);font-size:19px}
 .card .rulebig{font-family:var(--fell);font-style:italic;font-size:clamp(22px,3vw,30px);margin:22px 0 6px}
 .card .small{font-size:15px;color:var(--dim);margin-top:4px}
-.card .keys{margin:22px auto 0;display:grid;grid-template-columns:auto auto;gap:6px 18px;font-size:15px;color:var(--dim);text-align:left;width:max-content}
+.card .keys{margin:20px auto 0;display:grid;grid-template-columns:auto auto;gap:6px 18px;font-size:15px;color:var(--dim);text-align:left;width:max-content}
 .card .keys b{font-family:var(--sc);letter-spacing:.1em;color:var(--cream);font-weight:400;text-align:right}
-.big{font-family:var(--sc);letter-spacing:.16em;font-size:17px;border:1px solid rgba(242,232,213,.6);padding:13px 34px;margin-top:28px;transition:.3s}
+.big{display:inline-block;font-family:var(--sc);letter-spacing:.16em;font-size:17px;border:1px solid rgba(242,232,213,.6);padding:13px 34px;margin-top:26px;transition:.3s;color:var(--cream);text-decoration:none}
 .big:hover{background:var(--cream);color:#000}
-a.big{color:var(--cream);display:inline-block;text-decoration:none}
-body.over .hud,body.over .touch{display:none!important}
+.big[disabled]{opacity:.4;pointer-events:none}
 .link{display:block;margin:14px auto 0;font-style:italic;color:var(--dim);font-size:15px;text-decoration:none}
 .link:hover{color:var(--cream)}
-#bg{position:fixed;inset:0;background:url(../img/lib/styx/last-judgment.jpg) center/cover;filter:brightness(.35) sepia(.2);z-index:19}
+.loading{margin-top:14px;font-style:italic;font-size:14px;color:var(--faint);min-height:1.2em}
+#bg{position:fixed;inset:0;background:url(../img/lib/styx/patinir-styx.jpg) center/cover;filter:brightness(.32) sepia(.25);z-index:19}
 
-#scare{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:#000}
-#scare.on{display:flex}
-#scare canvas{width:min(100vw,140vh);height:auto;filter:grayscale(1) contrast(1.4);animation:lunge .5s cubic-bezier(.2,1.6,.4,1) both}
-@keyframes lunge{from{transform:scale(.4)}to{transform:scale(1.15)}}
-#scare p{position:absolute;bottom:12vh;left:0;right:0;font-family:var(--fell);font-style:italic;font-size:28px;text-shadow:0 2px 20px #000}
-
-#end .portrait{width:min(260px,60vw);aspect-ratio:3/4;object-fit:cover;border:4px solid #6b5432;margin:18px auto 10px;display:block}
+#end .portrait{width:min(240px,56vw);aspect-ratio:3/4;object-fit:cover;border:4px solid #6b5432;margin:16px auto 10px;display:block}
 #end .god{font-family:var(--fell);font-size:clamp(40px,6vw,64px);line-height:1}
 #end .arch{font-style:italic;color:var(--dim)}
-#end .read{max-width:560px;margin:14px auto 0;font-size:18px;line-height:1.5}
-#end .score{margin-top:14px;font-family:var(--sc);letter-spacing:.12em;font-size:13px;color:var(--faint)}
+#end .read{max-width:560px;margin:12px auto 0;font-size:18px;line-height:1.5}
+#end .score{margin-top:12px;font-family:var(--sc);letter-spacing:.12em;font-size:13px;color:var(--faint)}
 #end .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-#end .row .big{margin-top:18px;padding:11px 22px;font-size:15px}
+#end .row .big{margin-top:16px;padding:11px 22px;font-size:15px}
 #end>div{max-height:100%;overflow:auto;padding:10px}
 
-/* touch controls */
 .touch{position:fixed;inset:0;z-index:6;display:none}
 .touch.on{display:block}
+body.talking .touch{display:none}
 .touch .stick{position:absolute;left:22px;bottom:30px;width:120px;height:120px;border-radius:50%;border:1px solid var(--faint);background:rgba(0,0,0,.25)}
 .touch .knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(242,232,213,.35)}
 .touch .act{position:absolute;right:22px;bottom:40px;display:flex;flex-direction:column;gap:12px}
 .touch .act button{width:64px;height:64px;border-radius:50%;border:1px solid var(--dim);background:rgba(0,0,0,.4);font-family:var(--sc);font-size:14px}
-@media (max-width:700px){.rule{font-size:16px;top:12px}.goal{top:44px;left:14px;max-width:70vw}.stats{top:44px;right:14px}.talk .face{width:80px;height:100px}.talk .line{font-size:17px}}
+@media (max-width:700px){.rule{font-size:15px;top:10px}.compass{top:34px}.goal{top:64px;left:14px;max-width:62vw;font-size:15px}.stats{top:64px;right:14px}}
 </style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
 <canvas id="view"></canvas>
+<div class="bars"></div>
 
 <div class="hud">
-  <div class="vignette" id="vig"></div>
-  <div class="rule">The dog can smell coins.</div>
-  <div class="goal" id="goal">Find a coin. Get to the ferry.</div>
-  <div class="stats" id="stats"></div>
-  <div class="dot"></div>
-  <div class="prompt" id="prompt"></div>
-  <div class="carry" id="carry">You're carrying a coin. Something can smell it.</div>
+  <div class="danger" id="danger"></div>
+  <div class="play-only">
+    <div class="rule">The dog can smell coins.</div>
+    <div class="compass" id="compass"><span class="arrow"><svg viewBox="0 0 20 20"><path d="M10 1 17 17 10 13 3 17z"/></svg></span><span id="compassText"></span></div>
+    <div class="goal" id="goal"></div>
+    <div class="stats" id="stats"></div>
+    <div class="dot"></div>
+    <div class="prompt" id="prompt"></div>
+    <div class="carry" id="carry">You're carrying a coin. Something can smell it.</div>
+  </div>
   <div class="toast" id="toast"></div>
 </div>
 
-<div class="talk" id="talk"><img class="face" alt=""><div class="body"><div class="who"></div><div class="line"></div><div class="opts"></div><div class="next"></div></div></div>
+<div class="sub" id="sub"><b></b><span></span></div>
+<div class="choices" id="choices"></div>
+<div class="skiphint">click to skip a line</div>
 
-<div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tE">talk</button><button id="tQ">drop</button></div></div>
+<div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tE">use</button><button id="tQ">drop</button></div></div>
 
 <div id="bg"></div>
 <div class="card on" id="start"><div>
   <div class="over">a game, from the film</div>
   <h1>The Coin</h1>
   <div class="rulebig">The dog can smell coins.</div>
-  <div class="small">Find a coin. Get it to the ferry. Cerberus can't swim.</div>
+  <div class="small">You died without the fare. Find a coin and get it to the ferry.</div>
   <div class="keys" id="keys"><b>WASD</b><span>walk</span><b>Mouse</b><span>look</span><b>Shift</b><span>run</span><b>E</b><span>talk, pick up</span><b>Q</b><span>drop the coin</span></div>
-  <button class="big" id="go">Enter</button>
+  <button class="big" id="go" disabled>Enter</button>
+  <div class="loading" id="loading">Loading the Underworld…</div>
   <a class="link" href="../">or watch the film</a>
+  <div class="small" style="margin-top:22px;font-size:12.5px;color:rgba(242,232,213,.4)">People by Quaternius (CC0). Voices made with Kokoro. Paintings credited in the film.</div>
 </div></div>
 
 <div class="card" id="paused"><div><h1 style="font-size:56px">Paused</h1><button class="big" id="resume">Back in</button><a class="link" href="../">watch the film instead</a></div></div>
 
-<div id="scare"><canvas width="900" height="600"></canvas><p>Could be worse.</p></div>
-
 <div class="card" id="end"><div>
-  <div class="over" id="endline">You crossed.</div>
+  <div class="over" id="endline"></div>
   <img class="portrait" alt="">
   <div class="over">you played like</div>
   <div class="god"></div>
   <div class="arch"></div>
   <p class="read"></p>
   <div class="score"></div>
-  <div class="row"><button class="big" id="again">Play again</button><a class="big" style="text-decoration:none" href="../">Watch the film</a><button class="big" id="share">Share on X</button></div>
+  <div class="row"><button class="big" id="again">Play again</button><a class="big" href="../">Watch the film</a><button class="big" id="share">Share on X</button></div>
 </div></div>
 
+<audio id="voice" preload="auto"></audio>
 <script type="module" src="game.js"></script>
 </body>
 </html>
