@@ -31,8 +31,10 @@ const inWater = p => p.z > SHORE && !onDock(p);
 
 /* ---------- renderer, camera, post-processing ---------- */
 const canvas = $("#view");
-const renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: "high-performance"});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+// Phones, tablets and modest laptops get a lighter version so it stays smooth.
+const LITE = matchMedia("(pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4 || innerWidth * innerHeight * devicePixelRatio ** 2 > 6e6;
+const renderer = new THREE.WebGLRenderer({canvas, antialias: !LITE, powerPreference: "high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.25 : 1.75));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
@@ -44,15 +46,15 @@ camera.rotation.order = "YXZ";
 
 // A painterly finish: soft brushy patches, warm old-pigment grade, vignette, grain.
 const Painterly = {
-  uniforms: {tDiffuse: {value: null}, time: {value: 0}, danger: {value: 0}},
+  uniforms: {tDiffuse: {value: null}, time: {value: 0}, danger: {value: 0}, lite: {value: LITE ? 1 : 0}},
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float time; uniform float danger; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float time; uniform float danger; uniform float lite; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
     void main(){
       vec2 px = 1.0 / vec2(1600.0, 900.0);
       vec3 c = texture2D(tDiffuse, vUv).rgb;
       vec3 acc = c; float w = 1.0;
-      for (int i = 0; i < 6; i++) { float a = float(i) * 1.047; vec2 o = vec2(cos(a), sin(a)) * px * 2.2;
+      if (lite < .5) for (int i = 0; i < 6; i++) { float a = float(i) * 1.047; vec2 o = vec2(cos(a), sin(a)) * px * 2.2;
         vec3 s = texture2D(tDiffuse, vUv + o).rgb; float k = 1.0 - smoothstep(0.0, 0.25, distance(s, c)); acc += s * k; w += k; }
       c = acc / w;
       float l = dot(c, vec3(.299,.587,.114));
@@ -147,7 +149,7 @@ const waterNormals = (() => {
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 })();
 const water = new Water(new THREE.PlaneGeometry(240, 140), {
-  textureWidth: 512, textureHeight: 512, waterNormals, sunDirection: moon.position.clone().normalize(),
+  textureWidth: LITE ? 256 : 512, textureHeight: LITE ? 256 : 512, waterNormals, sunDirection: moon.position.clone().normalize(),
   sunColor: 0xcfd9ff, waterColor: 0x0f1c18, distortionScale: 2.4, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 70); scene.add(water);
@@ -161,9 +163,21 @@ const back = new THREE.Mesh(new THREE.BoxGeometry(76, 9.5, .6), M.plaster); back
 boxes.push([-38, -1, 38, .3]);
 for (let i = 0; i < 6; i++) {
   const xc = -36 + i * 12 + 6;
-  const vault = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 12, 32, 1, true, Math.PI / 2, Math.PI),
-    new THREE.MeshStandardMaterial({map: tex(LIB + VAULTS[i]), side: THREE.BackSide, roughness: .9, color: 0xb5a891}));
-  vault.rotation.z = Math.PI / 2; vault.position.set(xc, 6.4, 4); scene.add(vault);
+  // a flat coffered ceiling, with the painting set into it as a framed panel
+  // (quadro riportato, the way the Farnese and Sistine ceilings do it), at its true proportions
+  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(12, .3, 8.6), new THREE.MeshStandardMaterial({map: plasterTex, roughness: .95, color: 0xcabba0}));
+  ceiling.position.set(xc, 9.75, 4.1); scene.add(ceiling);
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(.6, .5, 8.6), M.column); beam.position.set(xc - 6, 9.5, 4.1); scene.add(beam);
+  const panel = new THREE.Group(); panel.position.set(xc, 9.58, 4.1); scene.add(panel);
+  const pt = loader.load(LIB + VAULTS[i], t => {
+    const maxW = 8.6, maxD = 5.6, a = t.image.width / t.image.height;
+    let w = maxW, d = w / a; if (d > maxD) { d = maxD; w = d * a; }
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(w + .5, .18, d + .5), new THREE.MeshStandardMaterial({color: 0x8a6a36, metalness: .6, roughness: .35}));
+    const pic = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({map: t, roughness: .85, color: 0xd8ccb8}));
+    pic.rotation.x = Math.PI / 2; pic.position.y = -.1;
+    panel.add(frame, pic);
+  });
+  pt.colorSpace = THREE.SRGBColorSpace; pt.anisotropy = 8;
   torch(xc, 4.3, .5, 24);
 }
 const roof = new THREE.Mesh(new THREE.BoxGeometry(76, .5, 9.4), M.plaster); roof.position.set(0, 10.85, 4); scene.add(roof);
@@ -856,7 +870,11 @@ $("#go").onclick = () => {
   document.fonts.ready.then(() => drawMap($("#map1")));
   $("#howto").classList.add("on");
 };
+function rotateHint() { $("#rotate").classList.toggle("on", matchMedia("(pointer: coarse)").matches && innerHeight > innerWidth && playing && !ended); }
+addEventListener("resize", rotateHint);
+$("#rotate").addEventListener("click", () => $("#rotate").classList.add("dismissed"));
 $("#begin").onclick = () => {
+  setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
   playing = true; me.started = performance.now();
   grabMouse();

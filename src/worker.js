@@ -56,8 +56,24 @@ function cleanMessages(input) {
 const clampInt = (n, lo, hi) => Math.max(lo, Math.min(hi, Number.isInteger(n) ? n : lo));
 const god = (g) => (GODS.includes(g) ? g : null);
 
+// Only our own pages may use the AI. Browsers always send an Origin header on these requests,
+// so another website (or a script without one) can't spend our allowance.
+function allowed(request, env) {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  const host = new URL(request.url).host;
+  const extra = (env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+  try {
+    const o = new URL(origin);
+    return o.host === host || extra.includes(origin) || o.hostname === "localhost" || o.hostname === "127.0.0.1";
+  } catch { return false; }
+}
+const MAX_BODY = 24000; // bytes; a whole conversation fits comfortably
+
 async function handle(request, env, ctx, kind) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!allowed(request, env)) return json({ error: "Forbidden" }, 403);
+  if (+(request.headers.get("content-length") || 0) > MAX_BODY) return json({ error: "Too large" }, 413);
   if (!env.ANTHROPIC_API_KEY && !env.AI) return json({ error: "The echoes are silent: no AI is configured yet." }, 503);
 
   if (env.LIMITER) {
@@ -166,6 +182,8 @@ const VOICES = ["thalia"];
 
 async function voice(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!allowed(request, env)) return json({ error: "Forbidden" }, 403);
+  if (+(request.headers.get("content-length") || 0) > 4000) return json({ error: "Too large" }, 413);
   if (!env.AI) return json({ error: "No voice configured" }, 503);
   if (env.LIMITER) {
     const { success } = await env.LIMITER.limit({ key: request.headers.get("cf-connecting-ip") || "anon" });

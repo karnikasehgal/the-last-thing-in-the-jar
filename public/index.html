@@ -12,6 +12,13 @@
 <meta property="og:url" content="https://the-coin.karnika-portfolio.workers.dev/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://the-coin.karnika-portfolio.workers.dev/og.jpg">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Coin">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
@@ -242,5 +249,6 @@ a.big{color:var(--cream);text-decoration:none;display:inline-block}
 <script src="film.js"></script>
 <script src="shots.js"></script>
 <script src="player.js"></script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 </body>
 </html>
