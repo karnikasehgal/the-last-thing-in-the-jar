@@ -14,5 +14,7 @@
   "ratelimits": [{ "name": "LIMITER", "namespace_id": "1002", "simple": { "limit": 12, "period": 60 } }],
   // Built-in Cloudflare AI: used when no Anthropic key is set.
   "ai": { "binding": "AI" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // The public address. Cloudflare creates the DNS record and certificate automatically.
+  "routes": [{ "pattern": "coin.klickbaitbyk.com", "custom_domain": true }]
 }

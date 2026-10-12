@@ -405,7 +405,11 @@ const sound = {
 
 /* ---------- HUD ---------- */
 let toastT;
-function toast(msg, ms = 2800) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), ms); }
+// Alerts read like breaking news on the front page.
+function toast(msg, ms = 2800, label = "Breaking") {
+  const t = $("#toast"); t.querySelector("b").textContent = label; t.querySelector("span").textContent = msg;
+  t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), ms);
+}
 function paintStats() { $("#stats").innerHTML = `caught by the dog: ${me.caught}<br>splashed: ${me.splashed}`; }
 const GOALS = [
   {label: "Talk to Hermes, the man waiting in the arcade", at: () => NPC.hermes.pos},
@@ -560,12 +564,12 @@ function pickCoin(mesh) {
   if (mesh) { scene.remove(mesh); coins = coins.filter(c => c !== mesh); }
   me.coin = true; sound.chime(); paintGoal();
   $("#carry").classList.add("on");
-  if (dog.mode === "drugged") toast("Got it. Run. When he wakes up, he'll smell it.");
-  else wakeDog("He smelled the coin. RUN.");
+  if (dog.mode === "drugged") toast("Man takes coin. Dog still asleep, for now. Run.", 3200);
+  else wakeDog("Dog smells coin. Local man runs.");
 }
 function pickCake() {
   scene.remove(cake); cake = null; me.cake = true; sound.chime(); paintGoal();
-  toast("A honey cake. Sticky. The dog will love it.");
+  toast("Local man steals honey cake from altar. Gods unavailable for comment.", 3200);
 }
 function throwCake() {
   me.cake = false;
@@ -580,7 +584,7 @@ function throwCake() {
   })();
   setTimeout(() => {
     dog.mode = "drugged"; dog.drugUntil = performance.now() + 25000; dog.noiseUntil = 0;
-    toast("He ate it. He's out cold. You've got about 25 seconds."); paintGoal();
+    toast("Three-headed dog eats cake, falls asleep. You have about 25 seconds.", 3600); paintGoal();
   }, 750);
 }
 function dropCoin() {
@@ -604,7 +608,7 @@ function updateDog(dt, now) {
     if (now > dog.snore) { sound.growl(.25); dog.snore = now + 2600; }
     if (now < dog.drugUntil) { paint.uniforms.danger.value *= .9; $("#danger").classList.remove("on"); return; }
     dog.mode = "sleep"; $("#carry").textContent = "You're carrying a coin. Something can smell it."; $("#carry").classList.toggle("on", me.coin);
-    if (me.coin) wakeDog("He's awake. And he smells the coin.");
+    if (me.coin) wakeDog("Dog wakes up. Dog smells coin. Dog is not happy.");
     paintGoal();
   }
   const wanted = me.coin || now < dog.noiseUntil;
@@ -642,9 +646,11 @@ async function caught() {
   const head = new THREE.Vector3(); hound.heads[1].head.getWorldPosition(head);
   camShot.pos.copy(head).add(flat(me.pos).sub(flat(dog.pos)).normalize().multiplyScalar(.9)).setY(head.y);
   camShot.look.copy(head); camShot.active = true;
-  canvas.classList.add("caught"); sound.hit(); toast("Could be worse.", 2400);
+  canvas.classList.add("caught"); sound.hit();
+  const st = $("#stamp"); st.classList.remove("go"); void st.offsetWidth; st.classList.add("go");
   await new Promise(r => setTimeout(r, 2300));
-  canvas.classList.remove("caught"); camShot.active = false;
+  canvas.classList.remove("caught"); camShot.active = false; $("#stamp").classList.remove("go");
+  toast("Man caught by dog. Says it could be worse.", 2600);
   if (me.coin) { me.coin = false; $("#carry").classList.remove("on"); }
   coins.forEach(c => scene.remove(c)); coins = []; makeCoin(PLACES.coinSpot, .14);
   me.cake = false; placeCake();
@@ -676,12 +682,18 @@ function finish(text) {
   if (me.caught === 0) score.Athena += 1; else if (me.caught > 2) score.Ares += 1;
   const patron = Object.keys(score).sort((a, b) => score[b] - score[a])[0];
   const mins = Math.max(1, Math.round((performance.now() - me.started) / 60000));
+  const HEDS = {
+    "You crossed. It goes faster than you'd think.": "Local man crosses Styx after a century on the bank",
+    "You both crossed. Charon will deny this.": "Ferryman breaks his own rule, takes two",
+    "You stayed. You've got a rock. You've got a view.": "Man with coin refuses ferry. \u2018I've got a view,\u2019 he says"
+  };
+  $("#endHed").textContent = HEDS[text] || "Local man reaches ferry";
   $("#endline").textContent = text;
   $("#end .portrait").src = `${LIB}gods/${patron.toLowerCase()}.jpg`;
-  $("#end .god").textContent = patron;
-  $("#end .arch").textContent = GODS[patron].a;
-  $("#end .read").textContent = `${GODS[patron].gift} Watch out, though: ${GODS[patron].shadow} Could be worse.`;
-  $("#end .score").textContent = `${mins} minute${mins > 1 ? "s" : ""} · caught by the dog ${me.caught} time${me.caught === 1 ? "" : "s"} · splashed ${me.splashed} time${me.splashed === 1 ? "" : "s"}`;
+  $("#endCap").innerHTML = `Experts say you played like <b>${patron}</b>, ${GODS[patron].a.toLowerCase()}.`;
+  $("#end .read").textContent = `Sources close to the riverbank describe the player as a classic case of ${patron}. ${GODS[patron].gift} Friends warn of the downside: ${GODS[patron].shadow} The dog has been asked for comment and replied with three separate growls. Could be worse.`;
+  const row = (k, v, cls = "") => `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`;
+  $("#index").innerHTML = row("Minutes in the Underworld", mins) + row("Caught by the dog", me.caught, me.caught ? "down" : "up") + row("Splashes", me.splashed, me.splashed ? "down" : "up") + row("Coins delivered", 1, "up");
   $("#end").classList.add("on");
   $("#share").onclick = () => open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I got a coin past a three-headed dog and onto Charon's ferry. Caught ${me.caught} time${me.caught === 1 ? "" : "s"}. Apparently I play like ${patron}.`)}&url=${encodeURIComponent(location.origin + "/play/")}`, "_blank", "noopener");
 }
@@ -752,7 +764,7 @@ function tick(now) {
       else if (me.pos.z + dz > DEEP - .5) toast("Too deep. You can't swim either.", 1500);
       stepT -= dt; if (stepT <= 0) { sound.step(wet); stepT = wet ? .7 : (speed > 5 ? .3 : .45); }
     }
-    if (wet && !wasWet) { sound.splash(); me.splashed++; paintStats(); if (dog.mode === "hunt") toast("It won't follow you into the river."); }
+    if (wet && !wasWet) { sound.splash(); me.splashed++; paintStats(); if (dog.mode === "hunt") toast("Dog refuses to get wet. Experts not surprised.", 2600, "Update"); }
     wasWet = wet;
     if (!greeted && NPC.hermes && flat(me.pos).distanceTo(NPC.hermes.pos) < 4.5) { greeted = true; conversation("hermes"); }
     const n = nearby(), pr = $("#prompt");

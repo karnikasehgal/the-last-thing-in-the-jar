@@ -2,7 +2,7 @@
 
 **A short film you can play.** Episode I of *The Last Thing in the Jar*.
 
-Live: https://the-coin.karnika-portfolio.workers.dev
+Live: https://coin.klickbaitbyk.com
 
 Mikon chokes on an olive pit at his cousin's wedding and arrives at the River Styx without the coin for the ferry. The rule is a hundred years on the bank. So he waits, and for a century he watches the famous visitors go past: Orpheus singing the ferryman to tears, Theseus and Pirithous getting stuck to their chairs, Heracles walking off with the three-headed dog, Elpenor (who fell off a roof in the *Odyssey*), Aeneas with his golden branch, and Psyche, who is carrying two coins and has been told not to help him.
 
