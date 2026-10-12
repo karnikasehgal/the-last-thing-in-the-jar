@@ -22,3 +22,20 @@ What comes from the ancient sources, what is a variant, and what we made up.
 | Mikon, the olive pit, the oar that splashes him | **Invented** | Our side character. Apuleius never names the old man. |
 | The riverbank with an Italian arcade and a temple | **Invented setting** | A Renaissance-style staging, not an ancient description. |
 | Charon only ever says "Coin." | **Our characterisation** | Ancient Charon is a grim, filthy old ferryman (Virgil); the deadpan is ours. |
+
+## Chapter II, The Lyre
+
+| In the game | Verdict | Where it comes from |
+|---|---|---|
+| Orpheus goes down alive to bring back Eurydice, who died of a snakebite on their wedding day | **Ancient** | Virgil, *Georgics* 4.453 to 527; Ovid, *Metamorphoses* 10.1 to 77 |
+| His music moves Charon, Cerberus and the shades | **Ancient** | Virgil says Cerberus held his three mouths open and still; Ovid says the bloodless shades wept |
+| Sisyphus sits down on his rock to listen | **Ancient** | Ovid, *Metamorphoses* 10.44 |
+| Cerberus by the gate on the far bank | **Ancient** | Virgil puts his cave on the far shore (*Aeneid* 6.417 to 423) |
+| He pleads that it's "a loan, not a gift", and that love brought Hades and Persephone together too | **Ancient** | Both arguments are in Orpheus's speech in Ovid, *Metamorphoses* 10.17 to 39 |
+| Persephone persuades Hades | **Our staging** | The sources give the decision to the king and queen together |
+| The one condition: don't look back until you're out | **Ancient** | Virgil and Ovid |
+| Eurydice limping from her wound | **Ancient** | Ovid: "she came with slow steps, from her wound" |
+| She says only "goodbye" as she goes | **Ancient** | Ovid: a last farewell he barely heard |
+| You can choose not to look back | **Invented** | In every ancient version, he does |
+| A white cypress and a spring to the left of the House of Hades, the Lake of Memory to the right | **Ancient** | The Orphic gold tablets (Petelia, Hipponion) |
+| The way up is a sea cave | **Our staging** | Orpheus is said to have gone down at Taenarum, a cave by the sea at the southern tip of Greece |

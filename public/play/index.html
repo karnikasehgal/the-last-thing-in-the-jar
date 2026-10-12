@@ -123,8 +123,63 @@ canvas.map{width:100%;height:auto;border:1px solid rgba(214,178,94,.5);box-shado
 #mapview .small{margin-top:10px}
 .mapbtn{position:fixed;right:20px;top:64px;z-index:6;font-family:var(--sc);letter-spacing:.12em;font-size:12px;border:1px solid var(--faint);padding:6px 10px;background:rgba(0,0,0,.4);color:var(--dim)}
 body.talking .mapbtn{display:none}
+
+/* chapters, the Codex, found things, songs, the lyre */
+.chapters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:22px auto 0;max-width:760px}
+.chapters button{display:flex;flex-direction:column;align-items:center;min-width:84px;padding:8px 10px;border:1px solid rgba(242,232,213,.22);background:rgba(0,0,0,.35);transition:.25s}
+.chapters button i{font-family:var(--sc);font-style:normal;font-size:12px;letter-spacing:.14em;color:var(--gold)}
+.chapters button b{font-family:var(--fell);font-weight:400;font-size:17px}
+.chapters button span{font-style:italic;font-size:12.5px;color:var(--dim)}
+.chapters button.sel{border-color:var(--cream);background:rgba(242,232,213,.08)}
+.chapters button[disabled]{opacity:.35;cursor:default}
+.codexbtn{position:fixed;right:20px;top:96px;z-index:6;font-family:var(--sc);letter-spacing:.12em;font-size:12px;border:1px solid var(--faint);padding:6px 10px;background:rgba(0,0,0,.4);color:var(--dim)}
+body.talking .codexbtn{display:none}
+#codex{background:rgba(6,5,4,.94);align-items:flex-start}
+#codex>div{max-width:1000px;width:100%;text-align:left}
+#codex h2{font-family:var(--fell);font-weight:400;font-size:clamp(34px,4.6vw,54px);text-align:center}
+#codex .lede{text-align:center;font-style:italic;color:var(--dim);margin-top:4px}
+#codex h4{font-family:var(--sc);font-weight:400;letter-spacing:.16em;font-size:14px;color:var(--gold);margin:28px 0 10px;border-bottom:1px solid rgba(214,178,94,.3);padding-bottom:6px}
+#codex h4 span{float:right;color:var(--dim)}
+#codex .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:12px}
+#codex .entry{border:1px solid rgba(242,232,213,.16);padding:12px 14px;background:rgba(242,232,213,.03)}
+#codex .entry b{display:block;font-family:var(--fell);font-weight:400;font-size:20px}
+#codex .entry p{font-size:15px;line-height:1.45;margin-top:4px}
+#codex .entry small{display:block;margin-top:6px;font-style:italic;font-size:12.5px;color:var(--faint)}
+#codex .entry.locked{opacity:.4}
+#codex .close{display:block;margin:28px auto 10px}
+#found{position:fixed;left:20px;bottom:24px;z-index:11;max-width:min(420px,calc(100vw - 40px));padding:14px 16px;border:1px solid rgba(214,178,94,.5);background:rgba(8,6,4,.86);opacity:0;transform:translateY(8px);transition:.5s;pointer-events:none}
+#found.on{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
+#found em{display:block;font-family:var(--sc);font-style:normal;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+#found b{display:block;font-family:var(--fell);font-weight:400;font-size:22px;margin-top:2px}
+#found p{font-size:15px;line-height:1.45;margin-top:4px}
+#found small{display:block;margin-top:6px;font-style:italic;font-size:12px;color:var(--faint)}
+#perform{position:fixed;inset:0;z-index:15;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(10vh + 30px);background:linear-gradient(transparent 40%,rgba(0,0,0,.65))}
+#perform.on{display:flex}
+#perform h3{font-family:var(--fell);font-weight:400;font-size:clamp(24px,3vw,34px);text-shadow:0 2px 14px #000}
+#perform .psub{font-style:italic;color:var(--dim);font-size:15px;margin:4px 0 14px;text-shadow:0 2px 10px #000}
+#perform .lane{position:relative;width:min(760px,calc(100vw - 32px));height:120px;border-top:1px solid rgba(214,178,94,.35);border-bottom:1px solid rgba(214,178,94,.35);background:rgba(0,0,0,.35);overflow:hidden}
+#perform .lane::before{content:"";position:absolute;left:10%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;border:2px solid var(--gold);box-shadow:0 0 18px rgba(214,178,94,.4)}
+#perform.good .lane::before{animation:good .25s}
+#perform.miss .lane::before{animation:miss .25s}
+@keyframes good{50%{transform:scale(1.25);background:rgba(214,178,94,.35)}}
+@keyframes miss{50%{border-color:#a2432c;transform:translateX(4px)}}
+#perform .note{position:absolute;top:var(--h);width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--cream);box-shadow:0 0 12px rgba(242,232,213,.7);transition:opacity .2s, transform .2s}
+#perform .note.hit{transform:scale(1.8);opacity:0!important;background:var(--gold)}
+#perform .note.missed{background:#6a5a4a;box-shadow:none}
+#perform .meter{width:min(760px,calc(100vw - 32px));height:4px;background:rgba(242,232,213,.15);margin-top:10px}
+#perform .meter i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
+#lyremeter{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:none;gap:18px;font-family:var(--sc);letter-spacing:.12em;font-size:11px;color:var(--dim);text-shadow:0 1px 8px #000}
+#lyremeter.on{display:flex}
+#lyremeter div{width:150px}
+#lyremeter .bar{height:5px;background:rgba(242,232,213,.15);margin-top:4px}
+#lyremeter .bar i{display:block;height:100%;background:var(--cream)}
+#lyremeter .calm .bar i{background:var(--gold)}
+#lyremeter.tired .breath .bar i{background:#a2432c}
+body.daylight::after{content:"";position:fixed;inset:0;z-index:18;background:#fff8ea;animation:dawn 2.6s forwards}
+@keyframes dawn{from{opacity:0}to{opacity:1}}
 @media (max-width:760px){.howgrid{grid-template-columns:1fr}.steps div{font-size:16px}}
-@media (max-width:700px){.rule{font-size:15px;top:10px}.compass{top:34px}.goal{top:64px;left:14px;max-width:62vw;font-size:15px}.stats{top:64px;right:14px}}
+@media (max-width:700px){.rule{font-size:15px;top:10px}.compass{top:34px}.goal{top:64px;left:14px;max-width:58vw;font-size:15px}.stats{top:134px;right:14px;font-size:12.5px}.mapbtn{right:14px}.codexbtn{right:14px}}
+body:has(#perform.on) .skiphint{opacity:0}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -142,6 +197,7 @@ body.talking .mapbtn{display:none}
     <div class="dot"></div>
     <div class="prompt" id="prompt"></div>
     <div class="carry" id="carry">You're carrying a coin. Something can smell it.</div>
+    <div id="lyremeter"><div class="breath">your fingers<div class="bar"><i></i></div></div><div class="calm">the dog<div class="bar"><i></i></div></div></div>
   </div>
   <div class="toast" id="toast"></div>
 </div>
@@ -149,20 +205,25 @@ body.talking .mapbtn{display:none}
 <div id="namecard"><b></b><span></span></div>
 <div class="sub" id="sub"><b></b><span></span></div>
 <button class="mapbtn" id="mapBtn" hidden>map (M)</button>
+<button class="codexbtn" id="codexBtn">codex (C)</button>
+<div id="found"><em>Found</em><b></b><p></p><small></small></div>
+<div id="perform"><h3></h3><div class="psub"></div><div class="lane"></div><div class="meter"><i></i></div></div>
 <div class="choices" id="choices"></div>
 <div class="skiphint">click to skip a line</div>
 
-<div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tE">use</button><button id="tQ">drop</button></div></div>
+<div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tF" hidden>lyre</button><button id="tE">use</button><button id="tQ">drop</button></div></div>
 
 <div id="bg"></div>
 <div class="card on" id="start"><div>
   <div class="over">a game, from the film</div>
   <h1>The Coin</h1>
+  <div class="chapters" id="chapters"></div>
   <div class="rulebig">The dog can smell coins.</div>
   <div class="small">You died without the fare. Find a coin and get it to the ferry.</div>
   <div class="keys" id="keys"><b>WASD</b><span>walk</span><b>Mouse</b><span>look</span><b>Shift</b><span>run</span><b>E</b><span>talk, pick up</span><b>Q</b><span>drop the coin</span></div>
   <button class="big" id="go" disabled>Enter</button>
   <div class="loading" id="loading">Loading the Underworld…</div>
+  <button class="link" id="codexOpen" style="margin-top:6px">open the Codex</button>
   <div class="small" style="margin-top:22px;font-size:12.5px;color:rgba(242,232,213,.4)">People by Quaternius (CC0). Voices made with Kokoro. Paintings credited in the film.</div>
 </div></div>
 
@@ -181,6 +242,12 @@ body.talking .mapbtn{display:none}
   <button class="big" id="begin">Begin</button>
 </div></div>
 <div class="card" id="mapview"><div><canvas class="map" id="map2" width="1200" height="640"></canvas><div class="small">Press M or tap anywhere to close</div></div></div>
+<div class="card" id="codex"><div>
+  <h2>The Codex</h2>
+  <div class="lede">Everything you've found and everyone you've met, across every chapter, with where it comes from.</div>
+  <div class="entries"></div>
+  <button class="big close">Close</button>
+</div></div>
 <div class="card" id="paused"><div><h1 style="font-size:56px">Paused</h1><button class="big" id="resume">Back in</button></div></div>
 
 <div class="card" id="end"><div>
@@ -191,7 +258,7 @@ body.talking .mapbtn{display:none}
   <div class="arch"></div>
   <p class="read"></p>
   <div class="score"></div>
-  <div class="row"><button class="big" id="again">Play again</button></div>
+  <div class="row"><button class="big" id="retry" hidden>Try the walk again</button><button class="big" id="again">Play again</button></div>
 </div></div>
 
 <div id="rotate">Turn your phone sideways for a better view. <span style="opacity:.6">(tap to hide)</span></div>

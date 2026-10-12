@@ -10,6 +10,11 @@ Mikon chokes on an olive pit at his cousin's wedding and arrives at the River St
 Inspired by Zach Cregger's *Resident Evil* (2026), which skips the famous heroes and follows an ordinary man through the edges of the legend. Mikon is the old man Psyche is warned to ignore in Apuleius. Nobody ever wrote down his name.
 
 ## The game
+A game in chapters, each one a different person inside their own legend, on one Underworld map that grows (the plan is in `docs/game-design.md`).
+- **Chapter I, The Coin**: you are Mikon. Find a coin, get it past the dog, reach the ferry.
+- **Chapter II, The Lyre**: you are Orpheus. Sing your way past Charon and Cerberus, ask Hades and Persephone for Eurydice, and lead her out without looking back.
+- Trinkets from real Greek graves and stories are hidden along the way; the Codex keeps them, with sources.
+
 The game (in `public/play/`, served at coin.klickbaitbyk.com) is a first-person version: an open riverbank in the Underworld built like an Italian loggia, with frescoed vaults and real water. Hermes tells you the rule out loud: no coin, no boat, and the dog can smell coins. Talk to Elpenor, Theseus and Pirithous and Charon (every line is spoken, and the camera cuts to whoever is talking), find a coin, and get it past Cerberus to the ferry. Cerberus can't swim.
 
 - 3D people: Quaternius *Universal Base Characters* and *Universal Animation Library* (CC0), compressed into `public/play/assets/`. Their Greek clothes, hats, beards and props are made in code in `public/play/people.js`, following the ancient descriptions: Hermes in his winged traveller's hat with the herald's staff, Charon as Virgil describes him (filthy cloak, white beard, eyes of flame), Elpenor in a sailor's one-shoulder tunic with his oar.
