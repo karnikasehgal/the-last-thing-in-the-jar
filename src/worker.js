@@ -215,7 +215,7 @@ function route(request, env) {
   if (url.hostname === GAME_HOST) {
     if (url.pathname === "/") return at("/play/");
     if (url.pathname === "/manifest.webmanifest") return at("/play/manifest.webmanifest");
-    if (url.pathname === "/play/" || url.pathname === "/play/index.html") return Response.redirect(url.origin + "/", 301);
+    if (url.pathname === "/play/" || url.pathname === "/play/index.html") return Response.redirect(url.origin + "/" + url.search, 301);
     if (FILM_ONLY.test(url.pathname)) return notFound();
   }
   if (url.hostname === FILM_HOST && url.pathname.startsWith("/play/")) return notFound();

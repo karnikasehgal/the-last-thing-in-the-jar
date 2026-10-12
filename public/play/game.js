@@ -150,9 +150,29 @@ const waterNormals = (() => {
 })();
 const water = new Water(new THREE.PlaneGeometry(240, 140), {
   textureWidth: LITE ? 256 : 512, textureHeight: LITE ? 256 : 512, waterNormals, sunDirection: moon.position.clone().normalize(),
-  sunColor: 0xcfd9ff, waterColor: 0x0f1c18, distortionScale: 2.4, fog: true
+  sunColor: 0xcfeeff, waterColor: 0x0c3a40, distortionScale: 2.4, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 70); scene.add(water);
+// The river glows from underneath like a lit cave river: bright turquoise along the bank, a lit rim
+// where it meets the stone, darkening toward the far side. The ripples break the glow up.
+water.material.uniforms.glow = {value: new THREE.Color(0x10b8dc)};
+water.material.uniforms.deep = {value: new THREE.Color(0x06357a)};
+water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outgoingLight = albedo;", `
+  float d = max(worldPosition.z - ${SHORE.toFixed(1)}, 0.0);
+  float c = 0.0;
+  for (int i = 0; i < 2; i++) {
+    vec2 q = worldPosition.xz * (i == 0 ? 1.0 : 2.3) + float(i) * 7.0;
+    float w = sin(q.x * 1.3 + time * .9 + 2.0 * sin(q.y * .9 + time * .6)) + sin(q.y * 1.7 - time * .7 + 2.0 * sin(q.x * .8 - time * .4));
+    c += pow(1.0 - abs(w) * .5, 7.0) * (i == 0 ? .7 : .45);
+  }
+  float rip = clamp(.5 + (surfaceNormal.x + surfaceNormal.z) * 5.0, 0.0, 1.0) * .35 + c;
+  float near = exp(-d / 10.0);
+  vec3 tint = mix(deep, glow, near);
+  float body = (.12 + .5 * near) * (.45 + rip);
+  float rim = smoothstep(1.2, 0.0, d);
+  vec3 outgoingLight = albedo * .35 + tint * body + vec3(.5, .95, 1.0) * rim * (.35 + .5 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
+// Light thrown up by the river onto the quay, the dock and anyone standing near the water.
+for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2fd0e0, 6, 16, 1.6); l.position.set(x, .2, SHORE + 2.5); scene.add(l); }
 const far = new THREE.Mesh(new THREE.PlaneGeometry(320, 90), new THREE.MeshBasicMaterial({map: tex(LIB + "styx/patinir-styx.jpg"), color: 0x6b6258, fog: false}));
 far.position.set(20, 28, 150); far.rotation.y = Math.PI; scene.add(far);
 
@@ -814,7 +834,7 @@ function drawMap(cv) {
   g.fillStyle = "#e6d8b8"; g.fillRect(0, 0, W, H);
   for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(90,70,45,${Math.random() * .05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
   // the river
-  g.fillStyle = "rgba(70,96,110,.55)"; g.fillRect(0, Y(SHORE), W, H - Y(SHORE));
+  g.fillStyle = "rgba(30,150,185,.55)"; g.fillRect(0, Y(SHORE), W, H - Y(SHORE));
   g.strokeStyle = "rgba(40,60,70,.5)"; g.lineWidth = 2;
   for (let k = 0; k < 7; k++) { g.beginPath(); for (let x = 0; x <= W; x += 20) g.lineTo(x, Y(SHORE + 2.5 + k * 2.4) + Math.sin(x / 40 + k) * 4); g.stroke(); }
   g.strokeStyle = "#5a4630"; g.lineWidth = 3; g.beginPath(); g.moveTo(0, Y(SHORE)); g.lineTo(W, Y(SHORE)); g.stroke();
