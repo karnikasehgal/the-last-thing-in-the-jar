@@ -1093,7 +1093,10 @@ function faceShot(p, {dist = .85, side = .25, up = .04, drift = .12, ms = 5000} 
   const f = V(Math.sin(p.root.rotation.y), 0, Math.cos(p.root.rotation.y)), r = V(f.z, 0, -f.x);
   const A = h.clone().addScaledVector(f, dist).addScaledVector(r, side).setY(h.y + up), B = h.clone().addScaledVector(f, dist - drift).addScaledVector(r, side * .8).setY(h.y + up);
   const t0 = performance.now(), id = {}; camShot.active = true; camShot.snap = true; shot.cur = id;
-  (function go() { if (shot.cur !== id) return; const u = Math.min(1, (performance.now() - t0) / ms), hh = new THREE.Vector3(); p.bones.Head.getWorldPosition(hh); camShot.pos.lerpVectors(A, B, u); camShot.look.copy(hh).setY(hh.y - .02); if (u < 1) requestAnimationFrame(go); })();
+  (function go() { if (shot.cur !== id) return; const u = Math.min(1, (performance.now() - t0) / ms), hh = new THREE.Vector3(); p.bones.Head.getWorldPosition(hh); camShot.pos.lerpVectors(A, B, u);
+    // if they lean in toward the lens while they talk, the camera eases back to keep its distance
+    const off = camShot.pos.clone().sub(hh), min = (dist - drift) * .95; if (off.length() < min) camShot.pos.copy(hh).addScaledVector(off.normalize(), min);
+    camShot.look.copy(hh).setY(hh.y - .02); requestAnimationFrame(go); })();
 }
 const fade = (to, ms) => new Promise(r => { const f = $("#fader"); f.style.transition = `opacity ${ms}ms`; f.style.background = to === "white" ? "#f6efe4" : "#000"; f.style.opacity = to === "clear" ? 0 : 1; setTimeout(r, ms); });
 const pause = ms => new Promise(r => setTimeout(r, ms));
@@ -1247,16 +1250,16 @@ async function weddingFilm() {
     const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h);
     // the people he loves, gathered round, looking down at him
     const eye = h.clone().add(V(0, -.3, .1)), ring = [["kleio", -.45], ["thea", .15], ["lykon", .7], ["nikias", -1.1]];
-    for (const [k, a] of ring) { const p = cast[k], at = eye.clone().add(V(Math.sin(a) * .85, 0, Math.cos(a) * .85)); p.root.position.set(at.x, 0, at.z); p.root.rotation.set(0, Math.atan2(eye.x - at.x, eye.z - at.z), 0); p.root.rotateX(.42); p.play("listen"); p.expr.hold = {AK_03_BrowInnerUp: 1}; }
+    for (const [k, a] of ring) { const p = cast[k], at = eye.clone().add(V(Math.sin(a) * 1.2, 0, Math.cos(a) * 1.2)); p.root.position.set(at.x, 0, at.z); p.root.rotation.set(0, Math.atan2(eye.x - at.x, eye.z - at.z), 0); p.root.rotateX(.36); p.play("listen"); p.expr.hold = {AK_03_BrowInnerUp: 1}; p.hideHands?.(true); } // tipped toward him, their hands would swing up into the lens
     camShot.active = true; camShot.snap = true; shot.cur = {}; camShot.pos.copy(eye); camShot.look.copy(eye).add(V(.2, .62, .85));
     { const t0 = performance.now(), id = shot.cur; (function sway() { if (shot.cur !== id) return; const u = (performance.now() - t0) / 1000; camShot.look.copy(eye).add(V(.2 + Math.sin(u * .7) * .18, .62 - u * .03, .85)); requestAnimationFrame(sway); })(); }
-    PLAYER.setHead(false); sound.setMuffle(500, 3); sound.heart(); sound.party(false);
+    PLAYER.setHead(false); PLAYER.hideHands?.(true); sound.setMuffle(500, 3); sound.heart(); sound.party(false);
     povDim = true; { const t0 = performance.now(); (function dimming() { if (!povDim) return; const u = Math.min(1, (performance.now() - t0) / 9000); paint.uniforms.blur.value = u; paint.uniforms.dim.value = u * .9; if (u < 1) requestAnimationFrame(dimming); })(); }
     await say("kleio", "w_a5", "Mikon? Mikon, look at me. Stay with us. Somebody get water!");
     await say("thea", "w_t3", "Mikon, please. Please.");
     await vo("mikon", "w_vo1", "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.");
     await fade("black", 2200);
-    povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0; sound.setMuffle(20000, .5);
+    povDim = false; PLAYER.hideHands?.(false); for (const [k] of ring) cast[k].hideHands?.(false); paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0; sound.setMuffle(20000, .5);
     if (skipped) return;
     // the next night: the same courtyard, cleared, and Mikon laid out on the table
     wedding.mood("funeral"); PLAYER.setHead(true); crowd.hide(); for (const k of ["kleio", "thea", "lykon", "nikias"]) cast[k].expr.hold = {};
@@ -1278,7 +1281,7 @@ async function weddingFilm() {
   await reel();
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);
-  sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
+  PLAYER.hideHands?.(false); for (const g of Object.values(guests)) g.hideHands?.(false); sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
   setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false; crowd?.hide();
   for (const k of Object.keys(guests)) delete NPC[k];
   PLAYER.root.quaternion.identity(); PLAYER.root.position.set(-20.4, 0, 16.05); PLAYER.root.rotation.set(0, Math.PI, 0);
@@ -1483,9 +1486,9 @@ async function orpheusFilm() {
   if (!skipped) {
     // he carries a lamp down; ahead, the faint grey light of the dead
     const lamp = new THREE.PointLight(0xffa860, 5, 12, 1.5), deep = new THREE.PointLight(0x8aa0c8, 3, 16, 1.4); deep.position.set(-37, 2.6, 13); scene.add(lamp, deep);
-    { const a = V(-53, 0, 13), b = V(-39, 0, 13), t0 = performance.now(); (function walk() { const u = Math.min(1, (performance.now() - t0) / 16000); PLAYER.root.position.lerpVectors(a, b, u); lamp.position.copy(PLAYER.root.position).add(V(.35, 1.3, .25)); lamp.intensity = 5 + Math.sin(performance.now() / 70) * .4 + Math.sin(performance.now() / 23) * .25; if (u < 1 && staging) requestAnimationFrame(walk); })(); }
+    { const a = V(-54, 0, 13), b = V(-43.5, 0, 13), t0 = performance.now(); (function walk() { const u = Math.min(1, (performance.now() - t0) / 16000); PLAYER.root.position.lerpVectors(a, b, u); lamp.position.copy(PLAYER.root.position).add(V(.35, 1.3, .25)); lamp.intensity = 5 + Math.sin(performance.now() / 70) * .4 + Math.sin(performance.now() / 23) * .25; if (u < 1 && staging) requestAnimationFrame(walk); })(); }
     caveLights = [lamp, deep];
-    shot([-37.6, 1.8, 13.4], [-50, 1.4, 13], [-38.2, 1.7, 13.2], [-46, 1.3, 13], 16000, true);
+    shot([-40.8, 1.75, 13.3], [-52, 1.4, 13], [-41.2, 1.7, 13.2], [-48, 1.3, 13], 16000, true); // well inside the cave, clear of its open end
     await fade("clear", 1800);
     await vo("", "v2_j4", "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out.");
     // follow behind him, into the dark

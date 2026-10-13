@@ -44,7 +44,7 @@ export function makeOrpheus(G) {
     const shadeT = G.cast("shade"); shadeT.root.visible = false;
     st.shades = scatterShades(scene, shadeT, G.SkeletonUtils, G.CLIPS, 9);
     dog.pos.copy(FAR.gateMouth); dog.mode = "guard"; dog.calm = 0; dog.yaw = Math.PI; dog.asleep = false;
-    lyre.g.visible = true;
+    lyre.g.visible = false; // only in your hands while you play (it hung in front of the camera through the film)
     Object.assign(G.CARDS, {
       mikon: ["Mikon", "Ninety-nine years on the bank. Still no coin."],
       sisyphus: ["Sisyphus", "King of Corinth. Cheated death twice. Pushes a rock."],
