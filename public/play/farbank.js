@@ -48,9 +48,7 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
     const z = side === 2 ? 146 + Math.random() * 6 : 66 + Math.random() * 80;
     m.position.set(x, r * .4 + Math.random() * 6, z); m.rotation.set(Math.random(), Math.random(), Math.random()); m.scale.y = 1.6 + Math.random(); scene.add(m);
   }
-  // a dark roof of rock overhead, far up
-  const vault = new THREE.Mesh(new THREE.SphereGeometry(120, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2.2), new THREE.MeshBasicMaterial({color: 0x0b0908, side: THREE.BackSide, fog: true}));
-  vault.scale.y = .32; add(vault, 0, 0, 105);
+  // (no roof of rock overhead any more: the river runs under an open night sky, thick with stars)
 
   /* the landing */
   for (let z = FAR.dockFrom; z < FAR.shore + .2; z += .55) add(new THREE.Mesh(new THREE.BoxGeometry(2.8, .12, .5), M.wood), 0, .02, z);

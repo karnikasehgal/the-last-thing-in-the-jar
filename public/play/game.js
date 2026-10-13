@@ -69,8 +69,9 @@ const scene = new THREE.Scene();
 // light from all around, faint and warm, so skin, silk and metal have something to reflect (a dim studio room)
 { const room = new RoomEnvironment(); room.traverse(o => { if (o.material?.color) o.material.color.multiply(new THREE.Color(.22, .19, .16)); });
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(room, .04).texture; }
-scene.background = new THREE.Color(0x15110d);
-scene.fog = new THREE.FogExp2(0x1d1813, 0.021);
+const NIGHT = 0x070b16; // the Styx at night: blue-black, under the stars
+scene.background = new THREE.Color(0x03050c);
+scene.fog = new THREE.FogExp2(NIGHT, 0.021);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.05, 400);
 camera.rotation.order = "YXZ"; scene.add(camera); // so things held in your hands can ride on it
 
@@ -224,6 +225,9 @@ ground.rotation.x = -Math.PI / 2; ground.position.set(20, 0, (BEACH - 98) / 2); 
 // The bank runs down to the water as a beach: the paving stops at a low marble kerb, and pale sand slopes away under
 // the river, darker and smoother where the water has wetted it.
 const kerb = new THREE.Mesh(new THREE.BoxGeometry(240, .1, .5), M.marble); kerb.position.set(20, .02, BEACH); scene.add(kerb);
+// the sand's surface: the walked slope, a waterline that wanders (the sand rises and falls a little along the shore,
+// so the water reaches further in some places), and on down under the river
+const beachY = (x, z) => sandY(z) + (Math.sin(x * .31) * .07 + Math.sin(x * .83 + 1.3) * .04 + Math.sin(x * 2.1 + 4) * .015) * smooth(SHORE - 5, SHORE - 2, z) - .6 * smooth(SHORE + 2, SHORE + 10, z);
 const beach = (() => {
   const geo = new THREE.PlaneGeometry(240, 32, 480, 96); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
@@ -231,9 +235,7 @@ const beach = (() => {
     const x = pos.getX(i) + 20, z = pos.getZ(i) + BEACH + 16;
     // the walked slope, then on down under the water; small wind ripples on the dry sand, none where it's wet
     const dry = 1 - smooth(SHORE - 2.5, SHORE - .3, z), ripple = (Math.sin(x * 2.1 + Math.sin(z * .7) * 2) * .5 + .5) * .012 * dry;
-    // the waterline wanders: the sand rises and falls a little along the shore, so the water reaches further in some places
-    const wander = (Math.sin(x * .31) * .07 + Math.sin(x * .83 + 1.3) * .04 + Math.sin(x * 2.1 + 4) * .015) * smooth(SHORE - 5, SHORE - 2, z);
-    pos.setY(i, sandY(z) + wander - .6 * smooth(SHORE + 2, SHORE + 10, z) + ripple + (z < BEACH + .3 ? .015 : 0));
+    pos.setY(i, beachY(x, z) + ripple + (z < BEACH + .3 ? .015 : 0));
     const k = .62 + .38 * dry; col[i * 3] = k; col[i * 3 + 1] = k * .99; col[i * 3 + 2] = k * .97;
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
@@ -264,26 +266,64 @@ const water = new Water(new THREE.PlaneGeometry(240, 146), {
   sunColor: 0x9fc8d8, waterColor: 0x020d10, distortionScale: 1.1, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 67); scene.add(water);
-// The river of the dead: black, glassy water that mirrors the torches, with only a faint cold glow from below
-// along the quay, broken up by the ripples, and a pale rim where it laps the stone.
-water.material.uniforms.glow = {value: new THREE.Color(0x0b6a78)};
-water.material.uniforms.deep = {value: new THREE.Color(0x02161c)};
+// The river of the dead glows: dark glassy water that mirrors the torches, and waves that light up electric blue as
+// they roll in and break on the sand (as plankton does on a night beach), a bright line where each one runs up the
+// beach and slides back, and a glitter of sparks in the foam.
+water.material.uniforms.glow = {value: new THREE.Color(0x1d6cff)};
+water.material.uniforms.deep = {value: new THREE.Color(0x010818)};
 water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outgoingLight = albedo;", `
-  float d = max(worldPosition.z - ${(SHORE - .4).toFixed(1)}, 0.0); // (from the waterline on the sand)
-  float c = 0.0;
-  for (int i = 0; i < 2; i++) {
-    vec2 q = worldPosition.xz * (i == 0 ? 1.0 : 2.3) + float(i) * 7.0;
-    float w = sin(q.x * 1.3 + time * .9 + 2.0 * sin(q.y * .9 + time * .6)) + sin(q.y * 1.7 - time * .7 + 2.0 * sin(q.x * .8 - time * .4));
-    c += pow(1.0 - abs(w) * .5, 7.0) * (i == 0 ? .7 : .45);
-  }
-  float rip = clamp(.5 + (surfaceNormal.x + surfaceNormal.z) * 5.0, 0.0, 1.0) * .35 + c;
-  float near = exp(-d / 7.0);
-  vec3 tint = mix(deep, glow, near);
-  float body = (.05 + .22 * near) * (.55 + rip * .6);
-  float rim = smoothstep(1.6, 0.0, d);
-  vec3 outgoingLight = albedo * .7 + tint * body + vec3(.45, .8, .85) * rim * (.03 + .08 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
-// Light thrown up by the river onto the quay, the dock and anyone standing near the water (faint and cold).
-for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2fb0c0, 2.2, 12, 1.6); l.position.set(x, .2, SHORE + 2.5); scene.add(l); }
+  vec3 wp = worldPosition.xyz;
+  float d = max(wp.z - ${(SHORE - .4).toFixed(1)}, 0.0), T = time * 2.4; // (from the waterline on the sand)
+  float bend = sin(wp.x * .23) * 1.4 + sin(wp.x * .071 + 2.) * 2.2;
+  // crests rolling in toward the shore, broken into pieces along their length
+  float ph = d * 1.35 + T + bend, crest = pow(.5 + .5 * sin(ph), 28.);
+  float brk = smoothstep(-.2, .7, sin(wp.x * 1.9 + bend * 2. + floor(ph / 6.2832) * 1.7) * .6 + sin(wp.x * 4.3 - T * .5) * .4);
+  float zone = exp(-d / 6.) * (.35 + .65 * smoothstep(.2, 2.5, d));
+  // the swash: each wave's edge running up the sand and back
+  float reach = .55 + .45 * sin(T * .45 + wp.x * .12 + bend * .3);
+  float edge = smoothstep(.18, 0., abs(d - reach)) * (.5 + .5 * brk), wet = step(d, reach) * .08;
+  // sparks in the foam
+  vec2 cell = floor(wp.xz * 9.);
+  float hs = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  float spark = step(.965, hs) * (.5 + .5 * sin(time * 9. + hs * 60.)) * (crest + edge);
+  float rip = clamp(.5 + (surfaceNormal.x + surfaceNormal.z) * 5.0, 0.0, 1.0);
+  vec3 tint = mix(deep, glow * .06, exp(-d / 9.));
+  vec3 blue = vec3(.16, .55, 1.6);
+  vec3 outgoingLight = albedo * .55 + tint * (.4 + rip * .5) + blue * (crest * brk * zone * 1.1 + (edge + wet) * .9 + spark * 1.6);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
+// Blue sparks on the wet sand, where the waves have left the glow behind.
+const sparkU = {time: {value: 0}};
+{ const n = LITE ? 1500 : 5000, pos = new Float32Array(n * 3), seed = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const x = -60 + Math.random() * 160, z = SHORE - 1.8 + Math.pow(Math.random(), .7) * 2.2; pos.set([x, beachY(x, z) + .015, z], i * 3); seed[i] = Math.random(); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
+  const m = new THREE.ShaderMaterial({uniforms: sparkU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float seed; uniform float time; varying float vA;
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_Position = projectionMatrix * mv;
+        vA = pow(max(0., sin(time * (.6 + seed * 1.8) + seed * 40.)), 6.); gl_PointSize = min(5., (1. + seed * 1.5) * 9. / -mv.z); }`,
+    fragmentShader: `varying float vA; void main(){ float r = length(gl_PointCoord - .5); if (r > .5) discard; gl_FragColor = vec4(vec3(.25, .65, 1.6) * vA * smoothstep(.5, 0., r), 1.); }`});
+  const pts = new THREE.Points(g, m); pts.frustumCulled = false; scene.add(pts); }
+// The sky over the river: deep blue-black, thick with stars, and the Milky Way across it. It follows the camera, so
+// it is always infinitely far away.
+const starDome = new THREE.Mesh(new THREE.SphereGeometry(380, 48, 24), new THREE.ShaderMaterial({side: THREE.BackSide, depthWrite: false, fog: false,
+  vertexShader: `varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+  fragmentShader: `varying vec3 vD;
+    float h(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+    float n(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+      return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
+                 mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
+    float stars(vec3 d, float scale, float th){ vec3 p = d * scale, c = floor(p); float r = h(c); if (r < th) return 0.;
+      vec3 o = c + .5 + (vec3(h(c + 7.), h(c + 13.), h(c + 29.)) - .5) * .6; return smoothstep(.09, 0., length(p - o)) * (r - th) / (1. - th); }
+    void main(){ vec3 d = normalize(vD); float up = smoothstep(-.05, .25, d.y);
+      float band = dot(d, normalize(vec3(.35, .55, .76))), mw = exp(-band * band / .03);
+      float cloud = n(d * 6.) * .6 + n(d * 14.) * .3 + n(d * 31.) * .1, dust = smoothstep(.45, .8, n(d * 9. + 3.));
+      vec3 col = mix(vec3(.004, .008, .02), vec3(.02, .03, .07), up);
+      col += vec3(.18, .2, .32) * mw * cloud * (1. - dust * .7) * up;
+      col += vec3(.35, .25, .3) * pow(mw, 4.) * cloud * up * .5;
+      float s = stars(d, 220., .985) + stars(d, 420., .99) * .7 + stars(d, 420., .96) * mw * .8;
+      col += vec3(.85, .9, 1.) * s * up * 1.6;
+      gl_FragColor = vec4(col, 1.); }`}));
+starDome.renderOrder = -1; scene.add(starDome);
+// Light thrown up by the glowing river onto the beach, the dock and anyone standing near the water (faint and cold).
+for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2a78ff, 3.2, 14, 1.6); l.position.set(x, .2, SHORE + 2); scene.add(l); }
 // Mist lying on the river in slow drifting banks, thicker in the distance.
 const mistU = {time: {value: 0}};
 { const mat = new THREE.ShaderMaterial({uniforms: mistU, transparent: true, depthWrite: false,
@@ -294,8 +334,8 @@ const mistU = {time: {value: 0}};
       void main(){ vec2 p = vW.xz * .06 + vec2(time * .012, time * .004);
         float m = n(p) * .55 + n(p * 2.3 + 5.) * .3 + n(p * 5.1 - time * .02) * .15;
         float far = smoothstep(${(SHORE + 2).toFixed(1)}, ${(SHORE + 40).toFixed(1)}, vW.z);
-        float a = smoothstep(.55, .9, m) * (.03 + .13 * far);
-        gl_FragColor = vec4(vec3(.42, .5, .54), a); }`});
+        float a = smoothstep(.55, .9, m) * .08 * far; // (only far out: near the shore it turned the glowing water milky)
+        gl_FragColor = vec4(vec3(.14, .2, .34), a); }`});
   const sheets = []; for (let i = 0; i < 4; i++) { const sheet = new THREE.Mesh(new THREE.PlaneGeometry(260, 150), mat); sheet.rotation.x = -Math.PI / 2; sheet.position.set(20, -.1 + i * .35, SHORE + 72); sheet.renderOrder = 5; scene.add(sheet); sheets.push(sheet); }
   // the river mirrors the torches and the arcade, not the mist lying on it
   const mirror = water.onBeforeRender; water.onBeforeRender = (...a) => { sheets.forEach(m => m.visible = false); mirror.apply(water, a); sheets.forEach(m => m.visible = true); }; }
@@ -1084,7 +1124,10 @@ function tick(now) {
   for (const [i, d] of farWorld.doors.entries()) d.rotation.y += ((i ? 1 : -1) * (dog.asleep ? 1.25 : .35) - d.rotation.y) * .02;
   if (NPC.charon) NPC.charon.root.position.y = .25 + Math.sin(now / 1100) * .05;
   water.material.uniforms.time.value += dt * .45;
-  paint.uniforms.time.value = now / 1000; mistU.time.value = now / 1000;
+  paint.uniforms.time.value = now / 1000; mistU.time.value = sparkU.time.value = now / 1000; starDome.position.copy(camera.position);
+  // the wedding is a world of its own under its own sky, built off to one side: seen from outside that sky (from the
+  // river) it would hang in the stars like a planet, so it's only drawn while the camera is inside it
+  if (wedding) wedding.g.visible = camera.position.distanceTo(wedding.g.position) < 215;
   sceneLight();
   if (!LITE) shadows(now);
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
@@ -1263,7 +1306,7 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
 function setWeddingLights(on) {
   wedding?.lights.forEach(l => l.visible = on);
   if (on) { nearLights.forEach(l => l.visible = false); farLights.forEach(l => l.visible = false); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; sky.intensity = .8; }
-  else { scene.fog.color.set(0x1d1813); scene.fog.density = .021; setLightsFar(false); }
+  else { scene.fog.color.set(NIGHT); scene.fog.density = .021; setLightsFar(false); }
 }
 
 // The wedding crowd: everyone Thea's family has ever met. Built once, the first time the film plays.
