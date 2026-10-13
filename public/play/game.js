@@ -99,10 +99,21 @@ hdri(renderer, "small_cathedral", .1, [.75, .9, 1.15]).then(e => ENV.under = e);
 hdri(renderer, "spruit_sunrise", .45, [1.1, .95, .8]).then(e => ENV.dusk = e);
 hdri(renderer, "meadow_2", .7).then(e => ENV.day = e);
 hdri(renderer, "small_cathedral", .06, [.8, .8, 1]).then(e => ENV.night = e);
+// The air and the fill light, by where the camera is: the wedding has its own (a warm golden haze at dusk, clear blue
+// air by day, cold night for the funeral); everywhere else is the river at night. (It used to be a brown fog over
+// the wedding, which muddied it.)
+const AIR = {
+  wedding: {fog: 0xd8a888, density: .0035, top: 0xffd8b0, ground: 0x8a6448, fill: 1.15},
+  day: {fog: 0xc8d8e6, density: .0035, top: 0xe2efff, ground: 0x8a7a5a, fill: 1.2},
+  funeral: {fog: 0x151826, density: .02, top: 0x5a6890, ground: 0x1a140e, fill: .45}
+};
+const NIGHT_SKY = [0x9fb3c8, 0x2a1d12];
 function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
   const want = ENV[x > 200 ? (mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
+  if (x > 200) { const a = AIR[mood] || AIR.wedding; scene.fog.color.setHex(a.fog); scene.fog.density = a.density; sky.color.setHex(a.top); sky.groundColor.setHex(a.ground); sky.intensity = a.fill; sky.userData.wed = true; }
+  else if (sky.userData.wed) { sky.userData.wed = false; scene.fog.color.setHex(NIGHT); scene.fog.density = .021; sky.color.setHex(NIGHT_SKY[0]); sky.groundColor.setHex(NIGHT_SKY[1]); setLightsFar(farOn); }
 }
 // The film finish: a warm grade with rich colour, a soft vignette, a whisper of grain (and the blur/dim/danger effects
 // the story uses). It used to smear the picture into brushy patches and drain the colour; animated films are crisp and saturated.
@@ -478,7 +489,8 @@ const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.
 const nearLights = []; scene.traverse(o => { if (o.isPointLight && o !== keyLight) nearLights.push(o); });
 const farLights = [];
 const farWorld = buildFarBank({scene, boxes, circles, noise, tex, LIB, lights: farLights});
-function setLightsFar(far) { nearLights.forEach(l => l.visible = !far); farLights.forEach(l => l.visible = far); sky.intensity = far ? .9 : .55; }
+let farOn = false;
+function setLightsFar(far) { farOn = far; nearLights.forEach(l => l.visible = !far); farLights.forEach(l => l.visible = far); sky.intensity = far ? .9 : .55; }
 
 /* ---------- coins ---------- */
 let coins = [];

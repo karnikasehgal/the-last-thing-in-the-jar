@@ -185,11 +185,13 @@ export function buildMeadow(lite) {
     const ring = (r0, r1, hMax, color, seed) => {
       const geo = new THREE.CylinderGeometry(r1, r0, 1, 128, 6, true), p = geo.attributes.position;
       for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), top = p.getY(i) > 0; const a = Math.atan2(z, x);
-        const peak = hMax * (.35 + fbm(Math.cos(a) * 3 + seed, Math.sin(a) * 3) * .9); p.setY(i, top ? peak : -2); }
+        // low toward the west, where the sun sets beyond the courtyard's colonnade, so the sky stays open there
+        const west = .18 + .82 * Math.min(1, Math.max(0, (Math.cos(a) + .35) / .9));
+        const peak = hMax * west * (.35 + fbm(Math.cos(a) * 3 + seed, Math.sin(a) * 3) * .9); p.setY(i, top ? peak : -2); }
       geo.computeVertexNormals();
       const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color, roughness: 1, side: THREE.DoubleSide})); m.position.set(40, 0, 0); return m;
     };
-    meadow.add(ring(118, 112, 22, 0x6a8a52, 1), ring(165, 150, 48, 0x7a90a8, 7));
+    meadow.add(ring(118, 112, 12, 0x6a8a52, 1), ring(165, 150, 26, 0x8a9ab0, 7)); // (low, distant ridges: tall, they walled in the sky like painted flats)
   }
   return meadow;
 }

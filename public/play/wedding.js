@@ -35,7 +35,7 @@ export function buildWedding(scene, {noise, lite = false}) {
   // floor, whitewashed walls, a colonnade open to the west
   const pav = noise("#b9a487", "#6b5a44", 512, 40, .14); pav.repeat.set(5, 4);
   pav.repeat.set(10, 8);
-  add(new THREE.Mesh(new THREE.BoxGeometry(36, .2, 28), pbr("terracotta_floor_tiles", {size: 2.2, tint: 0xd8c8b0})), 0, -.1, 0);
+  add(new THREE.Mesh(new THREE.BoxGeometry(36, .2, 28), pbr("seaworn_stone_tiles", {size: 2.6, tint: 0xf2e8d6})), 0, -.1, 0);
   const lime = noise("#e6dccb", "#9a8a72", 256, 6, .1);
   const wallM = pbr("plastered_wall_02", {size: 3, tint: 0xf2e8d6}); // whitewashed lime plaster
   add(new THREE.Mesh(new THREE.BoxGeometry(36, 4, .5), wallM), 0, 2, 14);
@@ -129,14 +129,46 @@ export function buildWedding(scene, {noise, lite = false}) {
 
   dressed(g, S);
 
-  // the sky beyond the colonnade: dusk
-  const c = document.createElement("canvas"); c.width = 16; c.height = 256; const x = c.getContext("2d");
-  const grad = x.createLinearGradient(0, 0, 0, 256); grad.addColorStop(0, "#1c2240"); grad.addColorStop(.45, "#6a4a6a"); grad.addColorStop(.7, "#e0864a"); grad.addColorStop(.85, "#f6c070"); grad.addColorStop(1, "#3a2a20");
-  x.fillStyle = grad; x.fillRect(0, 0, 16, 256);
-  const skyT = new THREE.CanvasTexture(c); skyT.colorSpace = THREE.SRGBColorSpace;
-  const c2 = document.createElement("canvas"); c2.width = 16; c2.height = 256; { const x2 = c2.getContext("2d"), g2 = x2.createLinearGradient(0, 0, 0, 256); g2.addColorStop(0, "#4a7ab8"); g2.addColorStop(.55, "#9cc4e0"); g2.addColorStop(.8, "#e8eef0"); g2.addColorStop(1, "#c8c0a8"); x2.fillStyle = g2; x2.fillRect(0, 0, 16, 256); }
-  const skyDay = new THREE.CanvasTexture(c2); skyDay.colorSpace = THREE.SRGBColorSpace;
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(230, 24, 16), new THREE.MeshBasicMaterial({map: skyT, side: THREE.BackSide, fog: false})); sky.position.set(0, -8, 0); g.add(sky);
+  // The sky, painted as the films paint it. Dusk: deep blue overhead going to peach and gold toward the sun setting
+  // beyond the colonnade (to the west), the sun a soft blaze on the horizon, and slow clouds lit pink and gold from
+  // underneath. Day: clear blue, paler at the horizon, white clouds. The funeral: night, and stars.
+  const skyU = {mode: {value: 0}, sunDir: {value: new THREE.Vector3(-1, .06, .1).normalize()}, time: {value: 0}};
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(230, 48, 24), new THREE.ShaderMaterial({uniforms: skyU, side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+    fragmentShader: `uniform float mode; uniform vec3 sunDir; uniform float time; varying vec3 vD;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+      float fbm(vec2 p){ float a = 0., w = .5; for (int i = 0; i < 5; i++) { a += w * n(p); p *= 2.03; w *= .5; } return a; }
+      void main(){
+        vec3 d = normalize(vD); float y = max(d.y, 0.), s = max(dot(d, sunDir), 0.);
+        // clouds: a layer seen from below, stretched toward the horizon
+        vec2 cp = d.xz / (d.y + .12) * 1.6 + vec2(time * .004, 0.);
+        float cl = smoothstep(.5, .78, fbm(cp)) * smoothstep(.0, .12, d.y);
+        vec3 col;
+        if (mode < .5) { // dusk
+          vec3 zen = vec3(.18, .3, .62), mid = vec3(1., .5, .42), hor = vec3(1., .72, .36);
+          col = mix(hor, mid, smoothstep(.0, .25, y)); col = mix(col, zen, smoothstep(.22, .85, y));
+          col = mix(col, vec3(1., .66, .32), pow(s, 2.5) * .75 * (1. - smoothstep(.1, .7, y)));              // the glow round the sun
+          col += vec3(1., .85, .6) * pow(s, 200.) * 3. + vec3(1., .7, .4) * pow(s, 24.) * .5;
+          vec3 cc = mix(vec3(.55, .42, .55), vec3(1., .66, .52), pow(s, 2.) * .8 + (1. - smoothstep(.0, .25, y)) * .5); // lit from below, warmest near the sun
+          col = mix(col, cc, cl * .85);
+          col = mix(col, vec3(.95, .7, .52), (1. - smoothstep(-.02, .06, d.y)) * .6); // haze along the horizon
+        } else if (mode < 1.5) { // day
+          vec3 zen = vec3(.24, .48, .86), hor = vec3(.78, .88, .96);
+          col = mix(hor, zen, smoothstep(.0, .55, y));
+          col += vec3(1., .95, .85) * pow(s, 300.) * 2.;
+          col = mix(col, vec3(1.), cl * .9);
+        } else { // night
+          col = mix(vec3(.05, .07, .14), vec3(.01, .015, .04), smoothstep(.0, .6, y));
+          vec2 sp = floor(d.xz / (d.y + .3) * 160.); float st = step(.997, h(sp)) * smoothstep(.05, .3, d.y);
+          col += vec3(.9, .9, 1.) * st;
+          col = mix(col, vec3(.08, .09, .14), cl * .5);
+        }
+        // (kept well below white: the tone mapping washes very bright colour out to grey, and a sunset is all colour)
+        col *= mode < .5 ? .62 : mode < 1.5 ? .62 : 1.;
+        gl_FragColor = vec4(col, 1.);
+      }`}));
+  sky.position.set(0, -8, 0); g.add(sky);
   // outside the east gate: a spring meadow running down to a stream, for Orpheus and Eurydice (meadow.js)
   const meadow = buildMeadow(lite); g.add(meadow);
   // the snake, waiting in the grass
@@ -156,15 +188,15 @@ export function buildWedding(scene, {noise, lite = false}) {
 
   return {
     g, lights, food, bier, olives, sky, petals, meadow, snake, sun,
-    animate(now) { const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0015; if (y < 2.6) y = 5.6; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
+    animate(now) { skyU.time.value = now / 1000; const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0015; if (y < 2.6) y = 5.6; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
     // "wedding": warm dusk; "funeral": the next night, lamps only
     mood(kind) {
       this.kind = kind;
       const fun = kind === "funeral", day = kind === "day";
       sun.color.set(day ? 0xfff2d8 : 0xffb070); sun.position.set(day ? -10 : -30, day ? 30 : 8, day ? 12 : 4);
-      sky.material.map = day ? skyDay : skyT; sky.material.needsUpdate = true;
+      skyU.mode.value = fun ? 2 : day ? 1 : 0;
       food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
-      sun.intensity = fun ? .15 : day ? 3 : 1.6; sky.material.color.set(fun ? 0x2a2a44 : 0xffffff);
+      sun.intensity = fun ? .15 : day ? 3 : 2.8; // (a low golden sun across the courtyard)
       lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
     }
   };
