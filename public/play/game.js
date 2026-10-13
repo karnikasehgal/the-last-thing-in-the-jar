@@ -89,7 +89,9 @@ const Painterly = {
       gl_FragColor = vec4(c, 1.);
     }`
 };
-const composer = new EffectComposer(renderer);
+// (the composer draws into its own picture, which by default has no anti-aliasing: every edge came out jagged.
+// A multisampled one keeps edges smooth, the way the renderer alone would draw them.)
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, {type: THREE.HalfFloatType, samples: LITE ? 0 : 4}));
 composer.addPass(new RenderPass(scene, camera));
 if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .5, .96)); // candles, torches and silk highlights glow
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
@@ -108,7 +110,7 @@ function shadows(now) {
     lastLook = now; keyLights = [];
     scene.traverse(o => {
       if (o.isDirectionalLight) { keyLights.push(o); if (!o.userData.dir) { o.userData.dir = o.position.clone().sub(o.target.position).normalize();
-        o.castShadow = true; const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0004; o.shadow.normalBias = .03; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
+        o.castShadow = true; const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0006; o.shadow.normalBias = .05; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
       if (o.isMesh && !o.userData.shadowed) { o.userData.shadowed = true; o.receiveShadow = true;
         const m = [].concat(o.material)[0]; o.geometry.computeBoundingSphere?.(); const big = (o.geometry.boundingSphere?.radius || 0) * o.scale.x > 25;
         o.castShadow = !big && !m?.transparent && !o.isPoints && !(o.isInstancedMesh && o.count > 200); } // (a meadow of grass blades would cost more than it shows)
@@ -962,8 +964,9 @@ function tick(now) {
   fpPos.set(me.pos.x, ride ? 1.95 : inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
   moveBody(dt);
   // in conversations and cutaways, a soft key light from beside the camera, the way films light a face
-  keyLight.intensity += ((camShot.active ? 4 : 0) - keyLight.intensity) * .15;
-  if (camShot.active) keyLight.position.copy(camera.position).add(V(Math.cos(me.yaw) * .6, .45, -Math.sin(me.yaw) * .6));
+  // a soft light from beside the camera, the way films keep a face lit: strong in a shot or a conversation, faint otherwise
+  keyLight.intensity += ((camShot.active ? 4 : talking ? 3 : .9) - keyLight.intensity) * .15;
+  { const cp = camera.getWorldPosition(new THREE.Vector3()), r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); keyLight.position.copy(cp).addScaledVector(r, .6).add(V(0, .45, 0)); }
   // looking down, your head tips forward and you can see yourself: chest, hem, sandals
   const lean = Math.max(0, -me.pitch - .35) * .32;
   fpPos.x -= Math.sin(me.yaw) * lean; fpPos.z -= Math.cos(me.yaw) * lean; fpPos.y -= lean * .35;

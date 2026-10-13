@@ -216,7 +216,7 @@ function outline(B, y, band, SEG, include) {
 //   flare: extra width gained toward the hem; folds: depth of the hanging folds;
 //   hem: optional function(angle) -> extra drop for a ragged or slanted hem.
 let LONG = false; // set while dressing a realistic body: sleeves to the wrist, hems to the ankle
-function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false}) {
+function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false, cling = true}) {
   const B = study(body);
   if (LONG && !free && to < .8 && from < 1.1) to = SEATED ? .46 : Math.min(to, .1);
   if (LONG && from > 1.1 && from - to > .1) off += .022;
@@ -235,7 +235,7 @@ function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc =
       const a = full ? c / cols * Math.PI * 2 : arc[0] + (arc[1] - arc[0]) * c / (cols - 1);
       const s = Math.floor(((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2) * SEG) % SEG;
       let rad = o.r[s] + off;
-      if (prev) rad = Math.max(rad, prev[c] * .985); // cloth hangs from the widest point, it doesn't cling
+      if (prev && cling) rad = Math.max(rad, prev[c] * .985); // cloth hangs from the widest point, it doesn't cling (unless it's cut to fit)
       cur.push(rad);
       const fold = folds * .6 * t * (Math.sin(a * 7 + seed) * .7 + Math.sin(a * 13 + seed * 2) * .3);
       const R = rad + flare * t * t + fold;
@@ -741,11 +741,21 @@ function goldBand(p, side, at, r) { // a gold band around a limb, at a fraction 
   const m = new THREE.Mesh(new THREE.TorusGeometry(r, .007, 8, 28), gold); p.root.add(m); m.position.copy(s).lerp(e, at[2]);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), e.clone().sub(s).normalize()); m.updateMatrixWorld(true); p.bones[a + "_" + side].attach(m);
 }
+function sleeveless(p, B, body, mat) {
+  // a short mantle round the shoulders and down the upper back, as the references drape them (it also covers where the
+  // body was cut away under a modern shirt collar)
+  let mm = p.mantle || mat; if (mm.normalMap) { mm = mm.clone(); mm.normalMap = null; } // (the fold texture runs across it in stripes)
+  put(p, drape(body, {from: 1.49, to: 1.2, arc: [Math.PI * 1.04, Math.PI * 1.96], mat: mm, off: .038, flare: .05, folds: .03, free: true,
+    include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.3 ? [["spine_03", 1]] : [["spine_03", .7], ["spine_02", .3]])}));
+  // the front follows the body (cut from its own surface, to just past the shoulders)
+  return wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || ARMS.test(d)) && y > .95 && y < 1.5,
+    {mat, exact: true, off: .02, smooth: 12, clip: `b.y < 1.45 && abs(b.x) < .25 && b.y > .97`});
+}
 function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gilt = true, wreath} = {}) {
-  p.noNeckband = style === "bare"; // (the top copies the body, holes and all, where the body meets the head: the neckband covers that)
+  p.noNeckband = true; if (style !== "bare") p.mantle = drapeCloth(accent ?? (style === "plain" ? 0x6b5a44 : color), "jersey");
   const cl = drapeCloth(color, "jersey"), ac = drapeCloth(accent ?? color, "jersey"), low = style === "bare";
   // below: long and loose to the ankle
-  const skirt = drape(body, {from: low ? .95 : 1.03, to: .6, mat: low ? ac : cl, off: .024, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
+  const skirt = drape(body, {from: low ? .95 : 1.07, to: .6, mat: low ? ac : cl, off: .03, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
   put(p, skirt); if (SEATED) seatedFall(p, B, body, low ? ac : cl);
   if (low) {
     put(p, drape(body, {from: .99, to: .92, mat: ac, off: .045, flare: 0, folds: .03, weightsAt: boneWeights(B, [["pelvis", 1]])})); // rolled at the waist
@@ -759,9 +769,8 @@ function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gi
     } else put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51)) && y > 1.3 && y < 1.53,
         {mat: ac, exact: true, off: .012, smooth: 8, clip: `b.y > 1.38 + .25 * b.x * b.x * 6. && b.y < 1.5`})); // a rag knotted round the neck
   } else {
-    // above: sleeveless, a high round neck (over the edge where the body meets the head)
-    put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51) || ARMS.test(d)) && y > .95 && y < 1.56,
-      {mat: cl, exact: true, off: .02, smooth: 12, clip: `b.y < 1.5 && abs(b.x) < .27 && b.y > .97`}));
+    // above: sleeveless with a boat neck, drawn in rings around the torso (so it never copies the body's holes)
+    put(p, sleeveless(p, B, body, cl));
     if (style === "himation") {
       const line = "(1.47 + 1.7 * (b.x - .13))"; // the sash: from the left shoulder down across to the right hip
       put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || (ARMS.test(d) && x > 0 && x < .3)) && y > .95 && y < 1.56,
@@ -797,9 +806,8 @@ function epicHermes(p, B, body) {
   const cream = new THREE.Color(0xefe6d2), cloth2 = drapeCloth(0xffffff, "jersey"), hide = new THREE.MeshStandardMaterial({color: 0x5e3c22, roughness: .55});
   const k = p.norm.k;
   // the chiton: sleeveless, gold at the neck; the skirt to the knee, gold at the hem
-  const top = wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51) || ARMS.test(d)) && y > .95 && y < 1.56,
-    {mat: cloth2, exact: true, off: .022, smooth: 12, clip: `b.y < 1.5 && abs(b.x) < .25 && b.y > .97`});
-  top.userData.k = k; put(p, trimmed(top, y => y > 1.47, cream));
+  const top = sleeveless(p, B, body, cloth2);
+  top.userData.k = k; put(p, trimmed(top, y => y > 1.415, cream));
   const skirt = drape(body, {from: 1.04, to: .5, free: true, mat: cloth2, off: .024, flare: .13, folds: .035, step: .03, weightsAt: skirtWeights(B, .7), hem: a => Math.sin(a * 3) * .015});
   skirt.userData.k = k; put(p, trimmed(skirt, y => y < .555, cream));
   put(p, drape(body, {from: 1.075, to: 1.035, mat: hide, off: .032, flare: 0, folds: 0, step: .02, weightsAt: boneWeights(B, [["pelvis", 1]])})); // belt
