@@ -53,17 +53,22 @@ body.talking .hud .play-only{opacity:0}
 /* film-style dialogue: letterbox, name, subtitle, choices */
 .bars::before,.bars::after{content:"";position:fixed;left:0;right:0;height:0;background:#000;z-index:8;transition:height .6s ease}
 .bars::before{top:0}.bars::after{bottom:0}
-body.talking .bars::before,body.talking .bars::after{height:10vh}
-.sub{position:fixed;left:50%;bottom:calc(10vh + 22px);transform:translateX(-50%);z-index:9;width:min(860px,calc(100vw - 32px));text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
+body.talking .bars::before,body.talking .bars::after{height:12.5vh}
+/* subtitles the way films do them: plain, centred, low in the picture; the speaker named quietly */
+.sub{position:fixed;left:50%;bottom:calc(12.5vh + 18px);transform:translateX(-50%);z-index:9;width:min(980px,calc(100vw - 40px));text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
 .sub.on{opacity:1}
-.sub b{display:block;font-family:var(--sc);font-weight:400;letter-spacing:.18em;font-size:13px;color:var(--gold);margin-bottom:4px}
-.sub span{font-size:clamp(19px,2.1vw,25px);line-height:1.4;text-shadow:0 0 2px #000,0 2px 12px #000,0 0 30px rgba(0,0,0,.9)}
-.choices{position:fixed;left:50%;bottom:calc(10vh + 18px);transform:translateX(-50%);z-index:10;width:min(640px,calc(100vw - 32px));display:none;flex-direction:column;gap:8px}
-.choices.on{display:flex}
-.choices button{text-align:left;font-size:18px;padding:11px 16px;border:1px solid var(--faint);background:rgba(10,8,6,.78);line-height:1.35}
-.choices button:hover,.choices button:focus-visible{border-color:var(--cream);outline:none}
-.choices button b{font-family:var(--sc);color:var(--gold);margin-right:10px;font-weight:400}
-.skiphint{position:fixed;right:22px;bottom:calc(10vh + 14px);z-index:9;font-family:var(--fell);font-style:italic;font-size:14px;color:var(--faint);opacity:0}
+.sub b{display:block;font-family:var(--body);font-weight:400;font-style:italic;letter-spacing:.02em;font-size:14px;color:rgba(242,232,213,.55);margin-bottom:2px}
+.sub span{font-family:var(--body);font-size:clamp(18px,1.9vw,23px);line-height:1.45;color:#f6f1e6;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 18px rgba(0,0,0,.65)}
+/* choices sit in the black bar under the picture: a few words each, nothing boxed */
+.choices{position:fixed;left:0;right:0;bottom:0;height:12.5vh;z-index:10;display:none;align-items:center;justify-content:center;gap:clamp(18px,4vw,56px);padding:0 20px}
+.choices.on{display:flex;animation:choicein .5s ease}
+@keyframes choicein{from{opacity:0}to{opacity:1}}
+.choices button{font-family:var(--body);font-size:clamp(15px,1.5vw,18px);color:rgba(242,232,213,.62);padding:6px 2px;border-bottom:1px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap}
+.choices button:hover,.choices button:focus-visible{color:#fff;border-bottom-color:var(--gold);outline:none}
+.choices button b{display:none}
+.choices button i{font-style:normal;font-size:11px;color:rgba(242,232,213,.3);margin-right:8px;letter-spacing:.1em}
+@media (max-width:760px){.choices{flex-direction:column;gap:2px;height:auto;min-height:12.5vh;padding:8px 16px;background:#000}.choices button{white-space:normal}}
+.skiphint{position:fixed;right:22px;bottom:calc(12.5vh + 10px);z-index:9;font-family:var(--fell);font-style:italic;font-size:14px;color:var(--faint);opacity:0}
 body.talking .skiphint{opacity:1}
 
 /* cards */
@@ -180,6 +185,15 @@ body.daylight::after{content:"";position:fixed;inset:0;z-index:18;background:#ff
 @media (max-width:760px){.howgrid{grid-template-columns:1fr}.steps div{font-size:16px}}
 @media (max-width:700px){.rule{font-size:15px;top:10px}.compass{top:34px}.goal{top:64px;left:14px;max-width:58vw;font-size:15px}.stats{top:134px;right:14px;font-size:12.5px}.mapbtn{right:14px}.codexbtn{right:14px}}
 body:has(#perform.on) .skiphint{opacity:0}
+body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint,body.cinema #namecard{opacity:0!important;pointer-events:none}
+.cine{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
+.cine.on{display:block}
+.cine button{position:absolute;right:22px;bottom:calc(12.5vh + 14px);pointer-events:auto;font-family:var(--sc);letter-spacing:.16em;font-size:12px;color:rgba(242,232,213,.5);padding:6px 8px}
+.cine button:hover{color:#fff}
+#titlecard{position:fixed;inset:0;z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 1.1s;background:radial-gradient(ellipse at center,rgba(0,0,0,.2),rgba(0,0,0,.7))}
+#titlecard.on{opacity:1}
+#titlecard small{font-family:var(--sc);letter-spacing:.32em;font-size:13px;color:rgba(242,232,213,.6)}
+#titlecard b{font-family:var(--fell);font-weight:400;font-size:clamp(54px,9vw,120px);line-height:1.05;margin-top:6px;text-shadow:0 2px 40px rgba(0,0,0,.8)}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -210,6 +224,8 @@ body:has(#perform.on) .skiphint{opacity:0}
 <div id="perform"><h3></h3><div class="psub"></div><div class="lane"></div><div class="meter"><i></i></div></div>
 <div class="choices" id="choices"></div>
 <div class="skiphint">click to skip a line</div>
+<div class="cine"><button id="skipIntro">skip</button></div>
+<div id="titlecard"><small></small><b></b></div>
 
 <div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tF" hidden>lyre</button><button id="tE">use</button><button id="tQ">drop</button></div></div>
 

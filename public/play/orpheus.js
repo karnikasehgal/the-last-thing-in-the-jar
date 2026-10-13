@@ -34,9 +34,9 @@ export function makeOrpheus(G) {
     G.clearChapterOne(); G.save.meet("orpheus");
     me.pos.copy(G.PLACES.start); me.yaw = -Math.PI / 2;
     // Mikon is still on the bank, ninety-something years in.
-    NPC.mikon = Object.assign(G.cast("mikon"), {name: "Mikon", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(14, 0, 16.05), yaw: Math.PI, seatY: .5});
-    NPC.hades = Object.assign(G.cast("hades", {scale: 1.06}), {name: "Hades", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.hades.clone(), yaw: Math.PI, seatY: 1.1});
-    NPC.persephone = Object.assign(G.cast("persephone"), {name: "Persephone", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.persephone.clone(), yaw: Math.PI, seatY: 1.1});
+    NPC.mikon = Object.assign(G.cast("mikon", {seated: true}), {name: "Mikon", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(14, 0, 16.05), yaw: Math.PI, seatY: .5});
+    NPC.hades = Object.assign(G.cast("hades", {scale: 1.06, seated: true}), {name: "Hades", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.hades.clone(), yaw: Math.PI, seatY: 1.1});
+    NPC.persephone = Object.assign(G.cast("persephone", {seated: true}), {name: "Persephone", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.persephone.clone(), yaw: Math.PI, seatY: 1.1});
     NPC.sisyphus = Object.assign(G.cast("sisyphus"), {name: "Sisyphus", idle: "Push_Loop", talk: "Idle_Talking_Loop", pos: FAR.sisyphus.clone(), yaw: 0});
     NPC.eurydice = Object.assign(G.cast("eurydice"), {name: "Eurydice", idle: "Idle_Loop", talk: "Idle_Loop", pos: V(0, 0, 134), yaw: 0});
     for (const id of ["mikon", "hades", "persephone", "sisyphus", "eurydice"]) G.placeNPC(NPC[id]);
@@ -69,68 +69,68 @@ export function makeOrpheus(G) {
   async function conversation(id) {
     G.beginTalk(NPC[id] || NPC.hades, id);
     if (id === "hermes") {
-      await say("hermes", "o_h1", "Hang on. You're breathing. Nobody down here breathes.");
-      await say("orpheus", "o1", "I'm Orpheus. My wife died. A snake, in the long grass, on our wedding day. I've come to take her home.");
-      await say("hermes", "o_h2", "I'm sorry. Really. But the living don't cross. Charon won't take you, and on the other side, there's a dog.", "ferry");
-      const k = await G.choose([{t: "Ask Hermes to help you."}, {t: "Tell him you brought a lyre."}, {t: "Ask if she remembers you."}]);
+      await say("hermes", "v2_oh1", "Hold on. You're breathing. Nobody down here breathes, it's one of the first things they give up. Who are you, and how did you get past the gate at Taenarum?");
+      await say("orpheus", "v2_o1", "My name is Orpheus. My wife is Eurydice. We were married in the spring, and that same afternoon a snake found her ankle in the long grass. I sang at her funeral. Then I stopped singing, and I came here instead.");
+      await say("hermes", "v2_oh2", "I'm sorry. I mean that, I was there, I heard the song. But I have to tell you how this goes. The living don't cross. Charon won't take you. And on the far bank there's a dog whose entire purpose is to keep people exactly where they are.", "ferry");
+      const k = await G.choose([{t: "Ask for his help"}, {t: "Show him the lyre"}, {t: "Ask if she remembers"}]);
       me.choices.hermes = [{Hermes: 2, Athena: 1}, {Apollo: 2, Dionysus: 1}, {Aphrodite: 2, Hera: 1}][k];
-      if (k === 0) await say("hermes", "o_h4", "I walk people down. I don't walk them back. Usually.");
-      if (k === 1) { await say("orpheus", "o2", "I brought a lyre."); await say("hermes", "o_h3", "Against Charon. Bold. I'll be over here, pretending I didn't see you."); }
-      if (k === 2) await say("hermes", "o_h5", "Nobody talks much down here. But she hasn't drunk from the river of forgetting. So. She remembers you.");
+      if (k === 0) await say("hermes", "v2_oh4", "I walk people down. I don't walk them back. There isn't a road for that, Orpheus. There's barely a road down.");
+      if (k === 1) { await say("orpheus", "v2_o2", "I brought my lyre."); await say("hermes", "v2_oh3", "Against the ferryman of the dead, a lyre. You know I invented that instrument? Out of a tortoise shell, when I was one day old. I'd very much like to see what it does to Charon."); }
+      if (k === 2) await say("hermes", "v2_oh5", "Nobody talks much down here, but I'll tell you this much. She hasn't drunk from Lethe, the river of forgetting. Whatever she was, she still is. Go on, then. I'll be over here, looking the other way.");
       st.stage = Math.max(st.stage, 1); G.hermesLeaves();
     } else if (id === "mikon") {
-      await say("mikon", "o_m1", "Oh, you're the singer. Everyone's talking about you. Well. Charon isn't. Charon doesn't talk.");
+      await say("mikon", "v2_om1", "You're the singer, aren't you? Everybody's talking about you. Well, nobody talks down here, but they're all looking at you the way people look at the weather. Good luck with Charon. I've been working on him for ninety-nine years.");
     } else if (id === "charon") {
       if (st.stage >= 4 && st.side === "far") return backAcross();
-      if (st.side === "far") { await say("charon", "o_c1", "Coin."); G.endTalk(); return; }
-      if (st.stage >= 2) { await say("charon", "o_c1", "Coin."); G.endTalk(); return; }
-      await say("charon", "o_c1", "Coin.");
-      await say("orpheus", "o3", "I'm not dead. I don't have one.");
-      await say("charon", "o_c2", "Then no.");
-      await say("orpheus", "o4", "Let me play you something. One song. Then you can say no.");
+      if (st.side === "far") { await say("charon", "v2_oc1", "Coin."); G.endTalk(); return; }
+      if (st.stage >= 2) { await say("charon", "v2_oc1", "Coin."); G.endTalk(); return; }
+      await say("charon", "v2_oc1", "Coin.");
+      await say("orpheus", "v2_o3", "I don't have one. I'm not dead.");
+      await say("charon", "v2_oc2", "Then you're on the wrong side of the river, and that's where you'll stay.");
+      await say("orpheus", "v2_o4", "Let me play you something first. One song. If you still want me gone when it's over, I'll go.");
       const r = await perform(SONGS.ferry, {title: "A song for the ferryman", sub: "Press Space, or tap, as each note reaches the ring", need: .65});
-      if (!r.passed) { await say("charon", "o_c5", "No."); G.endTalk(); G.toast("He didn't feel it. Try again: talk to him."); return; }
-      await say("charon", "o_c3", "Get in.");
+      if (!r.passed) { await say("charon", "v2_oc5", "I've heard better from the gulls. Go home, singer."); G.endTalk(); G.toast("He didn't feel it. Try again: talk to him."); return; }
+      await say("charon", "v2_oc3", "That was her song. The girl from Thrace. She sat right there in the middle and hummed it the whole way over. Get in. Sit where she sat.");
       G.endTalk();
       st.stage = 2;
-      await G.crossRiver(true, {during: async () => { await voice("charon", "o_c4", "The dog's awake on the other side. He hates music. He hates everything."); await voice("orpheus", "o5", "Everybody likes something."); }});
+      await G.crossRiver(true, {during: async () => { await voice("charon", "v2_oc4", "The dog's awake on the other side. He doesn't care for music. He doesn't care for anything, as far as I can tell, and I've known him since he was a pup."); await voice("orpheus", "v2_o5", "Everybody cares for something. You just have to find out what."); }});
       st.side = "far";
       G.toast("Hold F, or the lyre button, to play. While you play, the dog calms down. Your fingers tire, so rest when he's far away.", 6500);
       G.paintGoal(); return;
     } else if (id === "sisyphus") {
-      await say("sisyphus", "o_s1", "Don't stop. Please. First time I've sat down in four hundred years.");
-      await say("orpheus", "o7", "What happens when I stop?");
-      await say("sisyphus", "o_s2", "The rock remembers it's a rock.");
-      const k = await G.choose([{t: "Play him one more song."}, {t: "Ask how he cheated death."}, {t: "Leave him to it."}]);
+      await say("sisyphus", "v2_os1", "Don't stop. Please, whatever you do, don't stop playing. This is the first time I've sat down in four hundred years.");
+      await say("orpheus", "v2_o7", "What happens when I stop?");
+      await say("sisyphus", "v2_os2", "The rock remembers it's a rock, and I remember I'm me, and we both go back up that hill together. Play a little longer, would you?");
+      const k = await G.choose([{t: "Play him one more"}, {t: "Ask how he got here"}, {t: "Leave him to it"}]);
       me.choices.sisyphus = [{Demeter: 2, Apollo: 1}, {Hermes: 1, Athena: 2}, {Ares: 1, Zeus: 1}][k];
-      if (k === 0) { [4, 5, 7, 8, 7, 5, 4].forEach((n, i) => pluck(n, .8, i * .32)); await say("sisyphus", "o_s3", "That's the nicest thing anyone's done for me since I cheated death. Twice."); }
-      if (k === 1) await say("sisyphus", "o_s4", "I chained up Death himself. Nobody died for a week. Ares was furious. Nothing was dying in his wars.");
-      if (k === 2) await say("sisyphus", "o_s5", "Fair. Everyone's busy.");
+      if (k === 0) { [4, 5, 7, 8, 7, 5, 4].forEach((n, i) => pluck(n, .8, i * .32)); await say("sisyphus", "v2_os3", "Oh, that's lovely. That's the kindest thing anybody has done for me since I tricked my way out of here the first time."); }
+      if (k === 1) await say("sisyphus", "v2_os4", "I cheated death. Twice. The first time, I chained up Death himself, and for a whole week nobody in the world could die. Ares was furious, his wars kept not working. The second time, I talked my way out of this place and simply didn't come back. They took that personally.");
+      if (k === 2) await say("sisyphus", "v2_os5", "Fair enough. Everyone's busy. Mind the asphodel on your way, it bruises.");
     } else if (id === "hades") {
       G.save.meet("persephone");
-      await say("hades", "o_ha1", "A living man. In my house. With an instrument. Explain. Quickly.");
-      await say("orpheus", "o8", "My wife came here too early. I want her back. That's the whole speech.");
-      await say("persephone", "o_p1", "It wasn't much of a speech. Let him sing it.");
-      const k = await G.choose([{t: "Sing about the day you met her."}, {t: "Sing that everyone ends up here anyway. You're asking for a loan, not a gift."}, {t: "Sing to Persephone: love brought her here too."}]);
+      await say("hades", "v2_oha1", "A living man, in my house, holding an instrument. I can't remember the last time that happened, and I would very much like to go on not remembering. Explain yourself, and be quick about it.");
+      await say("orpheus", "v2_o8", "My wife came here too early. I'm not asking you to change your law, my lord. I'm asking you to lend her back to me for the years she didn't get.");
+      await say("persephone", "v2_op1", "Let him sing it, Hades. He didn't come all this way to make a speech.");
+      const k = await G.choose([{t: "Sing of the day you met"}, {t: "Ask for a loan, not a gift"}, {t: "Sing to Persephone"}]);
       me.choices.plea = [{Aphrodite: 2, Dionysus: 1}, {Athena: 2, Hermes: 1}, {Hera: 2, Demeter: 1}][k];
-      await say("orpheus", ["o9a", "o9b", "o9c"][k], ["This one's about a girl who laughed at my lyre, and then asked me to play it again.", "Everyone ends up here. Give her a few years up there, and you'll have her back. It's a loan, not a gift.", "They say love brought you here too, my queen. If that story's true, then you already know."][k]);
+      await say("orpheus", ["v2_o9a", "v2_o9b", "v2_o9c"][k], ["This one's about a girl who laughed at my lyre the first time she heard it, and then made me play it for her until the sun came up.", "Everyone comes here in the end, my lord, and in the end you'll have her back. I'm only asking for a loan, not a gift.", "They say love brought you down here too, my queen. If that story is true, then you already know what I'm asking for."][k]);
       let r;
       for (;;) {
         r = await perform(SONGS.plea, {title: "A song for the King and Queen of the dead", sub: "Space, or tap, on every note. This one matters", need: .62});
         if (r.passed) break;
-        await say("hades", "o_ha4", "No.");
-        await say("persephone", "o_p3", "Again. Play it again.");
+        await say("hades", "v2_oha4", "No. It was pretty, and the answer is no.");
+        await say("persephone", "v2_op3", "Play it again. Play it as if he isn't listening.");
       }
-      await say("persephone", "o_p2", "Hades.");
-      await say("hades", "o_ha2", "Fine. She follows you up. You walk in front, and you don't look back. Not once. Not until you're both in the light.");
-      await say("orpheus", "o10", "That's it?");
-      await say("hades", "o_ha3", "You'd be amazed.");
+      await say("persephone", "v2_op2", "Hades. Look at me.");
+      await say("hades", "v2_oha2", "Fine. She'll follow you up. You walk in front, and you do not look back at her. Not once, not for any reason, not until you are both standing in the light. If you do, she comes straight back down to me.");
+      await say("orpheus", "v2_o10", "That's all?");
+      await say("hades", "v2_oha3", "You'd be amazed how many people find that too much.");
       // face the door; she appears behind you
       me.pos.copy(FAR.throneFront).add(V(0, 0, -1.5)); me.yaw = 0; me.pitch = -.03;
       G.camShot.active = false;
       startWalk();
-      await voice("eurydice", "o_eu1", "Orpheus? Is that you?");
-      await voice("orpheus", "o11", "Don't say anything. Just follow me. Please.");
+      await voice("eurydice", "v2_oe1", "Orpheus? Is that you? I heard you all the way from the meadow.");
+      await voice("orpheus", "v2_o11", "Don't say anything else. Just follow my voice and keep walking. Please.");
       G.endTalk(); G.paintGoal();
       G.toast("She's behind you. If she comes into view, even for a moment, she's gone.", 5200);
       return;
@@ -158,9 +158,9 @@ export function makeOrpheus(G) {
     return st.trail[0].clone();
   }
   async function backAcross() {
-    await say("charon", "o_c7", "Back again. Get in. Eyes front.");
+    await say("charon", "v2_oc7", "Back again, singer. Get in, both of you. Eyes front the whole way over.");
     G.endTalk();
-    await G.crossRiver(false, {eury: NPC.eurydice, during: async () => { await new Promise(r => setTimeout(r, 3500)); await voice("charon", "o_c6", "She's behind you. Don't."); }});
+    await G.crossRiver(false, {eury: NPC.eurydice, during: async () => { await new Promise(r => setTimeout(r, 3500)); await voice("charon", "v2_oc6", "She's right behind you. Don't."); }});
     st.side = "near"; st.trail = [V(0, 0, 37), V(0, 0, 36), flat(me.pos)];
     G.paintGoal();
   }
@@ -168,9 +168,9 @@ export function makeOrpheus(G) {
     if (st.over) return; st.over = true;
     G.setPlaying(false); G.releaseMouse();
     const e = NPC.eurydice; e.play("Idle_Loop");
-    await voice("eurydice", "o_eu5", "Goodbye.");
+    await voice("eurydice", "v2_oe5", "Goodbye, my love.");
     fade(e, 1600);
-    await voice("orpheus", "o12", "Eurydice!");
+    await voice("orpheus", "v2_o12", "Eurydice!");
     G.finish("You looked back. In every version of the story, he does.", {retry: retryWalk});
   }
   function fade(p, ms) {
@@ -192,21 +192,21 @@ export function makeOrpheus(G) {
     st.over = true; G.setPlaying(false); G.releaseMouse(); $("#prompt").classList.remove("on");
     G.beginTalk(null, "none");
     st.stepsOff = true;
-    await voice("eurydice", "o_eu4", "Orpheus... I can't hear you anymore.");
-    const k = await G.choose([{t: "Look back."}, {t: "Keep walking."}]);
+    await voice("eurydice", "v2_oe4", "Orpheus... I can't hear your footsteps anymore. Are you even there?");
+    const k = await G.choose([{t: "Look back"}, {t: "Keep walking"}]);
     if (k === 0) {
       G.endTalk(); me.yaw += Math.PI; // turn round
       await new Promise(r => setTimeout(r, 900));
-      await voice("eurydice", "o_eu5", "Goodbye.");
+      await voice("eurydice", "v2_oe5", "Goodbye, my love.");
       fade(NPC.eurydice, 1600);
-      await voice("orpheus", "o12", "Eurydice!");
+      await voice("orpheus", "v2_o12", "Eurydice!");
       me.choices.end = {Poseidon: 2, Aphrodite: 1};
       return G.finish("You looked back, right at the end. In every version of the story, he does.");
     }
     G.endTalk(); st.stepsOff = false;
     st.autoWalk = true;
-    await voice("eurydice", "o_eu6", "It's so bright.");
-    await voice("orpheus", "o13", "Keep walking. I've got you.");
+    await voice("eurydice", "v2_oe6", "It's so bright. I'd forgotten it could ever be this bright.");
+    await voice("orpheus", "v2_o13", "Keep walking. I've got you. I've got you.");
     me.choices.end = {Hera: 2, Athena: 1};
     document.body.classList.add("daylight");
     await new Promise(r => setTimeout(r, 2600));
@@ -267,7 +267,7 @@ export function makeOrpheus(G) {
     if (dog.calm >= 1 && me.pos.z > FAR.gateZ + .5) {
       dog.asleep = true; dog.mode = "sleep"; dog.speed = 0; $("#lyremeter").classList.remove("on"); G.paint.uniforms.danger.value = 0; $("#danger").classList.remove("on");
       G.save.meet("cerberus");
-      voice("orpheus", "o6", "Three heads. One lullaby."); G.paintGoal(); return;
+      voice("orpheus", "v2_o6", "There. Three heads, one lullaby. Sleep, dog."); G.paintGoal(); return;
     }
     let target = FAR.gateMouth.clone().add(V(Math.sin(now / 1600) * 3, 0, 0)), speed = 1.4;
     dog.mode = dog.calm > .75 ? "sleepish" : "guard";
@@ -310,9 +310,9 @@ export function makeOrpheus(G) {
     $("#danger").classList.toggle("on", edge && !inView);
     if (inView) { st.lookT += dt; if (st.lookT > .1) lookedBack(); } else st.lookT = 0;
     // things that happen on the way
-    if (!st.fired.slow && me.pos.z < FAR.hallZ - 4 && st.side === "far") { st.fired.slow = true; voice("eurydice", "o_eu3", "You're walking so fast. My foot still hurts."); }
-    if (!st.fired.stop && me.pos.z < FAR.gateZ - 2 && st.side === "far") { st.fired.stop = true; st.stepsOff = true; setTimeout(() => { voice("eurydice", "o_eu2", "Orpheus? Are you still there?").then(() => setTimeout(() => st.stepsOff = false, 1500)); }, 1200); }
-    if (!st.fired.mikon && st.side === "near" && flat(NPC.mikon.pos).distanceTo(flat(me.pos)) < 8) { st.fired.mikon = true; voice("mikon", "o_m2", "Mate. Don't turn around. Just keep walking. I'll tell you if anything's weird. It's all weird."); }
+    if (!st.fired.slow && me.pos.z < FAR.hallZ - 4 && st.side === "far") { st.fired.slow = true; voice("eurydice", "v2_oe3", "You're walking so fast. My foot still hurts, where it bit me."); }
+    if (!st.fired.stop && me.pos.z < FAR.gateZ - 2 && st.side === "far") { st.fired.stop = true; st.stepsOff = true; setTimeout(() => { voice("eurydice", "v2_oe2", "Orpheus? Are you still there? I can't hear you anymore.").then(() => setTimeout(() => st.stepsOff = false, 1500)); }, 1200); }
+    if (!st.fired.mikon && st.side === "near" && flat(NPC.mikon.pos).distanceTo(flat(me.pos)) < 8) { st.fired.mikon = true; voice("mikon", "v2_om2", "Mate. Mate. Don't turn around. Just keep walking. I'll tell you if anything weird happens. Everything's weird. Keep walking."); }
     if (!st.fired.light && st.side === "near" && me.pos.x < -34 && me.pos.z > 9 && me.pos.z < 17) { st.fired.light = true; theLight(); }
   }
   function always(dt, now) {

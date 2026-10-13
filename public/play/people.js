@@ -138,6 +138,7 @@ function skinned(geo, mat, body) {
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
 function wrap(body, keep, {off = .016, mat, bulge = () => 0, clip}) {
   const B = study(body), ix = B.g.index.array, tri = [];
+  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE_HIGH} && abs(b.x) < .6 && b.y > .95`; // cover everything modern (the hood keeps its own shape)
   if (clip) mat = clipped(mat, clip, B);
   const ok = new Uint8Array(B.N); for (let i = 0; i < B.N; i++) ok[i] = keep(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2], B.dom[i]) ? 1 : 0;
   for (let t = 0; t < ix.length; t += 3) if (ok[ix[t]] && ok[ix[t + 1]] && ok[ix[t + 2]]) tri.push(ix[t], ix[t + 1], ix[t + 2]);
@@ -188,7 +189,7 @@ function outline(B, y, band, SEG, include) {
 let LONG = false; // set while dressing a realistic body: sleeves to the wrist, hems to the ankle
 function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035}) {
   const B = study(body);
-  if (LONG && to > .3 && to < .8 && from < 1.1) to = .1;
+  if (LONG && to > .3 && to < .8 && from < 1.1) to = SEATED ? .5 : .1;
   include ||= d => TORSO.test(d) || LEGS.test(d);
   const rows = Math.max(2, Math.ceil((from - to) / step) + 1), full = arc[1] - arc[0] >= Math.PI * 2 - 1e-6;
   const cols = full ? SEG : Math.round(SEG * (arc[1] - arc[0]) / (Math.PI * 2)) + 1;
@@ -231,8 +232,10 @@ function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc =
 
 // How a skirt follows the legs: near the waist it moves with the hips, lower down it shares
 // the hips with whichever thigh is closer, so walking and sitting don't tear it.
+let SEATED = false; // dressing someone who sits: the skirt follows the legs all the way down
 function skirtWeights(B, legShare = .55) {
   const hipOnly = new Map([[B.idx.pelvis, 1]]);
+  if (SEATED) return (x, y, z, t) => mixWeights(hipOnly, borrowWeights(B, x, y, z, i => TORSO.test(B.dom[i]) || /^(thigh|calf)_/.test(B.dom[i])), Math.min(1, t * 3));
   return (x, y, z, t) => {
     const near = borrowWeights(B, x, Math.max(y, .62), z, i => TORSO.test(B.dom[i]) || /^thigh_/.test(B.dom[i]));
     return mixWeights(hipOnly, near, Math.min(1, t * 1.6) * legShare);
@@ -540,7 +543,7 @@ function makeFace(root) {
     }
   };
 }
-function makeRealPerson(id, look, {ASSETS, scene, scale}) {
+function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
   const female = FEMALE.has(id) || look.body === "female";
   const root = SkeletonUtils.clone(ASSETS["rb_" + id].scene);
   root.updateMatrixWorld(true);
@@ -567,6 +570,8 @@ function makeRealPerson(id, look, {ASSETS, scene, scale}) {
     const ix = g.index.array; for (let t = 0; t < ix.length; t++) I.push(ix[t] + base);
     base += pos.count;
   }
+  // remember where each vertex of the real body sits in the tailor's space, so its material can hide what the clothes cover
+  { let off = 0; for (const o of bodyParts) { const n = o.geometry.attributes.position.count; if (!o.geometry.attributes.aBind) o.geometry.setAttribute("aBind", new THREE.Float32BufferAttribute(P.slice(off * 3, (off + n) * 3), 3)); off += n; } }
   const merged = new THREE.BufferGeometry();
   merged.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   merged.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2)); merged.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(SI, 4));
@@ -577,9 +582,23 @@ function makeRealPerson(id, look, {ASSETS, scene, scale}) {
   tailor.skeleton = skel; tailor.bindMatrix = new THREE.Matrix4();
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const person = {root, bones, body: ref, norm: {k, turn}, female};
+  // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
+  const low = seated ? .5 : .1;
+  for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
+    const m = o.material.clone();
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = "attribute vec3 aBind; varying vec3 vB;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind;");
+      sh.fragmentShader = "varying vec3 vB;\n" + sh.fragmentShader.replace("void main() {", `void main() {
+        if (vB.y > 1.46 && abs(vB.x) < .22) discard;
+        if (abs(vB.x) < .6 && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
+        if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`);
+    };
+    m.customProgramCacheKey = () => "rbbody" + low;
+    o.material = m;
+  }
   // dress: long sleeves, long hems, a high neckline, so nothing modern shows
-  LONG = true; NECKLINE = NECKLINE_HIGH; const keepF = [FNECK, FUPPER]; FNECK = NECKLINE_HIGH; FUPPER = UPPER;
-  try { look.dress(person, study(tailor), tailor); } finally { LONG = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
+  LONG = true; SEATED = seated; NECKLINE = NECKLINE_HIGH; const keepF = [FNECK, FUPPER]; FNECK = NECKLINE_HIGH; FUPPER = UPPER;
+  try { look.dress(person, study(tailor), tailor); } finally { LONG = false; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
   if (look.eyes) { // Charon's eyes of flame
     root.traverse(o => { if (o.isMesh && /head/i.test([].concat(o.material)[0].name)) { o.material = o.material.clone(); } });
     const l = new THREE.PointLight(look.eyes, .35, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
@@ -603,9 +622,9 @@ function makeRealPerson(id, look, {ASSETS, scene, scale}) {
   return person;
 }
 
-export function makeCastMember(id, {ASSETS, CLIPS, scene, scale = 1}) {
+export function makeCastMember(id, {ASSETS, CLIPS, scene, scale = 1, seated = false}) {
   const look = LOOKS[id];
-  if (ASSETS["rb_" + (look.as || id)]) return makeRealPerson(look.as || id, look, {ASSETS, scene, scale});
+  if (ASSETS["rb_" + (look.as || id)]) return makeRealPerson(look.as || id, look, {ASSETS, scene, scale, seated});
   const root = SkeletonUtils.clone((look.body === "female" ? ASSETS.body_female : ASSETS.head_male).scene);
   const bones = {}; root.traverse(o => { if (o.isBone) bones[o.name] = o; });
   let body = null;

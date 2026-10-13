@@ -348,11 +348,11 @@ function placePeople() {
   const cast = (id, opts) => makeCastMember(id, {ASSETS, CLIPS, scene, ...opts});
   NPC.hermes = Object.assign(cast("hermes"),
     {name: "Hermes", idle: "Idle_Loop", talk: "Idle_Talking_Loop", pos: PLACES.hermes.clone(), face: true});
-  NPC.elpenor = Object.assign(cast("elpenor", {scale: .96}),
+  NPC.elpenor = Object.assign(cast("elpenor", {scale: .96, seated: true}),
     {name: "Elpenor", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(-6, 0, 16.05), yaw: Math.PI, seatY: .5});
-  NPC.theseus = Object.assign(cast("theseus"),
+  NPC.theseus = Object.assign(cast("theseus", {seated: true}),
     {name: "Theseus", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(54.6, 0, PLACES.chairs.z + .1), yaw: 0, seatY: STEP + .5});
-  NPC.pirithous = Object.assign(cast("pirithous"),
+  NPC.pirithous = Object.assign(cast("pirithous", {seated: true}),
     {name: "Pirithous", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(57.4, 0, PLACES.chairs.z + .1), yaw: 0, seatY: STEP + .5});
   NPC.charon = Object.assign(cast("charon", {scale: 1.08}),
     {name: "Charon", idle: "Idle_Torch_Loop", talk: "Idle_Talking_Loop", pos: V(0, 0, 37.2), yaw: Math.PI, seatY: .25, face: true});
@@ -491,7 +491,7 @@ async function line(who, id, text, cut) {
 function choose(options) {
   return new Promise(res => {
     const box = $("#choices");
-    box.innerHTML = options.map((o, i) => `<button data-k="${i}"><b>${i + 1}</b>${o.t}</button>`).join("");
+    box.innerHTML = options.map((o, i) => `<button data-k="${i}"><i>${i + 1}</i>${o.t}</button>`).join("");
     box.classList.add("on");
     box.querySelectorAll("button").forEach(b => b.onclick = () => { box.classList.remove("on"); choicePick = null; res(+b.dataset.k); });
     choicePick = k => box.querySelector(`button[data-k="${k}"]`)?.click();
@@ -514,49 +514,59 @@ async function conversation(id) {
   beginTalk(NPC[id], id);
   const say = (who, lid, text, cut) => line(who, lid, text, cut);
   if (id === "hermes") {
-    await say("hermes", "h1", "Right. You're dead. Welcome to the Underworld. I'm Hermes. I walk people in.");
-    await say("hermes", "h2", "That's the River Styx. To cross it, you take the ferry at the end of the dock.", "ferry");
-    await say("hermes", "h3", "The ferryman's called Charon. He wants one coin. You don't have one. So. Find a coin.", "charon");
-    await say("hermes", "h4", "Careful, though. There's a dog. Three heads. He sleeps in the cave past the old temple, and he can smell coins.", "grotto");
-    await say("mikon", "m1", "Wait. A three-headed dog can smell my coin?");
-    await say("hermes", "h5", "Your coin, specifically. If he comes for you, get in the river. He can't swim. Off you go.", "river");
+    await say("hermes", "v2_h1", "There you are. Don't panic, everybody does the thing with the hands at first. You're dead, I'm afraid. I'm Hermes. Half my job is walking people down here, and the other half is explaining the rules, which is the half nobody listens to.");
+    await say("mikon", "v2_m1", "An olive pit. I died of an olive pit. My cousin hadn't even cut the cake yet.");
+    await say("hermes", "v2_h2", "Most people go out in less interesting ways, if it helps. Look past the columns. That's the River Styx, and the dock at the end of it is the only way across.", "ferry");
+    await say("hermes", "v2_h3", "The ferryman's name is Charon. He's been rowing that boat since before there were cities, and he has exactly one rule. A coin for the crossing. Your family was meant to put one in your mouth. I'm told they were distracted.", "charon");
+    await say("mikon", "v2_m2", "So I'm stuck here because my cousin's wedding ran long.");
+    await say("hermes", "v2_h4", "For a hundred years, technically. That's what happens to anyone who can't pay. They wait on the bank and watch the boat leave without them. Unless, of course, they find a coin.");
+    await say("hermes", "v2_h5", "Which brings me to the dog. Three heads, one temper. He sleeps in the cave past the old temple, and he can smell a coin through solid rock. If he ever comes after you, get into the river. He hates water even more than he hates people.", "grotto");
+    await say("mikon", "v2_m3", "That's a lot of rules for one afternoon.");
+    await say("hermes", "v2_h6", "And it's a lot of afternoon for one man. Ask around. The sailor down by the water has been here long enough to know where everything is. I'm afraid I have to go and collect a general who fell off his horse.", "river");
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
-    await say("elpenor", "e1", "Oh. Hey. New? I'm Elpenor. I used to row for Odysseus.");
-    await say("mikon", "m2", "Mikon. Olive pit. You?");
-    await say("elpenor", "e2", "Fell off a roof. Long story. Short roof.");
-    const k = await choose([{t: "Ask if he's seen a coin anywhere."}, {t: "Tell him you'll get him out of here too."}, {t: "Tell him to stay off roofs."}]);
+    await say("elpenor", "v2_e1", "Oh, hello. Sorry, I don't get many people stopping, most of them walk straight past. Which, honestly, fair. I'm Elpenor. I rowed for Odysseus. Well, I rowed near Odysseus. There were a lot of us.");
+    await say("mikon", "v2_m4", "Mikon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here.");
+    await say("elpenor", "v2_e2", "That's a good one. Mine's worse. We were staying at Circe's house, and I'd had too much wine, so I went up on the roof to sleep where it was cool. In the morning I heard everyone leaving, jumped up in a hurry, and forgot about the ladder.");
+    const k = await choose([{t: "Ask about a coin"}, {t: "Promise to get him out"}, {t: "Say how sad that is"}]);
     me.choices.elpenor = [{Hermes: 2, Athena: 1}, {Demeter: 2, Hera: 1}, {Dionysus: 2, Apollo: 1}][k];
-    if (k === 1) await say("elpenor", "e5", "Nobody's ever said that to me.");
-    if (k === 2) await say("elpenor", "e6", "Bit late, mate.");
-    await say("elpenor", "e3", "There's one coin down here nobody's spent. The dog sleeps on it. In his cave, past the old temple.", "grotto");
-    await say("elpenor", "e4", "You can't just grab it. He'll smell it and wake up. You have to put him to sleep first.");
-    await say("elpenor", "e7", "Honey cake. Dogs can't resist it. Out like a lamp. There's one on the altar in the temple. Somebody left it as an offering.", "altar");
-    await say("elpenor", "e8", "Throw it near him, grab the coin, and run for the river. He can't swim.", "river");
+    if (k === 0) await say("mikon", "v2_m5", "I don't suppose you've seen a coin lying around anywhere?");
+    if (k === 1) { await say("mikon", "v2_m6", "When I get across, I'll find a way to get you out of here too."); await say("elpenor", "v2_e5", "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person."); }
+    if (k === 2) { await say("mikon", "v2_m7", "That might be the saddest thing I've ever heard."); await say("elpenor", "v2_e6", "Thank you. I tell it slightly differently at parties."); }
+    await say("elpenor", "v2_e3", "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.", "grotto");
+    await say("elpenor", "v2_e4", "You can't just walk in and pick it up. He'll smell it the second it moves. You'd have to put him to sleep first.");
+    await say("elpenor", "v2_e7", "There's a honey cake on the altar in the temple. Somebody left it as an offering years ago, and it hasn't gone stale, because nothing does down here. No dog alive can say no to honey cake. Throw it close to him, and he'll be out like a lamp.", "altar");
+    await say("elpenor", "v2_e8", "Then grab the coin and run for the river. He won't follow you into the water. And Mikon, if you make it across, tell Odysseus he still owes me a funeral.", "river");
   } else if (id === "theseus") {
-    await say("theseus", "t1", "Don't sit down.");
-    await say("pirithous", "p1", "Seriously. Don't.");
-    await say("mikon", "m3", "Are you two stuck to those chairs?");
-    await say("theseus", "t2", "We came down here to kidnap the Queen of the Dead. Long story. Then we sat down.");
-    const k = await choose([{t: "Ask them how to get past the dog."}, {t: "Try to pull them off the chairs."}, {t: "Leave them. They're heroes, they'll figure it out."}]);
+    await say("theseus", "v2_t1", "Stop right there. Whatever you do, don't sit down.");
+    await say("pirithous", "v2_p1", "He's serious. Look at us. This is what sitting down gets you.");
+    await say("mikon", "v2_m8", "Are the two of you stuck to those chairs?");
+    await say("theseus", "v2_t2", "Theseus, son of Aegeus, king of Athens, killer of the Minotaur. Currently attached to a rock.");
+    await say("pirithous", "v2_p2", "And I'm Pirithous, king of the Lapiths, and this was my idea, which he will tell you about if you stay longer than a minute.");
+    await say("theseus", "v2_t3", "We came down here to carry off the queen of the dead. Hades was very polite about it. He said we must be tired after such a long journey, and he offered us a seat.");
+    await say("pirithous", "v2_p3", "And we sat. And that was four years ago.");
+    const k = await choose([{t: "Ask about the dog"}, {t: "Pull them free"}, {t: "Leave them to it"}]);
     me.choices.theseus = [{Athena: 2, Hermes: 1}, {Artemis: 2, Hera: 1}, {Apollo: 2, Zeus: 1}][k];
-    if (k === 0) { await say("theseus", "t6", "Honey cake. Throw him one and he sleeps like a baby. Three babies.", "altar"); await say("pirithous", "p4", "The Sibyl did it. Everybody does it. Except us. We just sat down."); }
-    if (k === 1) { await say("mikon", "m4", "On three. One, two..."); await say("pirithous", "p2", "No. No. It's fused. I'm part chair now."); me.met.theseus = true; endTalk(); wakeDog("The screaming woke the dog. Hide in the river.", 10); return; }
-    if (k === 2) await say("pirithous", "p3", "Guys?");
+    if (k === 0) { await say("theseus", "v2_t4", "Honey cake. Throw him one and he sleeps like a baby. Three babies, technically.", "altar"); await say("pirithous", "v2_p4", "The Sibyl did it, apparently, for that Trojan fellow. Everybody does it. Everybody except us. We just sat down."); }
+    if (k === 1) { await say("mikon", "v2_m9", "Hold still. I'll pull on three. One, two..."); await say("pirithous", "v2_p5", "No, no, no, stop! It's fused, I'm part chair now, I can feel it in my spine!"); me.met.theseus = true; endTalk(); wakeDog("The screaming woke the dog. Hide in the river.", 10); return; }
+    if (k === 2) { await say("mikon", "v2_m10", "You're heroes. You'll work something out."); await say("theseus", "v2_t5", "That's exactly what we said four years ago."); await say("pirithous", "v2_p6", "Guys? Guys, come back."); }
   } else if (id === "charon") {
     if (!me.coin) {
-      await say("charon", "c1", "Coin.");
-      await say("mikon", "m5", "Working on it.");
-      endTalk(); sound.splash(); me.splashed++; paintStats(); toast("Splash."); return;
+      await say("charon", "v2_c1", "Coin.");
+      await say("mikon", "v2_m11", "I'm working on it. I don't suppose there's any chance of, you know, an I.O.U.?");
+      await say("charon", "v2_c3", "A hundred years on the bank, or one coin in my hand. Those are the two ways onto this boat. There has never been a third.");
+      endTalk(); sound.splash(); me.splashed++; paintStats(); toast("He flicks the water at you with his oar."); return;
     }
-    await say("charon", "c1", "Coin.");
-    await say("mikon", "m6", "Coin!");
-    await say("charon", "c2", "Get in.");
-    await say("mikon", "m7", "There's a kid on the bank. He doesn't have a coin.");
-    const k = await choose([{t: "Get in. A hundred years. You earned it."}, {t: "Give the kid your coin."}, {t: "Stay. You've got a good spot now."}]);
+    await say("charon", "v2_c1", "Coin.");
+    await say("mikon", "v2_m12", "I've got one. I've actually got one.");
+    await say("charon", "v2_c4", "Then get in. Sit in the middle, keep your hands inside, and don't look at the water too long. Some of them look back.");
+    await say("mikon", "v2_m13", "Wait. There's a kid on the bank. He hasn't got a coin either. He's been sitting there since before I arrived.");
+    const k = await choose([{t: "Get in"}, {t: "Give the kid your coin"}, {t: "Stay on the bank"}]);
     me.choices.charon = [{Zeus: 1, Apollo: 1, Hephaestus: 1}, {Demeter: 2, Hera: 1}, {Poseidon: 2, Dionysus: 1, Hephaestus: 1}][k];
-    if (k === 1) { await say("charon", "c3", "Doesn't work like that."); await say("mikon", "m8", "Then I'll wait with him."); await say("charon", "c4", "Both of you. Get in."); }
-    await say("mikon", "m9", "Could be worse.");
+    if (k === 0) await say("mikon", "v2_m14", "Sorry, kid. I'll wave.");
+    if (k === 1) { await say("charon", "v2_c5", "It doesn't work like that. One coin, one passenger."); await say("mikon", "v2_m15", "Then I'll wait with him. I've apparently got a hundred years to spare, and it turns out I'm good at waiting."); await say("charon", "v2_c6", "Both of you, then. Get in. If anybody asks, you paid."); }
+    if (k === 2) await say("mikon", "v2_m16", "Actually, you know what? I've got a good spot now. I think I'll stay a while.");
+    await say("mikon", "v2_m17", "Could be worse.");
     endTalk();
     return finish(["You crossed. It goes faster than you'd think.", "You both crossed. Charon will deny this.", "You stayed. You've got a rock. You've got a view."][k]);
   }
@@ -571,6 +581,7 @@ function endTalk() {
 }
 addEventListener("keydown", e => { if (!talking) return; if (/^[123]$/.test(e.key) && choicePick) choicePick(+e.key - 1); else if ([" ", "Enter", "e", "E"].includes(e.key)) skipLine?.(); });
 addEventListener("pointerdown", e => { if (talking && !e.target.closest("#choices")) skipLine?.(); });
+$("#skipIntro")?.addEventListener("click", e => { e.stopPropagation(); skipIntro?.(); });
 
 function hermesLeaves() {
   const h = NPC.hermes; h.leaving = true; h.play("Walk_Formal_Loop");
@@ -938,11 +949,39 @@ let lyreReady = false;
 function rotateHint() { $("#rotate").classList.toggle("on", matchMedia("(pointer: coarse)").matches && innerHeight > innerWidth && playing && !ended); }
 addEventListener("resize", rotateHint);
 $("#rotate").addEventListener("click", () => $("#rotate").classList.add("dismissed"));
-$("#begin").onclick = () => {
+// Each chapter opens like a film: the camera moves through the place while the person you're about to play talks.
+const INTROS = {1: {title: ["Chapter I", "The Coin"], shots: [{"from": [25, 6, 44, 0, 1.2, 37.5], "to": [11, 4, 31, 0, 1.4, 37.5], "id": "v2_i1", "who": "mikon", "text": "My name is Mikon. I sold salt fish in the agora at Corinth for twenty-two years, and I was, by every account, fine at it."}, {"from": [-30, 2.4, 4, 30, 2.2, 4], "to": [-12, 2.2, 4, 30, 2.2, 4], "id": "v2_i2", "who": "mikon", "text": "Last spring, at my cousin's wedding, I laughed at the wrong moment with an olive in my mouth. That's the whole story. There isn't a better version of it."}, {"from": [50, 3.2, 15, 56, 1.6, 6], "to": [54.5, 2.3, 11, 56, 1.7, 8.6], "id": "v2_i3", "who": "mikon", "text": "Nobody put a coin under my tongue for the ferryman. They were busy. It was a wedding, and the lamb was getting cold."}, {"from": [62, 2.8, 21, 72, 0.8, 12], "to": [66.5, 1.8, 17, 72, 0.6, 12], "id": "v2_i4", "who": "mikon", "text": "So this is where I am now. The bank of the River Styx, a ferry I can't afford, a dog that can smell money, and a hundred years to think about olives."}, {"from": [-1, 1.9, 23, -6, 1.2, 16], "to": [-3.5, 1.6, 19.5, -6, 1.1, 16], "id": "v2_i5", "who": "mikon", "text": "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting."}, {"from": [-36, 1.75, 7, -20, 1.6, 4], "to": [-34, 1.7, 5.5, -20, 1.6, 4], "id": "v2_i6", "who": "mikon", "text": "This is the story of one of them."}]},
+  2: {title: ["Chapter II", "The Lyre"], far: [2, 3, 4], shots: [{"from": [-53, 2.2, 13, -36, 1.5, 13], "to": [-44, 1.9, 13, -30, 1.5, 13], "id": "v2_j1", "who": "orpheus", "text": "They say I could make rivers stop to listen. I never tried. I only ever wanted one person to listen, and she always did."}, {"from": [-20, 1.8, 18, -6, 1.1, 16], "to": [-12, 1.7, 17, -6, 1.2, 16], "id": "v2_j2", "who": "orpheus", "text": "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it."}, {"from": [0, 5, 30, 0, 3, 80], "to": [0, 4, 42, 0, 3, 80], "id": "v2_j3", "who": "orpheus", "text": "I sang at her funeral. Every bird in Thrace went quiet. It didn't help."}, {"from": [-6, 2.4, 96, 6, 1, 108], "to": [-2, 2.2, 101, 6, 1, 110], "id": "v2_j4", "who": "orpheus", "text": "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out."}, {"from": [0, 3.2, 119, 0, 2, 137.4], "to": [0, 2.4, 128, 0, 2, 137.4], "id": "v2_j5", "who": "orpheus", "text": "Nobody comes back from the Underworld. Everybody says so. But as far as I know, nobody has ever asked properly."}, {"from": [-36, 1.75, 7, -20, 1.6, 4], "to": [-34, 1.7, 5.5, -20, 1.6, 4], "id": "v2_j6", "who": "orpheus", "text": "I'm going to ask."}]}};
+let skipIntro = null;
+async function playIntro(n) {
+  const I = INTROS[n]; if (!I) return;
+  talking = true; document.body.classList.add("talking", "cinema");
+  let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
+  for (const [k, sh] of I.shots.entries()) {
+    if (skipped) break;
+    setLightsFar(!!I.far?.includes(k));
+    const t0 = performance.now(), est = 2200 + sh.text.split(" ").length * 360, A = V(...sh.from.slice(0, 3)), AL = V(...sh.from.slice(3)), B = V(...sh.to.slice(0, 3)), BL = V(...sh.to.slice(3));
+    camShot.active = true; camShot.snap = true; camShot.pos.copy(A); camShot.look.copy(AL);
+    let moving = true;
+    (function drift() { if (!moving) return; const u = Math.min(1, (performance.now() - t0) / est), e = u * u * (3 - 2 * u); camShot.pos.lerpVectors(A, B, e); camShot.look.lerpVectors(AL, BL, e); requestAnimationFrame(drift); })();
+    $(".cine").classList.add("on");
+    await line(sh.who, sh.id, sh.text, "voice");
+    moving = false;
+  }
+  setLightsFar(false);
+  // the title card
+  const card = $("#titlecard"); card.querySelector("small").textContent = I.title[0]; card.querySelector("b").textContent = I.title[1];
+  card.classList.add("on"); await new Promise(r => setTimeout(r, skipped ? 900 : 2600)); card.classList.remove("on");
+  $(".cine").classList.remove("on");
+  document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null;
+}
+addEventListener("keydown", e => { if (skipIntro && (e.key === "Escape" || e.key === "Enter")) skipIntro(); });
+$("#begin").onclick = async () => {
   if (CH !== 1 && !chap.ready) { chap.setup(); chap.ready = true; }
   if (!PLAYER) { PLAYER = G.cast(CH === 2 ? "orpheus" : "mikon"); PLAYER.play("Idle_Loop", 0); PLAYER.setHead(false); chap.onBody?.(PLAYER); }
   setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
+  if (!new URLSearchParams(location.search).has("nointro")) await playIntro(CH);
   playing = true; me.started = performance.now();
   grabMouse();
   setTimeout(() => { if (!talking) toast("Hermes is waiting for you, just ahead."); }, 700);
