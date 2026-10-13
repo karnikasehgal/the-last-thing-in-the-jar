@@ -5,6 +5,7 @@
 // so the clothes move with the animations. Hats, beards, props and jewellery ride on the bones.
 import * as THREE from "three";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
+import { toonClips, hairSprings, toonFace, tintToon } from "./toon.js";
 
 const TORSO = /^(pelvis|spine_0[123]|neck_01|clavicle_[lr])$/;
 const LEGS = /^(thigh|calf|foot|ball)_/;
@@ -94,7 +95,9 @@ const UNALIAS = Object.fromEntries(Object.entries(ALIAS).map(([a, b]) => [b, a])
 function study(bodyMesh) {
   if (STUDIED.has(bodyMesh.geometry)) return STUDIED.get(bodyMesh.geometry);
   const g = bodyMesh.geometry, pos = g.attributes.position, nrm = g.attributes.normal, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
-  const names = bodyMesh.skeleton.bones.map(b => UNALIAS[b.name] || b.name), idx = {}; names.forEach((n, i) => idx[n] = i);
+  const tailorName = b => { if (UNALIAS[b.name] || !b.name.startsWith("DEF-")) return UNALIAS[b.name] || b.name; // (an animated-film character's extra bones,
+    for (let p = b.parent; p?.isBone; p = p.parent) if (UNALIAS[p.name]) return UNALIAS[p.name]; return b.name; }; // twists, fingers, face, count as the bone they hang from)
+  const names = bodyMesh.skeleton.bones.map(tailorName), idx = {}; names.forEach((n, i) => { if (!(n in idx)) idx[n] = i; });
   const N = pos.count, P = new Float32Array(N * 3), dom = [];
   for (let i = 0; i < N; i++) {
     P[i * 3] = pos.getX(i); P[i * 3 + 1] = pos.getY(i); P[i * 3 + 2] = pos.getZ(i);
@@ -278,6 +281,7 @@ function boneWeights(B, list) { // e.g. [["spine_03", 1]] or a function of heigh
 function mount(person, boneName, obj, at, rot = [0, 0, 0]) {
   person.root.updateMatrixWorld(true);
   obj.position.copy(at); obj.rotation.set(...rot);
+  if (person.hat && boneName === "Head") { obj.position.y += person.hat.dy; obj.scale.multiplyScalar(person.hat.s); }
   if (person.norm) { obj.position.y *= person.norm.k; obj.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), person.norm.turn); obj.rotation.y += person.norm.turn; }
   person.root.add(obj); obj.updateMatrixWorld(true);
   person.bones[boneName].attach(obj);
@@ -681,7 +685,9 @@ function rbClips(ASSETS, female) {
 const VISEMES = ["AA_VI_10_aa", "AA_VI_11_E", "AA_VI_13_O", "AA_VI_12_I", "AA_VI_14_U", "AA_VI_01_PP", "AA_VI_07_SS", "AA_VI_02_FF"];
 function makeFace(root) {
   const meshes = []; root.traverse(o => { if (o.isSkinnedMesh && o.morphTargetDictionary && Object.keys(o.morphTargetDictionary).length) meshes.push(o); });
-  const w = {}, set = (n, v) => { w[n] = v; for (const m of meshes) { const i = m.morphTargetDictionary[n]; if (i !== undefined) m.morphTargetInfluences[i] = v; } };
+  const toon = meshes.some(m => "face_blink" in m.morphTargetDictionary);
+  const put = (n, v) => { for (const m of meshes) { const i = m.morphTargetDictionary[n]; if (i !== undefined) m.morphTargetInfluences[i] = v; } };
+  const w = {}, set = (n, v) => { w[n] = v; if (!toon) put(n, v); };
   let nextBlink = performance.now() + 1500 + Math.random() * 3000, blinkAt = 0, vis = VISEMES[0], visT = 0;
   return {
     ok: meshes.length > 0, set,
@@ -700,12 +706,15 @@ function makeFace(root) {
       // a small, steady expression of their own
       set("AK_03_BrowInnerUp", speaking ? .15 + Math.sin(now / 900) * .1 : .05);
       for (const [n, v] of Object.entries(this.hold || {})) set(n, v);
+      if (toon) for (const [n, v] of Object.entries(toonFace(w))) put(n, v);
     }
   };
 }
 function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, female: fem}) {
   const female = fem ?? (FEMALE.has(id) || look.body === "female");
-  const root = SkeletonUtils.clone((asset || ASSETS["rb_" + id]).scene);
+  const src = asset || ASSETS["rb_" + id], toon = !!src.scene.userData.toon;
+  const root = SkeletonUtils.clone(src.scene);
+  if (toon) tintToon(root, look);
   root.updateMatrixWorld(true);
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
   // stand them up in the tailor's space: facing +z, scaled so the head sits where the tailor expects it
@@ -733,7 +742,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   // remember where each vertex of the real body sits in the tailor's space, so its material can hide what the clothes cover
   { let off = 0; for (const o of bodyParts) { const g = o.geometry, n = g.attributes.position.count; if (!g.attributes.aBind) g.setAttribute("aBind", new THREE.Float32BufferAttribute(P.slice(off * 3, (off + n) * 3), 3));
       // how much each vertex belongs to a hand: hands are always drawn, whatever the sleeves do
-      if (!g.attributes.aHand) { const hb = o.skeleton.bones.map(b => /Hand|Finger/.test(b.name)), si = g.attributes.skinIndex, sw = g.attributes.skinWeight, h = new Float32Array(n);
+      if (!g.attributes.aHand) { const hb = o.skeleton.bones.map(b => /Hand|Finger|^DEF-(Thumb|Index|Middle|Ring|Pinky)\d/.test(b.name)), si = g.attributes.skinIndex, sw = g.attributes.skinWeight, h = new Float32Array(n);
         for (let i = 0; i < n; i++) for (let c = 0; c < 4; c++) if (hb[comp(si, i, c)]) h[i] += comp(sw, i, c);
         g.setAttribute("aHand", new THREE.BufferAttribute(h, 1)); }
       off += n; } }
@@ -748,6 +757,11 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const hand = n => w(n).applyMatrix4(norm), wrist = Math.min(Math.abs(hand("Bip01_L_Hand").x), Math.abs(hand("Bip01_R_Hand").x)) + .012; // the sleeves end at the wrist joint
   const person = {root, bones, body: ref, norm: {k, turn}, female, wrist};
+  if (toon) { // a cartoon head is bigger and higher than the realistic one hats and crowns were placed for: move them up and size them to it
+    const hb = w("Bip01_Head").applyMatrix4(norm), box = new THREE.Box3(), v = new THREE.Vector3();
+    for (const o of skins) if (o.userData.head && /head/i.test(o.name)) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); box.expandByPoint(v.applyMatrix4(o.matrixWorld).applyMatrix4(norm)); } }
+    person.hat = {dy: box.max.y - hb.y - .223 + .025, s: (box.max.x - box.min.x) / .196 / Math.sqrt(1 / k)}; // (measured on the realistic heads)
+  }
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
   const low = seated ? .58 : .1, fp = {value: 0}, hh = {value: 0};
   for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
@@ -758,13 +772,13 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
       sh.vertexShader = "attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind; vH = aHand;");
       sh.fragmentShader = "varying vec3 vB; varying float vH;\n" + sh.fragmentShader.replace("void main() {", `void main() {
         if (vH < .6 && abs(vB.x) < .72 && vB.y > ${low.toFixed(2)} && vB.y < 1.5 && (vB.y > .95 || abs(vB.x) > .28)) discard;
-        if (vB.y > 1.46 && abs(vB.x) < .22) discard;
+        ${toon ? "" : "if (vB.y > 1.46 && abs(vB.x) < .22) discard;"}
         if (uFP > .5 && vB.y > 1.2) discard;
         if (uHH > .5 && vH > .3) discard;
         if (abs(vB.x) < ${(wrist - .004).toFixed(3)} && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
         if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`);
     };
-    m.customProgramCacheKey = () => "rbbody" + low + wrist.toFixed(3);
+    m.customProgramCacheKey = () => "rbbody" + low + wrist.toFixed(3) + toon;
     o.material = m;
   }
   // dress: long sleeves, long hems, a high neckline, so nothing modern shows
@@ -774,7 +788,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     root.traverse(o => { if (o.isMesh && /head/i.test([].concat(o.material)[0].name)) { o.material = o.material.clone(); } });
     const l = new THREE.PointLight(look.eyes, .35, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
   }
-  const headParts = skins.filter(o => /head|opacity/i.test([].concat(o.material)[0].name));
+  const headParts = skins.filter(o => /head|opacity/i.test([].concat(o.material)[0].name) || o.userData.head);
   root.traverse(o => { if (o.isMesh && !o.isSkinnedMesh && o.parent?.isBone && /Head/.test(o.parent.name)) headParts.push(o); });
   // First person: only your body from the waist down is drawn, so looking down you see your hem and your feet,
   // never the inside of your own neck. Reflections and cutaways show all of you.
@@ -791,7 +805,8 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   shareSkeletons(root);
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
-  const clips = rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
+  const clips = toon ? toonClips(src, ASSETS["rb_anims_" + (female ? "f" : "m")], rbClips(ASSETS, female)) : rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
+  if (toon) { const swing = hairSprings(root), tick = mixer.update.bind(mixer); mixer.update = dt => { tick(dt); swing(dt); return mixer; }; } // hair settles after the body moves
   person.expr = makeFace(root);
   Object.assign(person, {mixer, action: null, current: null, speaking: false, play(name, fade = .35) {
     const want = CLIPMAP[name] || name, clip = clips[want] || clips.idle;

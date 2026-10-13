@@ -11,6 +11,7 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { makeHound, animateHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
+import { prepareToon } from "./toon.js";
 import { buildFarBank, FAR } from "./farbank.js";
 import { placeTrinkets, showFound, openCodex, save } from "./lore.js";
 import { lyreInit, pluck } from "./music.js";
@@ -346,12 +347,20 @@ const gltf = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 // The realistic cast: Microsoft Rocketbox people (MIT licence), converted for the web, with motion-captured animation.
 const REAL = ["hermes", "charon", "mikon", "orpheus", "elpenor", "theseus", "pirithous", "hades", "sisyphus", "persephone", "eurydice", "demeas", "nikias", "lykon", "piper", "aunt", "thea", "dancer"];
 const ASSETS = {}, CLIPS = {};
+const TOON_F = ["persephone", "eurydice", "aunt", "thea", "dancer"];
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
     ...Array.from({length: 10}, (_, i) => "crowd/m" + i), ...Array.from({length: 9}, (_, i) => "crowd/f" + i)];
+  // the animated-film cast: one character model each for the women and the men, dressed and coloured per person
+  for (const n of TOON_F) list.splice(list.indexOf("rb/" + n), 1);
+  for (let i = 0; i < 9; i++) list.splice(list.indexOf("crowd/f" + i), 1);
+  list.push("toon/rain");
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
+  prepareToon(ASSETS.toon_rain);
+  for (const n of TOON_F) ASSETS["rb_" + n] = ASSETS.toon_rain;
+  for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
 }
 const NPC = {};

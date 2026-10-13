@@ -1,0 +1,3 @@
+Rain and Snow character rigs by Blender Studio (studio.blender.org), licensed CC-BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Modified: exported for the web, modern clothes removed,
+facial expressions baked to shape keys, colours baked to textures.
