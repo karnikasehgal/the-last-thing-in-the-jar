@@ -413,7 +413,7 @@ function beard(p, body, color, {thick = .012, chin = .25, moustache = true, stub
   const H = 1.6, lips = (x, y, z) => Math.abs(x) < .036 && y > H - .028 && y < H + .028 && z > .1;
   const keep = (x, y, z, d) => d === "Head" && z > -.005 && y > H - .09 && !lips(x, y, z) &&
     (y < H + .012 || (moustache && y < H + .042 && Math.abs(x) < .048 && z > .12));
-  const mat = new THREE.MeshStandardMaterial({color: new THREE.Color(color), map: STRANDS, roughness: .9});
+  const mat = new THREE.MeshStandardMaterial({color: new THREE.Color(color), map: STRANDS, roughness: .9, side: THREE.DoubleSide}); // (both sides: through the gap left for the lips, its inside showed as a black stripe)
   if (stubble) Object.assign(mat, {transparent: true, opacity: .42, depthWrite: false}); // (a few days of it: a shadow on the skin, not a beard)
   put(p, wrap(body, keep, {mat, off: thick, smooth: 5, bulge: (x, y) => Math.max(0, H - .01 - y) * chin}));
 }

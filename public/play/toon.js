@@ -193,7 +193,8 @@ export function tintToon(root, {tone, hairColor}) {
     o.material = [].concat(o.material).map(m => {
       if (tone && m.userData.skin) { m = m.clone(); m.userData.skinTone = new THREE.Color(tone); m.onBeforeCompile = sh => skinShader(sh, m); m.customProgramCacheKey = () => "skin"; }
       else if (hairColor && m.userData.hair) { m = m.clone(); const h = new THREE.Color(hairColor), l = h.getHSL({}).l;
-        if (l > .12) { m.map = null; m.color = h; m.roughness = .55; } // (the painted hair is near black: a lighter colour replaces it outright)
+        if (l > .12 && (!/brow|lash/i.test(o.name) || h.getHSL({}).s < .25)) { m.map = null; m.color = h; m.roughness = .55; } // (the painted hair is near black: a lighter colour replaces it outright; so do white and grey brows)
+        else if (l > .12) { const L = Math.min(l, .32), d = h.clone(), hsl = d.getHSL({}); d.setHSL(hsl.h, hsl.s, L); m.color = d.multiplyScalar(1.2 / (.1 + L * .3)); } // (brows under coloured hair keep their painted shape, in a middling shade of the hair's colour: golden-brown on a blond)
         else m.color = h.multiplyScalar(1.2 / Math.max(.08, .1 + l * .3)); }
       return m;
     });
