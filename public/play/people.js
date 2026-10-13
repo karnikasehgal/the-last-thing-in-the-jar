@@ -757,6 +757,7 @@ function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gi
   p.noNeckband = true; if (style !== "bare") p.mantle = drapeCloth(accent ?? (style === "plain" ? 0x6b5a44 : color), "jersey");
   const cl = drapeCloth(color, "jersey"), ac = drapeCloth(accent ?? color, "jersey"), low = style === "bare";
   // below: long and loose to the ankle
+  if (p.cover) p.cover.value.set(.66, low ? .92 : .99); // the robe covers the thighs: they're not drawn, so they can't push through it
   const skirt = drape(body, {from: low ? .95 : 1.07, to: .6, mat: low ? ac : cl, off: .03, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
   put(p, skirt); if (SEATED) seatedFall(p, B, body, low ? ac : cl);
   if (low) {
@@ -1006,16 +1007,18 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   }
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
   const low = seated ? .58 : .1, fp = {value: 0}, hh = {value: 0};
+  person.cover = {value: new THREE.Vector2(9, -9)}; // (the band of leg a long robe covers, set by the robe: none until then)
   for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
     const m = o.material.clone();
     m.onBeforeCompile = sh => {
       if (m.userData.skinTone) skinShader(sh, m); // (an animated character's own skin colour)
-      sh.uniforms.uFP = fp; sh.uniforms.uHH = hh;
-      sh.fragmentShader = "uniform float uFP; uniform float uHH;\n" + sh.fragmentShader;
+      sh.uniforms.uFP = fp; sh.uniforms.uHH = hh; sh.uniforms.uCover = person.cover;
+      sh.fragmentShader = "uniform float uFP; uniform float uHH; uniform vec2 uCover;\n" + sh.fragmentShader;
       sh.vertexShader = "attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind; vH = aHand;");
       sh.fragmentShader = "varying vec3 vB; varying float vH;\n" + sh.fragmentShader.replace("void main() {", `void main() {
         ${toon ? "" : `if (vH < .6 && abs(vB.x) < .72 && vB.y > ${low.toFixed(2)} && vB.y < 1.5 && (vB.y > .95 || abs(vB.x) > .28)) discard;`}
         ${toon ? "" : "if (vB.y > 1.46 && abs(vB.x) < .22) discard;"}
+        if (vH < .6 && abs(vB.x) < .2 && vB.y > uCover.x && vB.y < uCover.y) discard; // (thighs under a robe: sitting, they pushed through it)
         if (uFP > .5 && vB.y > 1.2) discard;
         if (uHH > .5 && vH > .3) discard;
         ${toon ? "" : `if (abs(vB.x) < ${(wrist - .004).toFixed(3)} && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`}`).replace("#include <map_fragment>", `#include <map_fragment>

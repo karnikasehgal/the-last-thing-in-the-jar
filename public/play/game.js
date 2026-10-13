@@ -1319,18 +1319,24 @@ const PALETTE = [[0xe9e0cc, 0x8a2f24], [0x6b7a4a, 0x3a2a1a], [0x2f4a6b, 0xd8cdb6
 // the women's gowns: rich colours, each with a lighter cape
 // (silk jersey in warm, deep colours; ivory is the bride's alone)
 const GOWNS = [[0xb5562e, 0], [0xc77a52, 0], [0x8a9a6a, 0], [0xc98a8a, 0], [0x1f5a5a, 0], [0x6b6a2e, 0], [0x7a2232, 0], [0xcdb48a, 0]];
-function buildCrowd() {
+// Dressing a person takes the best part of a second; done back to back, the page froze for the length of the whole
+// guest list (long enough for a browser to call it unresponsive). Between people, a breath: the page keeps moving.
+const breathe = () => new Promise(r => setTimeout(r, 0));
+async function buildCrowd() {
   const people = [], few = LITE ? 14 : 44;
   const pal = () => PALETTE[Math.random() * PALETTE.length | 0];
   // one dressed person per face, seated or standing; then cheaper copies in new colours
   const base = {standing: [], seated: []};
-  const keys = [...Array.from({length: 10}, (_, i) => ["crowd_m" + i, false]), ...Array.from({length: 9}, (_, i) => ["crowd_f" + i, true])];
-  keys.forEach(([k, female], i) => {
-    if (!ASSETS[k]) return;
+  // (every crowd man is the same animated body, and every woman: what makes them different people is their skin, cut and
+  // colours. Nine dressed ones, each copied in new colours, look as varied as nineteen and dress in half the time.)
+  const keys = [...Array.from({length: 5}, (_, i) => ["crowd_m" + i, false]), ...Array.from({length: 4}, (_, i) => ["crowd_f" + i, true])];
+  for (const [i, [k, female]] of keys.entries()) {
+    if (!ASSETS[k]) continue;
     const c = female ? GOWNS[i % GOWNS.length] : pal(), seated = i % 2 === 0;
+    await breathe();
     const p = makeExtra(ASSETS[k], {ASSETS, scene, female, seated, colors: [c[0], c[1], 0xe8e0d0], veil: female && Math.random() < .5});
     p.root.visible = false; (seated ? base.seated : base.standing).push(p);
-  });
+  }
   let si = 0, ti = 0;
   const take = kind => { const list = base[kind]; const b = list[(kind === "seated" ? si++ : ti++) % list.length]; if (!b.used) { b.used = true; return b; } return cloneExtra(b, ASSETS, scene, (Math.random() - .5) * .12); };
   const placeAt = (p, x, z, ry, clip) => { p.root.position.copy(wpos(x, 0, z)); p.root.rotation.set(0, ry, 0); p.root.visible = true; p.play(clip, 0); people.push(p); return p; };
@@ -1371,15 +1377,16 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
   }
   if (!wedding && !skip) {
     wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding();
+    const who = async (id, name, o) => { await breathe(); return Object.assign(G.cast(id, o), {name}); };
     guests = {
-      demeas: Object.assign(G.cast("demeas"), {name: "Demeas"}), kleio: Object.assign(G.cast("aunt", {seated: true}), {name: "Kleio"}),
-      lykon: Object.assign(G.cast("lykon", {seated: true}), {name: "Lykon"}), nikias: Object.assign(G.cast("nikias", {seated: true}), {name: "Nikias"}),
-      thea: Object.assign(G.cast("thea", {seated: true}), {name: "Thea"}), piper: Object.assign(G.cast("piper"), {name: "the piper"}), dancer: Object.assign(G.cast("dancer"), {name: "a guest"})
+      demeas: await who("demeas", "Demeas"), kleio: await who("aunt", "Kleio", {seated: true}),
+      lykon: await who("lykon", "Lykon", {seated: true}), nikias: await who("nikias", "Nikias", {seated: true}),
+      thea: await who("thea", "Thea", {seated: true}), piper: await who("piper", "the piper"), dancer: await who("dancer", "a guest")
     };
   }
   if (skip) {} else if (!crowd) {
     const card = $("#titlecard");
-    await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
+    await pause(1200); crowd = await buildCrowd(); await pause(600); card.classList.remove("on");
   } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
   guests ||= {};
   const cast = {...guests, mikon: PLAYER};
@@ -1580,19 +1587,19 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     $(".cine").classList.remove("on"); document.body.classList.remove("talking", "cinema"); staging = false; camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
     return paintGoal();
   }
+  // the title card stays up the whole time the wedding and its people are being built (a few seconds), not just at first
+  const title = $("#titlecard"), building = !wedding || !crowd || !orph;
+  if (building) { title.querySelector("small").textContent = "Thrace"; title.querySelector("b").textContent = "Spring";
+    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; title.classList.add("on"); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
   if (!wedding) { wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding(); }
-  if (!crowd) {
-    const card = $("#titlecard"); card.querySelector("small").textContent = "Thrace"; card.querySelector("b").textContent = "Spring";
-    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
-    await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
-  } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
+  if (!crowd) { await pause(1200); crowd = await buildCrowd(); await pause(600); }
+  else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
   if (!orph) {
-    orph = {
-      eury: Object.assign(G.cast("eurydice_alive", {seated: true}), {name: "Eurydice"}),
-      euryM: Object.assign(G.cast("eurydice_meadow"), {name: "Eurydice"}),
-      hymen: Object.assign(makeExtra(ASSETS.crowd_m3, {ASSETS, scene, female: false, colors: [0xe8a830, 0xd86a2a]}), {name: "Hymen, god of weddings"}),
-      friend: Object.assign(makeExtra(ASSETS.crowd_f2, {ASSETS, scene, female: true, colors: [0xc8d8e8, 0x8aa8c8]}), {name: "her friend"})
-    };
+    const eury = (await breathe(), Object.assign(G.cast("eurydice_alive", {seated: true}), {name: "Eurydice"}));
+    const euryM = (await breathe(), Object.assign(G.cast("eurydice_meadow"), {name: "Eurydice"}));
+    const hymen = (await breathe(), Object.assign(makeExtra(ASSETS.crowd_m3, {ASSETS, scene, female: false, colors: [0xe8a830, 0xd86a2a]}), {name: "Hymen, god of weddings"}));
+    const friend = (await breathe(), Object.assign(makeExtra(ASSETS.crowd_f2, {ASSETS, scene, female: true, colors: [0xc8d8e8, 0x8aa8c8]}), {name: "her friend"}));
+    orph = {eury, euryM, hymen, friend};
     // Hymen's torch, which will not catch
     const torchG = new THREE.Group(), stick = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .7, 8), new THREE.MeshStandardMaterial({color: 0x4a3020})); torchG.add(stick);
     const sn = 60, sg = new THREE.BufferGeometry(), sp = new Float32Array(sn * 3); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
@@ -1603,6 +1610,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     const foot = new THREE.Mesh(new THREE.CylinderGeometry(.12, .16, .06, 12), new THREE.MeshStandardMaterial({color: 0x8a6a30, roughness: .4, metalness: .7})); foot.position.y = -.35; torchG.add(foot);
     stick.scale.y = 1; torchG.scale.setScalar(1.6); scene.add(torchG); orph.torch = torchG;
   }
+  if (building) { await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); title.classList.remove("on"); }
   let {eury} = orph; const {hymen, friend} = orph; orph.euryM.root.visible = false;
   NPC.eury = eury; NPC.hymen = hymen; NPC.friend = friend; NPC.orpheus = PLAYER;
   let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
@@ -1765,7 +1773,7 @@ $("#begin").onclick = async () => {
   const intro = !new URLSearchParams(location.search).has("nointro");
   if (intro) { $("#fader").style.transition = "none"; $("#fader").style.background = "#000"; $("#fader").style.opacity = 1; document.body.classList.add("cinema"); // black at once: the world behind is built and waiting, and mustn't flash up before the film
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
-  if (CH !== 1 && !chap.ready) { chap.setup(); chap.ready = true; }
+  if (CH !== 1 && !chap.ready) { await chap.setup(); chap.ready = true; }
   if (!PLAYER) { PLAYER = G.cast(CH === 2 ? "orpheus" : "mikon", {seated: true}); PLAYER.play("Idle_Loop", 0); PLAYER.setHead(false); chap.onBody?.(PLAYER); }
   setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;

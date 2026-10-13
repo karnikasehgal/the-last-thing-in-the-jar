@@ -181,7 +181,7 @@ function dressed(g, S) {
     for (let i = 0; i < P.count; i++) {
       const u = P.getX(i) + .5, t = P.getY(i) + .5, open = .22 + .78 * Math.sin(Math.PI * t);
       // across the width the cloth hangs in scallops between its folds, deepest mid-span; along it, a slow ripple
-      const scallop = Math.pow(Math.abs(Math.sin(u * Math.PI * folds)), .7) * .3 * open, ripple = Math.sin(t * Math.PI * 13 + u * 4) * .05 * open;
+      const scallop = Math.pow(Math.abs(Math.sin(u * Math.PI * folds)), .7) * .2 * open, ripple = Math.sin(t * Math.PI * 13 + u * 4) * .05 * open;
       const wave = Math.sin(u * Math.PI * 2 * folds) * .12 * (1.25 - open);
       P.setXYZ(i, x0 + (u - .5) * width * open + wave, top - sag * Math.sin(Math.PI * t) - scallop + ripple, z0 + (z1 - z0) * t + Math.sin(u * Math.PI * folds) * .15 * open);
     }
@@ -199,8 +199,8 @@ function dressed(g, S) {
     }
     geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); g.add(m); return m;
   }
-  const sheer = new THREE.MeshStandardMaterial({color: 0x8a8274, roughness: 1, transparent: true, opacity: .32, side: THREE.DoubleSide, depthWrite: false}); // (dim: the torches below light it from close by)
-  for (const x of [-11, 10]) swag(x, 3.4, -13.7, 13.7, 4.7, .95 + rnd() * .2, sheer, 6); // (clear of the vine over the high table)
+  const sheer = new THREE.MeshStandardMaterial({color: 0x8a8274, roughness: 1, transparent: true, opacity: .26, side: THREE.DoubleSide, depthWrite: false}); // (dim: the torches below light it from close by)
+  for (const x of [-11, 10]) swag(x, 3.6, -13.7, 13.7, 4.15, .5 + rnd() * .15, sheer, 5); // (clear of the vine over the high table)
   const gauze = new THREE.MeshStandardMaterial({color: 0x6e1020, roughness: .75, transparent: true, opacity: .78, side: THREE.DoubleSide, depthWrite: false});
   for (const z of [-10.5, -7.5, 7.5, 10.5]) cascade(-17.6, z, 2.4, 3.9, gauze);
   for (const z of [-12.8, 12.8]) cascade(17.4, z * .9, 2, 3.9, gauze);

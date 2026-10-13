@@ -30,14 +30,20 @@ export function makeOrpheus(G) {
   })();
 
   /* ---------- setting the stage ---------- */
-  function setup() {
+  async function setup() { // (async: a breath between people, so the page doesn't freeze while they're dressed)
+    const breathe = () => new Promise(r => setTimeout(r, 0));
     G.clearChapterOne(); G.save.meet("orpheus");
     me.pos.copy(G.PLACES.start); me.yaw = -Math.PI / 2;
     // Mikon is still on the bank, ninety-something years in.
+    await breathe();
     NPC.mikon = Object.assign(G.cast("mikon_bank", {seated: true}), {name: "Mikon", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(14, 0, 16.05), yaw: Math.PI, seatY: .5});
+    await breathe();
     NPC.hades = Object.assign(G.cast("hades", {scale: 1.06, seated: true}), {name: "Hades", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.hades.clone(), yaw: Math.PI, seatY: 1.1});
+    await breathe();
     NPC.persephone = Object.assign(G.cast("persephone", {seated: true}), {name: "Persephone", idle: "sittable", talk: "sittabletalk", pos: FAR.persephone.clone(), yaw: Math.PI, seatY: 1.1});
+    await breathe();
     NPC.sisyphus = Object.assign(G.cast("sisyphus"), {name: "Sisyphus", idle: "Push_Loop", talk: "Idle_Talking_Loop", pos: FAR.sisyphus.clone(), yaw: 0});
+    await breathe();
     NPC.eurydice = Object.assign(G.cast("eurydice"), {name: "Eurydice", idle: "Idle_Loop", talk: "Idle_Loop", pos: V(0, 0, 134), yaw: 0});
     for (const id of ["mikon", "hades", "persephone", "sisyphus", "eurydice"]) G.placeNPC(NPC[id]);
     // Sisyphus leans into the rock with both hands on it (the push is a slow walk on the spot)
@@ -48,7 +54,7 @@ export function makeOrpheus(G) {
         for (const [s, k] of [["l", 1], ["r", -1]]) { const t = c.clone().add(new THREE.Vector3(0, .25, 0)).addScaledVector(toMe, .95).addScaledVector(side, k * .38);
           G.reach(sis, s, t, ch.clone().addScaledVector(side, k * .6).add(new THREE.Vector3(0, -.4, 0)), .085); } }); }
     NPC.eurydice.root.visible = false;
-    const shadeT = G.cast("shade"); shadeT.root.visible = false;
+    await breathe(); const shadeT = G.cast("shade"); shadeT.root.visible = false;
     st.shades = scatterShades(scene, shadeT, G.SkeletonUtils, G.CLIPS, 9);
     dog.pos.copy(FAR.gateMouth); dog.mode = "guard"; dog.calm = 0; dog.yaw = Math.PI; dog.asleep = false;
     lyre.g.visible = false; // only in your hands while you play (it hung in front of the camera through the film)
