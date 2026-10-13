@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import { buildMeadow } from "./meadow.js";
 import { pbr } from "./pbr.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export const W = new THREE.Vector3(300, 0, 0);
 // where everyone sits and stands (relative to W). Mikon and Lykon on the near bench, facing the table;
@@ -126,6 +127,8 @@ export function buildWedding(scene, {noise, lite = false}) {
   const shroud = new THREE.Mesh(new THREE.BoxGeometry(1.5, .16, .62), S(0xefe8dc, {roughness: .95})); shroud.position.set(.35, .9, 0); bier.add(shroud);
   for (let i = 0; i < 8; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 4), S(i % 2 ? 0xe8d040 : 0xf2f0e8)); fl.position.set(-.4 + Math.random() * 1.4, .99, (Math.random() - .5) * .4); bier.add(fl); }
 
+  dressed(g, S);
+
   // the sky beyond the colonnade: dusk
   const c = document.createElement("canvas"); c.width = 16; c.height = 256; const x = c.getContext("2d");
   const grad = x.createLinearGradient(0, 0, 0, 256); grad.addColorStop(0, "#1c2240"); grad.addColorStop(.45, "#6a4a6a"); grad.addColorStop(.7, "#e0864a"); grad.addColorStop(.85, "#f6c070"); grad.addColorStop(1, "#3a2a20");
@@ -165,4 +168,77 @@ export function buildWedding(scene, {noise, lite = false}) {
       lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
     }
   };
+}
+
+// The courtyard dressed for the night, after the bride's mood board: a ceiling of great sheer white swags, burgundy
+// gauze falling from the colonnade and pooling on the floor, candles everywhere (down the tables, in clusters on the
+// floor, lining the way in from the gate with white flowers), and over the gate an arch of flowing white strands.
+function dressed(g, S) {
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // a length of cloth: hung between two ends, sagging, gathered at the ends and falling open in folds between
+  function swag(x0, width, z0, z1, top, sag, mat, folds = 7) {
+    const geo = new THREE.PlaneGeometry(1, 1, 28, 64), P = geo.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      const u = P.getX(i) + .5, t = P.getY(i) + .5, open = .22 + .78 * Math.sin(Math.PI * t);
+      // across the width the cloth hangs in scallops between its folds, deepest mid-span; along it, a slow ripple
+      const scallop = Math.pow(Math.abs(Math.sin(u * Math.PI * folds)), .7) * .3 * open, ripple = Math.sin(t * Math.PI * 13 + u * 4) * .05 * open;
+      const wave = Math.sin(u * Math.PI * 2 * folds) * .12 * (1.25 - open);
+      P.setXYZ(i, x0 + (u - .5) * width * open + wave, top - sag * Math.sin(Math.PI * t) - scallop + ripple, z0 + (z1 - z0) * t + Math.sin(u * Math.PI * folds) * .15 * open);
+    }
+    geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); g.add(m); return m;
+  }
+  // a fall of cloth from a beam to the floor, pinched into gathers at the top, flaring and pooling at the bottom
+  function cascade(x, z, width, top, mat) {
+    const geo = new THREE.PlaneGeometry(1, 1, 24, 48), P = geo.attributes.position;
+    for (let i = 0; i < P.count; i++) {
+      const u = P.getX(i) + .5, t = .5 - P.getY(i); // t: 0 at the beam, 1 at the end of the pool
+      const drop = Math.min(1, t / .82), pool = Math.max(0, (t - .82) / .18);
+      const spread = .35 + .65 * Math.pow(drop, .6) + pool * .4;
+      const fold = Math.sin(u * Math.PI * 9 + rnd() * .2) * (.05 + .1 * drop);
+      P.setXYZ(i, x + fold + pool * 1.1, Math.max(.01, top - drop * (top - .02)) + pool * .03 * Math.sin(u * 30), z + (u - .5) * width * spread);
+    }
+    geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); g.add(m); return m;
+  }
+  const sheer = new THREE.MeshStandardMaterial({color: 0x8a8274, roughness: 1, transparent: true, opacity: .32, side: THREE.DoubleSide, depthWrite: false}); // (dim: the torches below light it from close by)
+  for (const x of [-11, 10]) swag(x, 3.4, -13.7, 13.7, 4.7, .95 + rnd() * .2, sheer, 6); // (clear of the vine over the high table)
+  const gauze = new THREE.MeshStandardMaterial({color: 0x6e1020, roughness: .75, transparent: true, opacity: .78, side: THREE.DoubleSide, depthWrite: false});
+  for (const z of [-10.5, -7.5, 7.5, 10.5]) cascade(-17.6, z, 2.4, 3.9, gauze);
+  for (const z of [-12.8, 12.8]) cascade(17.4, z * .9, 2, 3.9, gauze);
+
+  // candles
+  const spots = []; // [x, y, z, height, radius]
+  for (const tz of [-5.2, 5.2]) for (let i = 0; i < 7; i++) spots.push([-2.4 + i * .8, .79, tz, .12 + rnd() * .22, .028]); // down the side tables
+  for (const x of [-2.75, 2.75]) spots.push([x, .79, 0, .3, .035]); // the two ends of the high table
+  const cluster = (cx, cz, n, r = .45) => { for (let i = 0; i < n; i++) { const a = rnd() * 6.3, d = Math.sqrt(rnd()) * r; spots.push([cx + Math.cos(a) * d, 0, cz + Math.sin(a) * d, .18 + rnd() * .55, .045 + rnd() * .04]); } };
+  for (const [x, z] of [[-16.6, -12.6], [-16.6, 12.6], [16.4, -12.6], [16.4, 12.6], [-16.8, -9], [-16.8, 9], [-16.8, -6], [-16.8, 6], [-4, -13.1], [4, -13.1], [-4, 13.1], [4, 13.1], [12, -13.1], [12, 13.1]]) cluster(x, z, 7);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .3; cluster(-9.5 + Math.cos(a) * 4.1, Math.sin(a) * 4.1, 3, .2); } // round the dance floor
+  for (let x = 13.4; x <= 17; x += .7) for (const z of [-3, -.4]) cluster(x, z, 2, .15);      // the way in from the gate
+  const n = spots.length, wax = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 14), S(0xf1e6d2, {roughness: .55}), n);
+  const fire = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({color: new THREE.Color(2.2, 1.45, .62)}), n);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  spots.forEach(([x, y, z, h, r], i) => {
+    wax.setMatrixAt(i, m4.compose(v.set(x, y + h / 2, z), q, sc.set(r, h, r)));
+    fire.setMatrixAt(i, m4.compose(v.set(x, y + h + .025, z), q, sc.set(.011, .028, .011)));
+  });
+  g.add(wax, fire);
+  // white flowers heaped round the floor candles: roses and sprays, with a little green
+  const blooms = [], leaves = [];
+  spots.forEach(([x, y, z, h]) => { if (y > .5) return; for (let k = 0; k < 7; k++) { const a = rnd() * 6.3, d = .1 + rnd() * .32; blooms.push([x + Math.cos(a) * d, .03 + rnd() * .1, z + Math.sin(a) * d, .026 + rnd() * .03]); if (k < 2) leaves.push([x + Math.cos(a + 1) * d, .03, z + Math.sin(a + 1) * d]); } });
+  const bloom = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), S(0xf6f2ea, {roughness: .7}), blooms.length);
+  blooms.forEach(([x, y, z, r], i) => bloom.setMatrixAt(i, m4.compose(v.set(x, y, z), q.setFromEuler(new THREE.Euler(rnd(), rnd(), rnd())), sc.set(r, r * .55, r))));
+  const leaf = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 6, 4), S(0x4a6236, {roughness: .8}), leaves.length);
+  leaves.forEach(([x, y, z], i) => leaf.setMatrixAt(i, m4.compose(v.set(x, y, z), q.setFromEuler(new THREE.Euler(0, rnd() * 6, 0)), sc.set(.09, .025, .045))));
+  g.add(bloom, leaf);
+  // the arch over the gate: white strands rising from the floor on each side and flowing over in loose waves
+  const strands = [];
+  for (let i = 0; i < 72; i++) {
+    const R = 2.5 + (rnd() - .5) * .9, H = 3.2 + rnd() * .9, ph = rnd() * 6.3, k = .8 + rnd() * 2.2, amp = .2 + rnd() * .8, foot = (rnd() - .5) * 1.2;
+    const pts = [];
+    for (let j = 0; j <= 40; j++) {
+      const s = j / 40, a = Math.PI * s, sw = Math.sin(Math.PI * s);
+      pts.push(new THREE.Vector3(15.6 + Math.sin(s * Math.PI * 2 * k + ph) * amp * sw + foot * (1 - sw), Math.sin(a) * H + (rnd() - .5) * .02, -R * Math.cos(a) + Math.sin(s * 9 + ph) * .12 * sw));
+    }
+    strands.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, .011, 4));
+  }
+  g.add(new THREE.Mesh(mergeGeometries(strands), S(0xf6f4f0, {roughness: .35, metalness: .1})));
 }

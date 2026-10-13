@@ -4,6 +4,7 @@
 // The ground stays flat where the story happens (x 15..46, z -13..13) and only starts to roll beyond it.
 import * as THREE from "three";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+const YARD = 18.4; // the courtyard's east wall: the meadow starts outside it
 
 // smooth value noise, so hills and patches of colour have no seams
 const hash = (x, z) => { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -71,7 +72,8 @@ export function buildMeadow(lite) {
     let placed = 0;
     while (placed < n) {
       // most of it near the story (around where she falls), the rest spread wide
-      const near = placed < n * .6, x = near ? 17 + Math.random() * 30 : 15 + Math.random() * 75, z = near ? -14 + Math.random() * 28 : -40 + Math.random() * 80;
+      const near = placed < n * .6, x = near ? YARD + Math.random() * 29 : YARD + Math.random() * 72, // (all of it outside the courtyard wall)
+         z = near ? -14 + Math.random() * 28 : -40 + Math.random() * 80;
       if (Math.abs(z - streamZ(x)) < STREAM_W * .75) continue; // not in the water
       const trodden = Math.hypot(x - 29.6, z - 4.4) < 1.6; // short where she falls, so the camera sees her and the snake
       e.set((Math.random() - .5) * .35, Math.random() * 6.3, (Math.random() - .5) * .35); q.setFromEuler(e);
@@ -93,7 +95,7 @@ export function buildMeadow(lite) {
     const drifts = [0xf6f2ea, 0xf2d84a, 0xe58ab0, 0x9a8ae6, 0xf6f2ea, 0xf0a050];
     let placed = 0;
     while (placed < n) {
-      const x = 16 + Math.random() * 60, z = -30 + Math.random() * 60;
+      const x = YARD + Math.random() * 58, z = -30 + Math.random() * 60;
       if (Math.abs(z - streamZ(x)) < STREAM_W || Math.hypot(x - 29.6, z - 4.4) < 1.7 || fbm(x * .12, z * .12) < .45) continue; // in drifts, not everywhere
       q.setFromEuler(new THREE.Euler((Math.random() - .5) * .5, Math.random() * 6, (Math.random() - .5) * .5));
       m.compose(new THREE.Vector3(x, groundHeight(x, z) + .3 + Math.random() * .35, z), q, new THREE.Vector3().setScalar(.8 + Math.random() * .6)); fl.setMatrixAt(placed, m);
@@ -122,7 +124,7 @@ export function buildMeadow(lite) {
     water.receiveShadow = true; meadow.add(water);
     // pebbles along the banks and showing through the shallows
     const peb = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.08, 1), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: .75}), lite ? 600 : 1800), m = new THREE.Matrix4(), q = new THREE.Quaternion(), pc = new THREE.Color();
-    for (let i = 0; i < peb.count; i++) { const x = 13 + Math.random() * 85, side = Math.random() < .5 ? -1 : 1, off = (i % 2 ? Math.random() * STREAM_W : STREAM_W - .2 + Math.random() * .9) * side, z = streamZ(x) + off; // (half on the banks, half on the bed, seen through the water)
+    for (let i = 0; i < peb.count; i++) { const x = YARD + Math.random() * 80, side = Math.random() < .5 ? -1 : 1, off = (i % 2 ? Math.random() * STREAM_W : STREAM_W - .2 + Math.random() * .9) * side, z = streamZ(x) + off; // (half on the banks, half on the bed, seen through the water)
       q.setFromEuler(new THREE.Euler(Math.random() * 3, Math.random() * 3, 0)); const s = .3 + Math.random() * 1.1;
       m.compose(new THREE.Vector3(x, groundHeight(x, z) - .02, z), q, new THREE.Vector3(s * 1.3, s * .55, s)); peb.setMatrixAt(i, m); peb.setColorAt(i, pc.setHSL(.08, .08 + Math.random() * .1, .45 + Math.random() * .25)); }
     meadow.add(peb);
