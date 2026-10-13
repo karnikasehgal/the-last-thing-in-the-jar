@@ -68,6 +68,21 @@ scene.fog = new THREE.FogExp2(0x1d1813, 0.021);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.05, 400);
 camera.rotation.order = "YXZ"; scene.add(camera); // so things held in your hands can ride on it
 
+let people = [], peopleT = 0; const hiddenBy = new Set();
+function unblock(on) {
+  if (!on) { if (hiddenBy.size) { hiddenBy.forEach(r => r.visible = true); hiddenBy.clear(); } return; }
+  const now = performance.now();
+  if (now - peopleT > 1000) { peopleT = now; people = []; scene.traverse(o => { if (o.children?.some(c => c.isSkinnedMesh && /^GEO-/.test(c.name) || c.isGroup && c.children[0]?.isSkinnedMesh && /^GEO-/.test(c.name))) people.push(o); }); }
+  const cam = camera.getWorldPosition(new THREE.Vector3()), look = camShot.look, line = look.clone().sub(cam), len = line.length(); line.normalize();
+  const h = new THREE.Vector3();
+  for (const r of people) {
+    const head = r.getObjectByName("Bip01_Head"); if (!head) continue;
+    head.getWorldPosition(h); const t = h.clone().sub(cam).dot(line);
+    const block = t > .15 && t < len - .45 && h.clone().sub(cam).addScaledVector(line, -t).length() < .3;
+    if (block && r.visible) { r.visible = false; hiddenBy.add(r); }
+    else if (!block && hiddenBy.has(r)) { r.visible = true; hiddenBy.delete(r); }
+  }
+}
 // Light from all around, captured in real places (HDRIs) and dimmed to suit: the underworld is a cold, dim stone
 // interior; the wedding courtyard at dusk takes a sunrise; the meadow by day, a meadow. Chosen by where the camera is.
 const ENV = {};
@@ -998,6 +1013,9 @@ function tick(now) {
   fpPos.set(me.pos.x, ride ? 1.95 : inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
   moveBody(dt);
   // in conversations and cutaways, a soft key light from beside the camera, the way films light a face
+  // nobody blocks a shot: in a film shot, anyone whose head sits right on the line between the camera and the speaker
+  // steps out of the picture until the shot moves on
+  unblock(camShot.active);
   // a soft light from beside the camera, the way films keep a face lit: strong in a shot or a conversation, faint otherwise
   keyLight.intensity += ((camShot.active ? 4 : talking ? 3 : .9) - keyLight.intensity) * .15;
   { const cp = camera.getWorldPosition(new THREE.Vector3()), r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); keyLight.position.copy(cp).addScaledVector(r, .6).add(V(0, .45, 0)); }

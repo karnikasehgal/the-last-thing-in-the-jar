@@ -1,12 +1,13 @@
-// Cerberus: a huge three-headed hound in the animated-film manner (a mastiff's bulk, big glowing eyes, spiked collars,
-// short fur drawn as shells), built in code so it can be lit and animated by the game's own logic.
+// Cerberus: three scary Great Danes on one body, in the animated-film manner: tall, lean and deep-chested, a sleek
+// black coat with a blue sheen, long square muzzles with heavy flews, cropped upright ears, small deep-set ember eyes,
+// a spiked collar on each neck. Built in code so it can be lit and animated by the game's own logic.
 // It faces +x. About 2.8 m long and 1.6 m at the shoulder.
 import * as THREE from "three";
 
 export function makeHound(scene) {
   const g = new THREE.Group();
   // charcoal fur with a warm sheen where the light grazes it, and ember light from within
-  const hide = new THREE.MeshPhysicalMaterial({color: 0x2a221e, roughness: .82, sheen: 1, sheenRoughness: .5, sheenColor: new THREE.Color(0x9a6248), emissive: 0x120403});
+  const hide = new THREE.MeshPhysicalMaterial({color: 0x1c1b1f, roughness: .78, sheen: .7, sheenRoughness: .5, sheenColor: new THREE.Color(0x48505e), emissive: 0x0c0203}); // (short hair: a soft sheen, not a gloss)
   const rimMat = new THREE.MeshBasicMaterial({color: 0xb2391a, transparent: true, opacity: .3, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending});
   const bone = new THREE.MeshStandardMaterial({color: 0xe8dcc4, roughness: .45});
   const ember = new THREE.MeshBasicMaterial({color: 0xff6a24});
@@ -15,8 +16,8 @@ export function makeHound(scene) {
   const hairs = (() => { const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d"), d = x.createImageData(128, 128);
     for (let k = 0; k < d.data.length; k += 4) { const v = Math.random() ** 2.2 * 255; d.data[k] = d.data[k + 1] = d.data[k + 2] = v; d.data[k + 3] = 255; } x.putImageData(d, 0, 0);
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 6); return t; })();
-  const shells = [1, 2, 3, 4, 5].map(k => new THREE.MeshStandardMaterial({color: new THREE.Color(0x2a221e).lerp(new THREE.Color(0x5a4234), k / 6), roughness: .9, alphaMap: hairs, alphaTest: .12 + k * .14, emissive: 0x0e0302}));
-  const furry = (m, depth = .035) => { shells.forEach((mat, k) => { const sh = new THREE.Mesh(m.geometry, mat); sh.scale.setScalar(1 + depth * (k + 1) / 5 / Math.max(.15, m.geometry.boundingSphere?.radius || (m.geometry.computeBoundingSphere(), m.geometry.boundingSphere.radius))); m.add(sh); }); return m; };
+  const shells = [1, 2].map(k => new THREE.MeshStandardMaterial({color: new THREE.Color(0x18171b).lerp(new THREE.Color(0x3a3c48), k / 3), roughness: .7, alphaMap: hairs, alphaTest: .35 + k * .2, emissive: 0x0a0202}));
+  const furry = (m, depth = .01) => { shells.forEach((mat, k) => { const sh = new THREE.Mesh(m.geometry, mat); sh.scale.setScalar(1 + depth * (k + 1) / 5 / Math.max(.15, m.geometry.boundingSphere?.radius || (m.geometry.computeBoundingSphere(), m.geometry.boundingSphere.radius))); m.add(sh); }); return m; };
   const rim = (m, s = 1.07) => { const r = new THREE.Mesh(m.geometry, rimMat); r.scale.setScalar(s); m.add(r); return m; };
   const part = (geo, parent, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1, mat = hide) => {
     const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.scale.set(sx, sy, sz); m.castShadow = true; parent.add(m); return m;
@@ -27,61 +28,61 @@ export function makeHound(scene) {
 
   /* body: a deep barrel chest, a tucked waist, strong haunches */
   const body = new THREE.Group(); body.position.y = 1.32; g.add(body);
-  fur(new THREE.SphereGeometry(.6, 28, 20), body, .36, .02, 0, 0, 0, 0, 1.12, 1.0, .82);        // chest
-  fur(new THREE.SphereGeometry(.42, 24, 16), body, -.3, .02, 0, 0, 0, 0, 1.4, .9, .82);         // belly, tucked up
-  fur(new THREE.SphereGeometry(.44, 24, 18), body, -.9, .04, 0, 0, 0, 0, 1.05, 1.0, .95);       // haunches
-  for (let i = 0; i < 9; i++) part(new THREE.ConeGeometry(.05, .2, 6), body, .7 - i * .2, .55 - Math.abs(i - 3) * .03, 0, 0, 0, -.25, 1, 1, 1, bone); // a ridge of spines
+  fur(new THREE.SphereGeometry(.56, 28, 20), body, .38, -.02, 0, 0, 0, 0, 1.15, 1.08, .68);      // a deep, narrow chest
+  fur(new THREE.SphereGeometry(.3, 24, 16), body, -.3, .12, 0, 0, 0, 0, 1.9, .82, .78);          // the waist, tucked high
+  fur(new THREE.SphereGeometry(.38, 24, 18), body, -.9, .08, 0, 0, 0, 0, 1.1, 1.0, .82);        // lean haunches
+  for (const s of [-1, 1]) fur(new THREE.SphereGeometry(.2, 16, 12), body, .62, -.05, s * .26, 0, 0, 0, 1.2, 1.4, .6); // shoulder muscle
 
   /* tail: thick at the root, swinging */
   const tail = new THREE.Group(); tail.position.set(-1.28, .14, 0); body.add(tail);
   let t = tail; const tailBits = [];
-  for (let i = 0; i < 5; i++) { const s = new THREE.Group(); s.position.set(-.2, 0, 0); t.add(s); fur(new THREE.CapsuleGeometry(.075 - i * .011, .14, 4, 10), s, -.1, 0, 0, 0, 0, Math.PI / 2); tailBits.push(s); t = s; }
+  for (let i = 0; i < 5; i++) { const s = new THREE.Group(); s.position.set(-.2, 0, 0); t.add(s); fur(new THREE.CapsuleGeometry(.05 - i * .008, .15, 4, 10), s, -.1, 0, 0, 0, 0, Math.PI / 2); tailBits.push(s); t = s; } // a long whip of a tail
 
   /* legs: heavy, with big paws and pale claws; the back legs with the backwards hock */
   const legs = [];
-  const paw = (parent, y) => { part(new THREE.SphereGeometry(.15, 16, 12), parent, .06, y, 0, 0, 0, 0, 1.5, .62, 1.15);
+  const paw = (parent, y) => { part(new THREE.SphereGeometry(.11, 16, 12), parent, .06, y, 0, 0, 0, 0, 1.6, .6, 1.1);
     for (const c of [-1.5, -.5, .5, 1.5]) part(new THREE.ConeGeometry(.022, .1, 6), parent, .27, y - .02, c * .045, 0, 0, -Math.PI / 2, 1, 1, 1, bone); };
   for (const side of [1, -1]) {
     const sh = new THREE.Group(); sh.position.set(.55, 1.2, side * .34); g.add(sh);
-    fur(seg(.2, .15, .55), sh, 0, 0, 0);
+    fur(seg(.18, .11, .55), sh, 0, 0, 0);
     const elbow = new THREE.Group(); elbow.position.y = -.55; sh.add(elbow);
-    fur(seg(.13, .1, .48), elbow, 0, 0, 0);
+    fur(seg(.095, .07, .48), elbow, 0, 0, 0);
     const wrist = new THREE.Group(); wrist.position.y = -.5; elbow.add(wrist);
-    fur(seg(.1, .1, .1), wrist, 0, 0, 0); paw(wrist, -.17);
+    fur(seg(.065, .065, .1), wrist, 0, 0, 0); paw(wrist, -.17);
     legs.push({upper: sh, mid: elbow, low: wrist, front: true, side});
     const hip = new THREE.Group(); hip.position.set(-.95, 1.22, side * .34); g.add(hip);
-    fur(seg(.24, .15, .58), hip, 0, 0, 0);
+    fur(seg(.22, .11, .58), hip, 0, 0, 0);
     const knee = new THREE.Group(); knee.position.y = -.58; hip.add(knee);
-    fur(seg(.12, .09, .5), knee, 0, 0, 0);
+    fur(seg(.1, .065, .5), knee, 0, 0, 0);
     const hock = new THREE.Group(); hock.position.y = -.5; knee.add(hock);
-    fur(seg(.09, .08, .28), hock, 0, 0, 0); paw(hock, -.33);
+    fur(seg(.06, .055, .28), hock, 0, 0, 0); paw(hock, -.33);
     legs.push({upper: hip, mid: knee, low: hock, front: false, side});
   }
 
   /* three necks and heads: broad mastiff skulls, heavy jowls, ears laid back, big glowing eyes, a spiked collar each */
   const heads = [];
-  const eyeWhite = new THREE.MeshStandardMaterial({color: 0xf2e6d0, roughness: .3}), iris = new THREE.MeshBasicMaterial({color: 0xffa020}), pupil = new THREE.MeshBasicMaterial({color: 0x080404});
+  const eyeWhite = new THREE.MeshStandardMaterial({color: 0x2a0806, roughness: .3}), iris = new THREE.MeshBasicMaterial({color: 0xff3a10}), pupil = new THREE.MeshBasicMaterial({color: 0xffc070}); // ember eyes, not friendly ones
   const nose = new THREE.MeshPhysicalMaterial({color: 0x0a0706, roughness: .25, clearcoat: 1});
   for (const [z, yaw] of [[-.34, .42], [0, 0], [.34, -.42]]) {
     const neck = new THREE.Group(); neck.position.set(.85, 1.55, z); neck.rotation.y = yaw; g.add(neck);
-    fur(new THREE.CapsuleGeometry(.19, .5, 6, 16), neck, .25, .25, 0, 0, 0, -.95);
+    fur(new THREE.CapsuleGeometry(.14, .55, 6, 16), neck, .25, .25, 0, 0, 0, -.95);                    // a long, muscled neck
     const collar = new THREE.Group(); collar.position.set(.1, .08, 0); collar.rotation.z = -.95 + Math.PI / 2; neck.add(collar);
-    part(new THREE.TorusGeometry(.23, .035, 10, 28), collar, 0, 0, 0, Math.PI / 2, 0, 0, 1, 1, 1, bronze);
-    for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; part(new THREE.ConeGeometry(.025, .09, 6), collar, Math.cos(a) * .26, 0, Math.sin(a) * .26, 0, 0, -Math.PI / 2, 1, 1, 1, bronze).lookAt(Math.cos(a) * 2, 0, Math.sin(a) * 2); }
+    part(new THREE.TorusGeometry(.18, .03, 10, 28), collar, 0, 0, 0, Math.PI / 2, 0, 0, 1, 1, 1, bronze);
+    for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; part(new THREE.ConeGeometry(.022, .085, 6), collar, Math.cos(a) * .2, 0, Math.sin(a) * .2, 0, 0, -Math.PI / 2, 1, 1, 1, bronze).lookAt(Math.cos(a) * 2, 0, Math.sin(a) * 2); }
     const head = new THREE.Group(); head.position.set(.55, .55, 0); neck.add(head);
-    fur(new THREE.SphereGeometry(.23, 24, 18), head, 0, .02, 0, 0, 0, 0, 1.1, .95, 1.0);                 // skull
-    fur(new THREE.SphereGeometry(.16, 20, 14), head, .25, -.05, 0, 0, 0, -.05, 1.45, .85, 1.05);         // muzzle, short and broad
+    fur(new THREE.SphereGeometry(.17, 24, 18), head, 0, .03, 0, 0, 0, 0, 1.25, .95, .9);                 // a long, flat skull
+    fur(new THREE.CapsuleGeometry(.11, .26, 8, 16), head, .29, -.03, 0, 0, 0, Math.PI / 2 - .06, 1.05, 1, 1.05); // the muzzle: long and square
     for (const s of [-1, 1]) {
-      fur(new THREE.SphereGeometry(.1, 14, 10), head, .27, -.12, s * .09, 0, 0, 0, 1.2, .9, .8);          // jowls
-      fur(new THREE.ConeGeometry(.09, .26, 8), head, -.1, .2, s * .14, s * .5, 0, .9);                     // ears, laid back
-      part(new THREE.SphereGeometry(.052, 16, 12), head, .16, .07, s * .11, 0, 0, 0, 1, 1, .8, eyeWhite); // eyes
-      part(new THREE.SphereGeometry(.032, 14, 10), head, .2, .072, s * .118, 0, 0, 0, 1, 1, .5, iris);
-      part(new THREE.SphereGeometry(.016, 10, 8), head, .214, .074, s * .12, 0, 0, 0, 1, 1, .5, pupil);
-      fur(new THREE.SphereGeometry(.07, 12, 8), head, .14, .14, s * .1, 0, 0, -.3, 1.5, .55, 1);           // a heavy brow
+      fur(new THREE.SphereGeometry(.085, 14, 10), head, .34, -.12, s * .085, 0, 0, .08, 1.9, 1.05, .7);    // heavy flews hanging off the muzzle
+      fur(new THREE.ConeGeometry(.055, .3, 6), head, -.04, .25, s * .1, s * .12, 0, .12);                    // cropped ears, upright and pointed
+      part(new THREE.SphereGeometry(.032, 14, 10), head, .14, .055, s * .1, 0, 0, 0, 1, .75, .7, eyeWhite);  // eyes, small and deep-set
+      part(new THREE.SphereGeometry(.024, 14, 10), head, .162, .055, s * .106, 0, 0, 0, 1, .8, .5, iris);
+      part(new THREE.SphereGeometry(.011, 10, 8), head, .172, .055, s * .108, 0, 0, 0, 1, 1, .5, pupil);
+      fur(new THREE.SphereGeometry(.06, 12, 8), head, .13, .1, s * .095, 0, 0, -.45, 1.7, .5, 1);           // a scowling brow, low over the eyes
     }
-    part(new THREE.SphereGeometry(.06, 14, 10), head, .47, -.02, 0, 0, 0, 0, 1.1, .8, 1.2, nose);
+    part(new THREE.SphereGeometry(.06, 14, 10), head, .55, .02, 0, 0, 0, 0, 1, .85, 1.25, nose);
     const jaw = new THREE.Group(); jaw.position.set(.12, -.14, 0); head.add(jaw);
-    fur(new THREE.SphereGeometry(.12, 16, 10), jaw, .18, -.02, 0, 0, 0, .05, 1.7, .5, .9);
+    fur(new THREE.SphereGeometry(.11, 16, 10), jaw, .22, -.02, 0, 0, 0, .05, 2.2, .5, .85);
     for (let k = 0; k < 4; k++) for (const s of [-1, 1]) {
       part(new THREE.ConeGeometry(.02, .08, 6), jaw, .08 + k * .07, .05, s * .06, 0, 0, 0, 1, 1, 1, bone);
       part(new THREE.ConeGeometry(.022, .1, 6), head, .22 + k * .06, -.12, s * .07, Math.PI, 0, 0, 1, 1, 1, bone);
