@@ -5,15 +5,18 @@
 import * as THREE from "three";
 
 export const PROPS = ["namaqualand_boulder_02", "namaqualand_boulder_04", "rock_moss_set_01", "rock_07", "boulder_01", "coast_rocks_02",
-  "antique_ceramic_vase_01", "ceramic_vase_02", "wooden_bowl_01", "wooden_lantern_01", "fern_02", "shrub_02"];
+  "antique_ceramic_vase_01", "ceramic_vase_02", "wooden_bowl_01", "wooden_lantern_01", "fern_02", "shrub_02",
+  // for the wedding table and courtyard: brass goblets and candelabra, carved wooden plates, pomegranates, a clay jug, potted plants, a tree
+  "brass_goblets", "carved_wooden_plate", "brass_candleholders", "food_pomegranate_01", "ceramic_vase_04", "potted_plant_02", "tree_small_02"];
 const ROCKS = ["namaqualand_boulder_02", "namaqualand_boulder_04", "rock_07", "boulder_01", "rock_moss_set_01"];
 
-// one model, centred on its middle, with its radius measured, ready to clone
+// one model, centred on its middle, with its radius measured, ready to clone ("set#item" takes one piece of a set)
 const prepped = {};
 function prep(A, name) {
   if (prepped[name]) return prepped[name];
-  const src = A["props_" + name]?.scene; if (!src) return null;
-  const g = src.clone(true), box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+  const [file, part] = name.split("#"), whole = A["props_" + file]?.scene; if (!whole) return null;
+  const src = part ? whole.getObjectByName(part) : whole; if (!src) return null;
+  const g = src.clone(true); g.position.set(0, 0, 0); g.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
   g.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
   const wrap = new THREE.Group(); g.position.sub(c); wrap.add(g);
   return prepped[name] = {wrap, r: Math.max(size.x, size.y, size.z) / 2, h: size.y, base: box.min.y - c.y};

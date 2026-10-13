@@ -570,6 +570,29 @@ function dressWedding() {
   for (const [x, z] of [[-16.6, -12.6], [-16.6, 12.6], [16.6, -12.6], [16.6, 12.6], [12, 13], [-6, 13]]) place(ASSETS, x > 0 ? "antique_ceramic_vase_01" : "ceramic_vase_02", g, x, 0, z, 1.05, {tint: 0xe0c0a0});
   for (const [x, z, h] of [[28, -9, 1.1], [42, -3, .9], [35, 16, 1.2], [48, 10, 1], [23, 13, .8], [60, -14, 1.3], [33, 6.5, .7]]) place(ASSETS, "shrub_02", g, x, groundHeight(x, z), z, h);
   for (const [x, z] of [[31, 9.6], [37, 13.8], [45, 8.7], [27, 12.9]]) place(ASSETS, "fern_02", g, x, -.05, z, .7);
+  // The table, laid with real things: the plates, cups and fruit that were drawn as plain shapes become carved wooden
+  // plates, brass goblets and pomegranates, each put where the shape stood (in the same group, so the funeral clears them)
+  const swap = [], P = (o, k) => o.geometry?.parameters?.[k];
+  g.traverse(o => { if (!o.isMesh || !o.geometry) return; const t = o.geometry.type;
+    if (t === "CylinderGeometry" && ((P(o, "radiusTop") === .16 && P(o, "radiusBottom") === .12) || (P(o, "radiusTop") === .15 && P(o, "radiusBottom") === .11))) swap.push([o, "plate"]);
+    else if (t === "CylinderGeometry" && P(o, "radiusTop") === .07 && P(o, "radiusBottom") === .03) swap.push([o, "cup"]);
+    else if (t === "SphereGeometry" && P(o, "radius") === .035 && o.material?.color?.getHex() === 0x5a2a4a) swap.push([o, "fruit"]); });
+  let k = 0;
+  for (const [o, kind] of swap) {
+    const y = Math.max(.793, o.position.y - (kind === "fruit" ? .03 : P(o, "height") / 2)), yaw = Math.random() * 6.3; // (on top of the cloth, never in it: a plate sunk into it showed only its rim)
+    if (kind === "plate") place(ASSETS, "carved_wooden_plate", o.parent, o.position.x, y, o.position.z, .032, {yaw});
+    else if (kind === "cup") place(ASSETS, "brass_goblets#brass_goblet_0" + (1 + k++ % 3), o.parent, o.position.x, y, o.position.z, .17, {yaw});
+    else if (k++ % 2) place(ASSETS, "food_pomegranate_01", o.parent, o.position.x, y, o.position.z, .085, {yaw});
+    o.visible = false;
+  }
+  // brass candelabra on the tables, lit; on the long side tables between the bread, at the two ends of the high one
+  for (const tz of [-5.2, 5.2]) for (const x of [-.85, 1.55]) place(ASSETS, "brass_candleholders#brass_candleholder_03", g, x, .785, tz, .62, {yaw: Math.random() < .5 ? 0 : Math.PI});
+  for (const x of [-2.75, 2.75]) place(ASSETS, "brass_candleholders#brass_candleholder_02", g, x, .785, 0, .36, {yaw: Math.PI / 2});
+  // a clay jug of wine on each side table
+  for (const tz of [-5.2, 5.2]) place(ASSETS, "ceramic_vase_04", g, .45, .785, tz + .05, .3, {tint: 0xd8c8b0});
+  // plants in clay pots by the gate and the colonnade, and trees beyond the walls, their crowns over the top
+  for (const [x, z] of [[16.9, -3.7], [16.9, 3.7], [-16.9, -13], [-16.9, 13]]) place(ASSETS, "potted_plant_02", g, x, 0, z, .9);
+  for (const [x, z, h] of [[-8, 17.5, 6.5], [6, -17.8, 7], [13.5, 17.2, 6]]) place(ASSETS, "tree_small_02", g, x, 0, z, h);
 }
 const NPC = {};
 function placePeople() {

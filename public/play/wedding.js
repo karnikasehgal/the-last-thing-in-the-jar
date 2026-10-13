@@ -240,8 +240,7 @@ function dressed(g, S) {
 
   // candles
   const spots = []; // [x, y, z, height, radius]
-  for (const tz of [-5.2, 5.2]) for (let i = 0; i < 7; i++) spots.push([-2.4 + i * .8, .79, tz, .12 + rnd() * .22, .028]); // down the side tables
-  for (const x of [-2.75, 2.75]) spots.push([x, .79, 0, .3, .035]); // the two ends of the high table
+  // (the tables have brass candelabra, placed with the real props once they're loaded)
   const cluster = (cx, cz, n, r = .45) => { for (let i = 0; i < n; i++) { const a = rnd() * 6.3, d = Math.sqrt(rnd()) * r; spots.push([cx + Math.cos(a) * d, 0, cz + Math.sin(a) * d, .18 + rnd() * .55, .045 + rnd() * .04]); } };
   for (const [x, z] of [[-16.6, -12.6], [-16.6, 12.6], [16.4, -12.6], [16.4, 12.6], [-16.8, -9], [-16.8, 9], [-16.8, -6], [-16.8, 6], [-4, -13.1], [4, -13.1], [-4, 13.1], [4, 13.1], [12, -13.1], [12, 13.1]]) cluster(x, z, 7);
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .3; cluster(-9.5 + Math.cos(a) * 4.1, Math.sin(a) * 4.1, 3, .2); } // round the dance floor
