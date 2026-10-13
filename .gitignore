@@ -4,3 +4,4 @@ node_modules/
 .dev.vars*
 .claude/
 public/_voices/
+public/play/_lab/
