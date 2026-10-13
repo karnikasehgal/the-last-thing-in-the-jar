@@ -2,6 +2,7 @@
 // with real people to talk to and something that can smell coins.
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import { Water } from "three/addons/objects/Water.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -331,12 +332,15 @@ function placeCake() {
 placeCake();
 
 /* ---------- people ---------- */
-const gltf = new GLTFLoader();
+const gltf = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+// The realistic cast: Microsoft Rocketbox people (MIT licence), converted for the web, with motion-captured animation.
+const REAL = ["hermes", "charon", "mikon", "orpheus", "elpenor", "theseus", "pirithous", "hades", "sisyphus", "persephone", "eurydice"];
 const ASSETS = {}, CLIPS = {};
 async function loadAssets(progress) {
-  const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims"];
+  const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
+    ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f"];
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
 }
 const NPC = {};
@@ -389,6 +393,7 @@ const sound = {
     const f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 480; f.Q.value = .6;
     this.river = actx.createGain(); this.river.gain.value = .3; n.connect(f).connect(this.river).connect(master); n.start();
     const vsrc = actx.createMediaElementSource($("#voice"));
+    this.voiceMeter = actx.createAnalyser(); this.voiceMeter.fftSize = 512; vsrc.connect(this.voiceMeter); this.voiceBuf = new Float32Array(512);
     const room = actx.createConvolver(), len = actx.sampleRate * 1.8, ir = actx.createBuffer(2, len, actx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
     room.buffer = ir; const wet = actx.createGain(); wet.gain.value = .16;
@@ -409,6 +414,8 @@ const sound = {
   bark() { if (!actx) return; [0, .18, .36, .7].forEach((d, i) => { const at = actx.currentTime + d, o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(200 - i * 25, at); o.frequency.exponentialRampToValueAtTime(70, at + .2); const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 700; o.connect(f); this.env(f, .55, .01, .22, at); o.start(at); o.stop(at + .3); }); },
   growl(level) { if (!actx) return; const o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.value = 42 + Math.random() * 12; const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 150; o.connect(f); this.env(f, .55 * level, .08, .55); o.start(); o.stop(actx.currentTime + .7); },
   hit() { if (!actx) return; const o = actx.createOscillator(); o.frequency.setValueAtTime(120, actx.currentTime); o.frequency.exponentialRampToValueAtTime(26, actx.currentTime + 1); this.env(o, 1, .005, 1.1); o.start(); o.stop(actx.currentTime + 1.2); const n = this.noise(.6); this.env(n, .7, .002, .5); n.start(); },
+  // how loud the voice is right now (0..1), for moving mouths
+  voiceLevel() { if (!this.voiceMeter) return 0; this.voiceMeter.getFloatTimeDomainData(this.voiceBuf); let s = 0; for (const v of this.voiceBuf) s += v * v; return Math.sqrt(s / this.voiceBuf.length); },
   chime() { if (!actx) return; [784, 1175].forEach((fq, i) => { const at = actx.currentTime + i * .1, o = actx.createOscillator(); o.frequency.value = fq; this.env(o, .12, .005, 1.8, at); o.start(at); o.stop(at + 2); }); }
 };
 
@@ -466,6 +473,7 @@ async function line(who, id, text, cut) {
   $("#sub span").textContent = text; $("#sub").classList.add("on");
   if (heard) {} else if (cut) cutTo(cut); else if (p) frameOn(p, 1); else if (talkingTo) frameOn(talkingTo, -1);
   if (p && !heard) p.play(p.talk);
+  if (p) p.speaking = true;
   voiceEl.src = `voice/${id}.m4a`;
   const fallback = 900 + text.split(" ").length * 280;
   await new Promise(res => {
@@ -476,6 +484,7 @@ async function line(who, id, text, cut) {
     voiceEl.play().catch(() => setTimeout(fin, fallback));
   });
   if (p && !heard) p.play(p.idle);
+  if (p) p.speaking = false;
   $("#sub").classList.remove("on");
   await new Promise(r => setTimeout(r, 160));
 }
@@ -804,8 +813,10 @@ function tick(now) {
   trinkets?.animate(now);
   const h = NPC.hermes;
   if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
+  const voiceLevelNow = sound.voiceLevel ? sound.voiceLevel() : 0;
   for (const p of Object.values(NPC)) {
     p.mixer.update(dt);
+    p.expr?.update(now, p.speaking, voiceLevelNow);
     if (p.face && !p.leaving && p.root.visible && flat(me.pos).distanceTo(flat(p.root.position)) < 9) {
       const want = Math.atan2(me.pos.x - p.root.position.x, me.pos.z - p.root.position.z); let d = want - p.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); p.root.rotation.y += d * Math.min(1, dt * 3);
     }
