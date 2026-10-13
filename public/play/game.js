@@ -91,7 +91,7 @@ const Painterly = {
 };
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .32, .55, .86)); // candles, torches and silk highlights glow
+if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .5, .96)); // candles, torches and silk highlights glow
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
 composer.addPass(new OutputPass());
 function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }

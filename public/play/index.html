@@ -58,6 +58,7 @@ body.talking .bars::before,body.talking .bars::after{height:12.5vh}
 .sub{position:fixed;left:50%;bottom:calc(12.5vh + 18px);transform:translateX(-50%);z-index:9;width:min(980px,calc(100vw - 40px));text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
 .sub.on{opacity:1}
 .sub b{display:block;font-family:var(--body);font-weight:400;font-style:italic;letter-spacing:.02em;font-size:14px;color:rgba(242,232,213,.55);margin-bottom:2px}
+@media (max-width:640px){.sub span{font-size:15px!important;line-height:1.35!important}} /* a phone: keep the faces clear */
 .sub span{font-family:var(--body);font-size:clamp(18px,1.9vw,23px);line-height:1.45;color:#f6f1e6;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 18px rgba(0,0,0,.65)}
 /* choices sit in the black bar under the picture: a few words each, nothing boxed */
 .choices{position:fixed;left:0;right:0;bottom:0;height:12.5vh;z-index:10;display:none;align-items:center;justify-content:center;gap:clamp(18px,4vw,56px);padding:0 20px}

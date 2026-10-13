@@ -420,6 +420,7 @@ const LOOKS = {
   // Hermes: young and beardless as the classical painters show him, in a traveller's hat with
   // wings, a short pinned cloak over a short tunic, winged sandals, and the herald's staff.
   hermes: {tone: 0xfff0e2, hair: ["hair_simpleparted"], hairColor: 0x4a321c, dress(p, B, body) {
+    if (p.toon) return epicHermes(p, B, body);
     const tunic = cloth(0xe9e0cc);
     put(p, wrap(body, UPPER, {mat: tunic, clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), flare: .05, weightsAt: skirtWeights(B)}));
@@ -449,6 +450,7 @@ const LOOKS = {
   }},
   // Elpenor: the youngest of Odysseus' crew, a sailor in a work tunic fastened on one shoulder.
   elpenor: {tone: 0xf2dcc4, hair: ["hair_buzzed"], hairColor: 0x2a1d14, dress(p, B, body) {
+    if (p.toon) return mensDrape(p, B, body, {color: 0x5b6b78, style: "plain"});
     const t = cloth(0x5b6b78);
     // fastened on the left shoulder; the right shoulder and chest are bare
     put(p, wrap(body, UPPER, {mat: t, clip: `${NECKLINE} && b.x < .3 && b.y > .97 && b.y < max(1.24, 1.31 + 1.5 * b.x)`}));
@@ -457,6 +459,7 @@ const LOOKS = {
   }},
   // Theseus: the hero of Athens, older now and bearded, in a red cloak with his father's sword.
   theseus: {tone: 0xf6dfc6, hair: ["hair_simpleparted", "hair_beard"], hairColor: 0x3a2516, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x3a2516); mensDrape(p, B, body, {color: 0xe2d6bc, accent: 0x8f2f22}); mount(p, "pelvis", sword(), new THREE.Vector3(.2, .99, .02), [0, 0, .35]); return; }
     beard(p, body, 0x3a2516);
     put(p, wrap(body, UPPER, {mat: cloth(0xd8cdb6), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0xd8cdb6, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
@@ -468,6 +471,7 @@ const LOOKS = {
   }},
   // Pirithous: king of the Lapiths, long-haired and bearded, a gold band on his head.
   pirithous: {tone: 0xe9cdb0, hair: ["hair_long", "hair_beard"], hairColor: 0x1d140d, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x1d140d, {chin: .4}); mensDrape(p, B, body, {style: "bare", accent: 0x3e2050}); return; }
     beard(p, body, 0x1d140d, {chin: .4});
     put(p, wrap(body, UPPER, {mat: cloth(0x6b4a7a), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0x6b4a7a, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
@@ -479,12 +483,14 @@ const LOOKS = {
   }},
   // Mikon: nobody in particular. A plain undyed tunic, a few days of beard, an olive pit's worth of bad luck.
   mikon: {tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x3b2a1c, {thick: .004, chin: 0, moustache: false}); return mensDrape(p, B, body, {color: 0xb0a284, style: "plain"}); }
     beard(p, body, 0x3b2a1c, {thick: .004, chin: 0, moustache: false}); // a few days of it
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.03, to: .99, mat: cloth(0x4a3a2a), off: .025, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
   }},  // Mikon a year on, sitting on the bank: the same clothes, long enough to cover him seated
   mikon_bank: {as: "mikon", tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x3b2a1c, {thick: .006, chin: .05}); return mensDrape(p, B, body, {color: 0xb0a284, style: "plain"}); }
     beard(p, body, 0x3b2a1c, {thick: .006, chin: .05}); // a year of it
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
@@ -493,6 +499,7 @@ const LOOKS = {
   }},
   // Orpheus: young and clean-shaven, as the vase painters show him singing; a white tunic, a blue cloak.
   orpheus: {tone: 0xf6dcc0, hair: ["hair_simpleparted"], hairColor: 0x2e1c10, dress(p, B, body) {
+    if (p.toon) return mensDrape(p, B, body, {color: 0xf0e8d8, accent: 0x2c3f6e, style: "cowl"});
     put(p, wrap(body, UPPER, {mat: cloth(0xeee6d4), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xeee6d4, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: LONG ? .15 : .64, to: LONG ? .11 : .6, free: true, mat: cloth(0x2c3f6e), off: .055, flare: 0, folds: 0, weightsAt: skirtWeights(B, .8)})); // (a trim at the hem, wherever the hem is)
@@ -526,6 +533,7 @@ const LOOKS = {
   // Hades: the vase painters' Plouton, a grave bearded king in a dark cloak over one shoulder, an iron crown,
   // and a sceptre (left by his throne).
   hades: {tone: 0xead2bc, hair: ["hair_long", "hair_beard"], hairColor: 0x15100c, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x15100c, {thick: .016, chin: .6}); mensDrape(p, B, body, {style: "bare", accent: 0x141018}); mount(p, "Head", crown(0x2b2622, true), new THREE.Vector3(0, 1.8, -.012)); return; }
     beard(p, body, 0x15100c, {thick: .016, chin: .6});
     const black = cloth(0x1c1622, {folds: true});
     put(p, wrap(body, UPPER, {mat: cloth(0x2a2030), clip: `b.y > .97 && b.x < .3 && b.y < max(1.2, 1.32 + 1.5 * b.x) && ${NECKLINE}`}));
@@ -538,13 +546,14 @@ const LOOKS = {
   }},
   // Sisyphus: dust, a work tunic gone brown, and a boulder that comes back down.
   sisyphus: {tone: 0xd8bfa4, ash: .15, hair: ["hair_long", "hair_beard"], hairColor: 0x6a5c4c, dress(p, B, body) {
+    if (p.toon) { beard(p, body, 0x6a5c4c, {chin: .35}); return mensDrape(p, B, body, {style: "bare", accent: 0x6b5440, gilt: false}); }
     beard(p, body, 0x6a5c4c, {chin: .35});
     put(p, wrap(body, UPPER, {mat: cloth(0x6b5440), clip: `${NECKLINE} && b.x < .3 && b.y > .97 && b.y < max(1.24, 1.31 + 1.5 * b.x)`}));
     put(p, drape(body, {from: 1.0, to: .66, mat: cloth(0x6b5440, {folds: true}), flare: .03, hem: a => .03 * Math.abs(Math.sin(a * 6)), weightsAt: skirtWeights(B, .8)}));
   }},
   // Persephone: queen of the dead, in a pomegranate-red peplos with an overfold, a gold crown, a pomegranate.
   persephone: {body: "female", tone: 0xfbe4d0, hair: ["hair_buns"], hairColor: 0x2a160e, dress(p, B, body) {
-    gown(p, B, body, 0x5e0f1c, 0x1a0a12);
+    if (p.toon) weddingDrape(p, B, body, {color: 0x6e1424}); else gown(p, B, body, 0x5e0f1c, 0x1a0a12); // pomegranate-red liquid silk
     mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, p.norm ? 1.735 : 1.675, -.012));
     const pom = pomegranate(); if (p.norm) hold(p, "l", pom, new THREE.Vector3(0, .03, -.03)); else mount(p, "hand_l", pom, new THREE.Vector3(.7, 1.38, .01));
   }},
@@ -555,6 +564,7 @@ const LOOKS = {
 };
 // Plain Greek dress for anyone: a chiton, a belt, a cloak behind; a veil or a myrtle wreath if they want one.
 function greek(p, B, body, color, cloak, {veil, wreath, kneel} = {}) { // cloak: a colour, or null for none
+  if (p.toon && !p.female) return mensDrape(p, B, body, {color, accent: cloak ?? color, wreath});
   put(p, wrap(body, UPPER, {mat: cloth(color), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`, smooth: 12, off: .022}));
   const skirt = drape(body, {from: 1.0, to: .6, mat: cloth(color, {folds: true}), flare: .06, weightsAt: skirtWeights(B, .8)}); put(p, skirt);
   if (SEATED) seatedFall(p, B, body, cloth(color, {folds: true}));
@@ -719,6 +729,110 @@ function wreathOn(p, {flowers = true, lift = 0} = {}) {
   }
   mount(p, "Head", flowerWreath({flowers, r: p.female ? .1 : .108}), new THREE.Vector3(0, (p.norm ? 1.8 : 1.74) - .036 + lift, -.02), [.12, 0, 0]);
 }
+// Menswear for the animated men, after the references: long loose drapes to the ankle in soft jersey, and one of
+//   "himation": a sleeveless top, a wide sash over the left shoulder falling down the back, a broad gold belt, a brooch;
+//   "cowl":     a sleeveless top with a high round neck, a long panel of cloth falling from the left shoulder;
+//   "bare":     bare-chested, a dark wrap skirt slung low and rolled at the waist, a broad gold collar, a medallion, armbands;
+//   "plain":    an ordinary man: a sleeveless top, the long skirt, a leather belt.
+// (Heights are the tailor's, for the animated men: neck 1.46, shoulders 1.42, chest 1.2-1.3, waist 1.07, hips .9.)
+function frontZ(B, y, x0 = 0) { let z = -1; for (let i = 0; i < B.N; i++) if (Math.abs(B.P[i * 3] - x0) < .04 && Math.abs(B.P[i * 3 + 1] - y) < .02 && TORSO.test(B.dom[i])) z = Math.max(z, B.P[i * 3 + 2]); return z; }
+function goldBand(p, side, at, r) { // a gold band around a limb, at a fraction of the way from one joint to the next
+  const [a, b] = at, s = p.bones[a + "_" + side].getWorldPosition(new THREE.Vector3()), e = p.bones[b + "_" + side].getWorldPosition(new THREE.Vector3());
+  const m = new THREE.Mesh(new THREE.TorusGeometry(r, .007, 8, 28), gold); p.root.add(m); m.position.copy(s).lerp(e, at[2]);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), e.clone().sub(s).normalize()); m.updateMatrixWorld(true); p.bones[a + "_" + side].attach(m);
+}
+function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gilt = true, wreath} = {}) {
+  p.noNeckband = style === "bare"; // (the top copies the body, holes and all, where the body meets the head: the neckband covers that)
+  const cl = drapeCloth(color, "jersey"), ac = drapeCloth(accent ?? color, "jersey"), low = style === "bare";
+  // below: long and loose to the ankle
+  const skirt = drape(body, {from: low ? .95 : 1.03, to: .6, mat: low ? ac : cl, off: .024, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
+  put(p, skirt); if (SEATED) seatedFall(p, B, body, low ? ac : cl);
+  if (low) {
+    put(p, drape(body, {from: .99, to: .92, mat: ac, off: .045, flare: 0, folds: .03, weightsAt: boneWeights(B, [["pelvis", 1]])})); // rolled at the waist
+    if (gilt) {
+      // a broad collar lying on the shoulders and chest (over the edge where the body meets the head)
+      put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51)) && y > 1.3 && y < 1.53,
+        {mat: gold, exact: true, off: .01, smooth: 8, clip: `b.y > 1.355 + .25 * b.x * b.x * 6. && b.y < 1.5`}));
+      const med = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .008, 28), gold); med.rotation.x = Math.PI / 2;
+      const g = new THREE.Group(); g.add(med); mount(p, "spine_03", g, new THREE.Vector3(0, 1.31, frontZ(B, 1.31) + .012));
+      for (const sd of ["l", "r"]) { goldBand(p, sd, ["upperarm", "lowerarm", .35], .05); goldBand(p, sd, ["lowerarm", "hand", .85], .036); }
+    } else put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51)) && y > 1.3 && y < 1.53,
+        {mat: ac, exact: true, off: .012, smooth: 8, clip: `b.y > 1.38 + .25 * b.x * b.x * 6. && b.y < 1.5`})); // a rag knotted round the neck
+  } else {
+    // above: sleeveless, a high round neck (over the edge where the body meets the head)
+    put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51) || ARMS.test(d)) && y > .95 && y < 1.56,
+      {mat: cl, exact: true, off: .02, smooth: 12, clip: `b.y < 1.5 && abs(b.x) < .27 && b.y > .97`}));
+    if (style === "himation") {
+      const line = "(1.47 + 1.7 * (b.x - .13))"; // the sash: from the left shoulder down across to the right hip
+      put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || (ARMS.test(d) && x > 0 && x < .3)) && y > .95 && y < 1.56,
+        {mat: ac, exact: true, off: .036, smooth: 10, clip: `abs(b.y - ${line}) < .1 && b.y > .97 && b.y < 1.53`, bulge: (x, y) => .008 * Math.sin(y * 55)}));
+      put(p, drape(body, {from: 1.48, to: SEATED ? .75 : .32, arc: [Math.PI * 1.48, Math.PI * 2.04], mat: ac, off: .05, flare: .1, folds: .035, free: true,
+        include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+      if (gilt) put(p, drape(body, {from: 1.11, to: 1.01, mat: gold, off: .04, flare: 0, folds: 0, step: .025, weightsAt: boneWeights(B, [["spine_02", .5], ["pelvis", .5]])}));
+      const brooch = new THREE.Mesh(new THREE.SphereGeometry(.024, 14, 10), gold); brooch.scale.z = .5; mount(p, "clavicle_l", brooch, new THREE.Vector3(.13, 1.46, frontZ(B, 1.42, .1) + .03));
+    } else if (style === "cowl") {
+      put(p, drape(body, {from: 1.47, to: SEATED ? .75 : .38, arc: [-Math.PI * .18, Math.PI * .3], mat: ac, off: .05, flare: .14, folds: .05, free: true,
+        include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+      if (gilt) { const brooch = new THREE.Mesh(new THREE.SphereGeometry(.022, 14, 10), gold); brooch.scale.z = .5; mount(p, "clavicle_l", brooch, new THREE.Vector3(.12, 1.47, frontZ(B, 1.42, .1) + .03)); }
+    } else put(p, drape(body, {from: 1.08, to: 1.03, mat: leather, off: .03, flare: 0, folds: 0, step: .025, weightsAt: boneWeights(B, [["pelvis", 1]])})); // plain: a belt
+  }
+  if (wreath) wreathOn(p, {flowers: false});
+}
+// Hermes after the EPIC musical's: the trickster god, grinning. Wings in his curls (no hat), round dark glasses, gold
+// earrings; a short cream chiton to the knee, trimmed in gold at the neck and hem; a leather strap across him to a satchel;
+// a dark cloak behind; leather bracers banded in gold; sandal laces wound up the calves, wings at the ankles; the caduceus.
+function trimmed(mesh, test, base, trim = new THREE.Color(0xc9a24a)) { // colour the cloth's edge gold (by height in the tailor's space)
+  const g = mesh.geometry, P = g.attributes.position, k = mesh.userData.k || 1, C = [];
+  for (let i = 0; i < P.count; i++) { const c = test(P.getY(i) / k) ? trim : base; C.push(c.r, c.g, c.b); }
+  g.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
+  if (!mesh.material.userData.own) mesh.material = mesh.material.clone(); // (a cut garment's material is its own already, and a copy would lose the cut)
+  mesh.material.vertexColors = true; mesh.material.color.set(0xffffff); mesh.material.needsUpdate = true; return mesh;
+}
+function headFit(p) { // from the measured hair: its top, its middle, its half-width just under the top
+  const P = p.headPts; let ty = -9; for (let i = 1; i < P.length; i += 3) ty = Math.max(ty, P[i]);
+  let cx = 0, cz = 0, n = 0, rx = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - (ty - .07)) < .012) { cx += P[i]; cz += P[i + 2]; n++; rx = Math.max(rx, Math.abs(P[i])); }
+  return {ty, cx: cx / (n || 1), cz: cz / (n || 1), rx};
+}
+function epicHermes(p, B, body) {
+  const cream = new THREE.Color(0xefe6d2), cloth2 = drapeCloth(0xffffff, "jersey"), hide = new THREE.MeshStandardMaterial({color: 0x5e3c22, roughness: .55});
+  const k = p.norm.k;
+  // the chiton: sleeveless, gold at the neck; the skirt to the knee, gold at the hem
+  const top = wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "Head" && y < 1.51) || ARMS.test(d)) && y > .95 && y < 1.56,
+    {mat: cloth2, exact: true, off: .022, smooth: 12, clip: `b.y < 1.5 && abs(b.x) < .25 && b.y > .97`});
+  top.userData.k = k; put(p, trimmed(top, y => y > 1.47, cream));
+  const skirt = drape(body, {from: 1.04, to: .5, free: true, mat: cloth2, off: .024, flare: .13, folds: .035, step: .03, weightsAt: skirtWeights(B, .7), hem: a => Math.sin(a * 3) * .015});
+  skirt.userData.k = k; put(p, trimmed(skirt, y => y < .555, cream));
+  put(p, drape(body, {from: 1.075, to: 1.035, mat: hide, off: .032, flare: 0, folds: 0, step: .02, weightsAt: boneWeights(B, [["pelvis", 1]])})); // belt
+  // the strap from the right shoulder to the left hip, and the satchel on it
+  put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || (ARMS.test(d) && x < 0 && x > -.3)) && y > .95 && y < 1.56,
+    {mat: hide, exact: true, off: .034, smooth: 8, clip: `abs(b.y - (1.47 - 1.69 * (b.x + .13))) < .022 && b.y > .98`}));
+  const bag = new THREE.Group(), box = new THREE.Mesh(new THREE.BoxGeometry(.15, .12, .05), hide), flap = new THREE.Mesh(new THREE.BoxGeometry(.152, .06, .054), new THREE.MeshStandardMaterial({color: 0x4a2e1a, roughness: .5}));
+  flap.position.y = .035; bag.add(box, flap); const clasp = new THREE.Mesh(new THREE.SphereGeometry(.009, 8, 6), gold); clasp.position.set(0, .01, .03); bag.add(clasp);
+  mount(p, "pelvis", bag, new THREE.Vector3(.2, .93, frontZ(B, .98) - .03), [0, -.5, 0]);
+  // the cloak, dark, hanging behind from the shoulders
+  put(p, drape(body, {from: 1.47, to: SEATED ? .75 : .42, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: drapeCloth(0x3a2a20, "jersey"), off: .05, flare: .12, folds: .04, free: true,
+    include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+  // bracers on the forearms, banded in gold
+  for (const sd of ["l", "r"]) {
+    const s0 = p.bones["lowerarm_" + sd].getWorldPosition(new THREE.Vector3()), e0 = p.bones["hand_" + sd].getWorldPosition(new THREE.Vector3()), dir = e0.clone().sub(s0).normalize();
+    const br = new THREE.Mesh(new THREE.CylinderGeometry(.044, .04, .13, 18, 1, true), hide); p.root.add(br); br.position.copy(s0).lerp(e0, .62); br.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); br.updateMatrixWorld(true); p.bones["lowerarm_" + sd].attach(br);
+    goldBand(p, sd, ["lowerarm", "hand", .4], .045); goldBand(p, sd, ["lowerarm", "hand", .86], .041);
+    for (const f of [.25, .45, .65, .85]) goldBand(p, sd, ["calf", "foot", f], .05 - f * .012); // sandal laces up the calf (gold-brown)
+    const g = new THREE.Group(), x = sd === "l" ? .114 : -.114; g.add(wing(Math.sign(x), Math.abs(x) + .05, .1, -.07, .7)); mount(p, `foot_${sd}`, g, new THREE.Vector3());
+  }
+  // wings in his hair, dark glasses, gold earrings
+  if (p.headPts) { const h = headFit(p);
+    for (const sd of [-1, 1]) { const w = wing(sd, h.rx - .02, 0, 0, 1.5); w.rotation.z = .35; const g = new THREE.Group(); g.add(w); g.userData.fitted = true; mount(p, "Head", g, new THREE.Vector3(h.cx, h.ty - .07, h.cz - .02)); } }
+  if (p.eyes) { const e = p.eyes, r = (e.max.y - e.min.y) / 2 + .006, ex = e.max.x - r + .004, ey = (e.max.y + e.min.y) / 2, ez = e.max.z + .012;
+    const glass = new THREE.Group(), frame = new THREE.MeshStandardMaterial({color: 0xc9a24a, metalness: .9, roughness: .3}), lens = new THREE.MeshPhysicalMaterial({color: 0x1a1210, roughness: .05, metalness: .2, clearcoat: 1, transparent: true, opacity: .88});
+    for (const sx of [-1, 1]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(r, .0035, 8, 32), frame), disc = new THREE.Mesh(new THREE.CircleGeometry(r, 32), lens); ring.position.set(sx * ex, 0, 0); disc.position.copy(ring.position); glass.add(ring, disc);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(.0025, .0025, .12, 6), frame); arm.rotation.x = Math.PI / 2; arm.position.set(sx * (ex + r), 0, -.06); glass.add(arm); }
+    const bridge = new THREE.Mesh(new THREE.TorusGeometry(ex - r, .003, 6, 16, Math.PI), frame); bridge.position.set(0, .004, 0); glass.add(bridge);
+    glass.userData.fitted = true; mount(p, "Head", glass, new THREE.Vector3(0, ey, ez)); // (pieces placed around its middle: mount converts that one point)
+    for (const sx of [-1, 1]) { const hoop = new THREE.Mesh(new THREE.TorusGeometry(.011, .0025, 6, 16), gold); hoop.userData.fitted = true; const ear = (p.headPts ? headFit(p).rx : .14) - .012;
+      mount(p, "Head", hoop, new THREE.Vector3(sx * ear, ey - .07, e.min.z - .04), [0, Math.PI / 2, 0]); } }
+  const cad = caduceus(); p.root.add(cad); hold(p, "l", cad, new THREE.Vector3(0, -.08, 0));
+}
 function aulos() { // the double pipes
   const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x6a4a2a, roughness: .5});
   for (const s of [-1, 1]) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.007, .011, .45, 8), m); t.position.set(s * .05, -.2, 0); t.rotation.z = s * .18; g.add(t); }
@@ -873,9 +987,12 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   const person = {root, bones, body: ref, norm: {k, turn}, female, wrist, toon};
   if (toon) { // a cartoon head is bigger and higher than the realistic one hats and crowns were placed for: move them up and size them to it
     const hb = w("Bip01_Head").applyMatrix4(norm), box = new THREE.Box3(), top = new THREE.Box3(), v = new THREE.Vector3();
+    const eyes = new THREE.Box3();
+    for (const o of skins) if (/snow-eyes$|rain-eyes$/i.test(o.name)) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 2) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); eyes.expandByPoint(v.applyMatrix4(o.matrixWorld).applyMatrix4(norm)); } }
+    if (!eyes.isEmpty()) person.eyes = eyes;
     for (const o of skins) if (o.userData.head && /head|hair/i.test(o.name)) { const hair = /hair/i.test(o.name), pos = o.geometry.attributes.position; /* (cartoon hair has volume: hats sit on it, sized to the head) */
       for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld).applyMatrix4(norm); top.expandByPoint(v); if (!hair) box.expandByPoint(v); (person.headPts ||= []).push(v.x, v.y, v.z); } }
-    person.hat = {dy: top.max.y - hb.y - .223 - .012, s: (box.max.z - box.min.z) / .247 * 1.08}; // (measured on the realistic heads; front to back, since ears make width a poor guide)
+    person.hat = {dy: top.max.y - hb.y - .223 - .05, s: (box.max.z - box.min.z) / .247 * 1.08}; // (measured on the realistic heads; front to back, since ears make width a poor guide)
   }
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
   const low = seated ? .58 : .1, fp = {value: 0}, hh = {value: 0};
@@ -902,9 +1019,9 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   LONG = true; WRIST = wrist + .055; SEATED = seated; NECKLINE = neck; const keepF = [FNECK, FUPPER]; FNECK = neck; FUPPER = UPPER;
   TOONDRESS = toon;
   try { look.dress(person, study(tailor), tailor); } finally { TOONDRESS = false; LONG = false; WRIST = .675; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
-  if (toon && !female) { // the animated man's body ends in a ragged edge where his modern collar was: a neckband in the tunic's colour covers it
+  if (toon && !female && !person.noNeckband) { // the animated man's body ends in a ragged edge where his modern collar was: a neckband in the tunic's colour covers it
     let tunic = null; root.traverse(o => { if (!tunic && o.userData.garment && o.userData.own && o.userData.top > 1.3) tunic = o; });
-    if (tunic) put(person, drape(tailor, {from: 1.53, to: 1.39, mat: cloth(tunic.material.color.getHex()), off: .011, flare: .004, folds: 0, step: .02,
+    if (tunic) put(person, drape(tailor, {from: 1.495, to: 1.39, mat: cloth(tunic.material.color.getHex()), off: .011, flare: .004, folds: 0, step: .02,
       include: d => d === "neck_01" || d === "spine_03", weightsAt: boneWeights(study(tailor), (x, y) => y > 1.46 ? [["neck_01", .7], ["spine_03", .3]] : [["spine_03", 1]])}));
   }
   if (look.eyes) { // Charon's eyes of flame
