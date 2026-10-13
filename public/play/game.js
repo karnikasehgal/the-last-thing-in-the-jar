@@ -45,6 +45,7 @@ const canvas = $("#view");
 // Phones, tablets and modest laptops get a lighter version so it stays smooth.
 const LITE = matchMedia("(pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4 || innerWidth * innerHeight * devicePixelRatio ** 2 > 6e6;
 const renderer = new THREE.WebGLRenderer({canvas, antialias: !LITE, powerPreference: "high-performance"});
+renderer.localClippingEnabled = true; // your own clothes are cut off just below your eyes in first person
 const pixelRatio = () => Math.max(1, Math.min(devicePixelRatio || 1, LITE ? 1.25 : 1.75)); // never below 1, or the picture shrinks into a corner
 renderer.setPixelRatio(pixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -301,14 +302,15 @@ const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.
   const view = new THREE.Mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshBasicMaterial({map: sunrise(), fog: false}));
   view.position.set(-56.6, 3.3, 13); view.rotation.y = Math.PI / 2; scene.add(view);
   // boulders heaped over the cave, so from the river it reads as a cliff
-  for (let i = 0; i < 22; i++) { const r = 2 + Math.random() * 3, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), new THREE.MeshStandardMaterial({color: 0x2c2420, roughness: .95})); m.position.set(-40 - Math.random() * 18, 5 + Math.random() * 5, 13 + (Math.random() - .5) * 16); m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m); }
+  // (kept above the cave's roof, which reaches about 8.5 m, and back from the sea mouth, so none of them hang inside it)
+  for (let i = 0; i < 22; i++) { const r = 2 + Math.random() * 3, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), new THREE.MeshStandardMaterial({color: 0x2c2420, roughness: .95, flatShading: true})); m.position.set(-39 - Math.random() * 13, 8.6 + r * .75 + Math.random() * 2, 13 + (Math.random() - .5) * 16); m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m); }
   const sun = new THREE.PointLight(0xffa860, 46, 28, 1.3); sun.position.set(-52, 3.2, 13); scene.add(sun);
   const bounce = new THREE.PointLight(0xff7a3a, 14, 14, 1.6); bounce.position.set(-43, 1.4, 13); scene.add(bounce);
   // a rough face of rock around the mouth, so the cave sits in a cliff
   const rock = new THREE.MeshStandardMaterial({color: 0x3a2a20, roughness: .95});
   for (let i = 0; i < 16; i++) {
     const r = 1.6 + Math.random() * 2.4, a = i / 16 * Math.PI * 2, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rock);
-    m.position.set(-37.2 - Math.random(), 2.7 + Math.sin(a) * 5.2, 13 + Math.cos(a) * 5.6); m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m);
+    const ring = 4.7 + r * .75; m.position.set(-37.2 - Math.random(), 2.7 + Math.sin(a) * ring, 13 + Math.cos(a) * ring); // outside the opening, never across it m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m);
   }
 }
 
@@ -929,6 +931,7 @@ function tick(now) {
   water.material.uniforms.time.value += dt * .45;
   paint.uniforms.time.value = now / 1000;
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
+  PLAYER?.fpCut?.();
   for (const f of poses) f(now);
   composer.render();
   requestAnimationFrame(tick);
@@ -1600,7 +1603,7 @@ let lyreHeld = false;
 const G = {
   THREE, scene, camera, me, NPC, dog, V, flat, $, keys, sound, save, PLACES, CARDS, CLIPS, SkeletonUtils, camShot, paint,
   get farWorld() { return farWorld; },
-  cast: (id, opts) => makeCastMember(id, {ASSETS, CLIPS, scene, ...opts}), mount, hold, placeNPC, clearChapterOne, hermesLeaves,
+  cast: (id, opts) => makeCastMember(id, {ASSETS, CLIPS, scene, ...opts}), mount, hold, poses, reach, placeNPC, clearChapterOne, hermesLeaves,
   line, choose, beginTalk, endTalk, toast, paintGoal, crossRiver, boatTo, setLightsFar, caughtBy, finish, releaseMouse, grabMouse,
   setPlaying: v => { playing = v; }, isTalking: () => talking, speedScale: k => { speedK = k; }, touchLyre: () => lyreHeld
 };

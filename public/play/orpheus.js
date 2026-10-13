@@ -34,12 +34,19 @@ export function makeOrpheus(G) {
     G.clearChapterOne(); G.save.meet("orpheus");
     me.pos.copy(G.PLACES.start); me.yaw = -Math.PI / 2;
     // Mikon is still on the bank, ninety-something years in.
-    NPC.mikon = Object.assign(G.cast("mikon", {seated: true}), {name: "Mikon", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(14, 0, 16.05), yaw: Math.PI, seatY: .5});
+    NPC.mikon = Object.assign(G.cast("mikon_bank", {seated: true}), {name: "Mikon", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(14, 0, 16.05), yaw: Math.PI, seatY: .5});
     NPC.hades = Object.assign(G.cast("hades", {scale: 1.06, seated: true}), {name: "Hades", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.hades.clone(), yaw: Math.PI, seatY: 1.1});
-    NPC.persephone = Object.assign(G.cast("persephone", {seated: true}), {name: "Persephone", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: FAR.persephone.clone(), yaw: Math.PI, seatY: 1.1});
+    NPC.persephone = Object.assign(G.cast("persephone", {seated: true}), {name: "Persephone", idle: "sittable", talk: "sittabletalk", pos: FAR.persephone.clone(), yaw: Math.PI, seatY: 1.1});
     NPC.sisyphus = Object.assign(G.cast("sisyphus"), {name: "Sisyphus", idle: "Push_Loop", talk: "Idle_Talking_Loop", pos: FAR.sisyphus.clone(), yaw: 0});
     NPC.eurydice = Object.assign(G.cast("eurydice"), {name: "Eurydice", idle: "Idle_Loop", talk: "Idle_Loop", pos: V(0, 0, 134), yaw: 0});
     for (const id of ["mikon", "hades", "persephone", "sisyphus", "eurydice"]) G.placeNPC(NPC[id]);
+    // Sisyphus leans into the rock with both hands on it (the push is a slow walk on the spot)
+    { const sis = NPC.sisyphus; sis.root.rotation.order = "YXZ";
+      G.poses.add(() => { if (!sis.root.visible) return; const pushing = sis.idle === "Push_Loop"; sis.root.rotation.x = pushing ? .3 : 0; if (!pushing) return;
+        sis.root.updateMatrixWorld(true); const c = G.farWorld.boulder.position, ch = new THREE.Vector3(); sis.bones.spine_03.getWorldPosition(ch);
+        const toMe = ch.clone().sub(c).setY(0).normalize(), side = new THREE.Vector3(-toMe.z, 0, toMe.x);
+        for (const [s, k] of [["l", 1], ["r", -1]]) { const t = c.clone().add(new THREE.Vector3(0, .25, 0)).addScaledVector(toMe, .95).addScaledVector(side, k * .38);
+          G.reach(sis, s, t, ch.clone().addScaledVector(side, k * .6).add(new THREE.Vector3(0, -.4, 0)), .085); } }); }
     NPC.eurydice.root.visible = false;
     const shadeT = G.cast("shade"); shadeT.root.visible = false;
     st.shades = scatterShades(scene, shadeT, G.SkeletonUtils, G.CLIPS, 9);

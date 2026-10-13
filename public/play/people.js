@@ -139,7 +139,7 @@ function skinned(geo, mat, body) {
   if (body.userData.fromNorm) { geo.applyMatrix4(body.userData.fromNorm); geo.computeVertexNormals(); }
   const m = new THREE.SkinnedMesh(geo, mat);
   if (body.userData.home) m.userData.home = body.userData.home;
-  m.userData.garment = true; m.userData.top = top;
+  m.userData.garment = true; m.userData.top = top; m.userData.own = mat.userData?.own;
   m.bind(body.skeleton, body.bindMatrix);
   m.frustumCulled = false; m.castShadow = false;
   return m;
@@ -147,10 +147,10 @@ function skinned(geo, mat, body) {
 
 /* ---------- garments ---------- */
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
-function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 10 : 3}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
+function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
   const B = study(body), ix = B.g.index.array, tri = [];
   if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE_HIGH} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
-  if (clip) mat = clipped(mat, clip, B);
+  if (clip) { mat = clipped(mat, clip, B); mat.userData.own = true; } // (a clipped material belongs to this one body)
   const ok = new Uint8Array(B.N); for (let i = 0; i < B.N; i++) ok[i] = keep(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2], B.dom[i]) ? 1 : 0;
   for (let t = 0; t < ix.length; t += 3) if (ok[ix[t]] && ok[ix[t + 1]] && ok[ix[t + 2]]) tri.push(ix[t], ix[t + 1], ix[t + 2]);
   const map = new Map(), P = [], UV = [], SI = [], SW = [], I = [], BP = []; // BP: the body point under each cloth vertex, its normal, its offset
@@ -161,7 +161,7 @@ function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, 
   for (const i of tri) {
     if (!map.has(i)) {
       const a = avg.get(key(i)), l = Math.hypot(...a) || 1, x = B.P[i * 3], y = B.P[i * 3 + 1], z = B.P[i * 3 + 2], o = off + bulge(x, y, z);
-      P.push(x + a[0] / l * o, y + a[1] / l * o, z + a[2] / l * o); BP.push(x, y, z, a[0] / l, a[1] / l, a[2] / l, o);
+      P.push(x + a[0] / l * o, y + a[1] / l * o, z + a[2] / l * o); BP.push(x, y, z, a[0] / l, a[1] / l, a[2] / l, ARMS.test(B.dom[i]) || /^hand_/.test(B.dom[i]) ? o : -1);
       UV.push(uv.getX(i) * 3, uv.getY(i) * 3);
       for (let k = 0; k < 4; k++) { SI.push(comp(B.si, i, k)); SW.push(comp(B.sw, i, k)); }
       map.set(i, P.length / 3 - 1);
@@ -180,8 +180,8 @@ function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, 
     for (let i = 0; i < nV; i++) { if (rep[i] !== i || nb[i].size < 3) continue; let x = 0, y = 0, z = 0; for (const j of nb[i]) { x += P[j * 3]; y += P[j * 3 + 1]; z += P[j * 3 + 2]; } const n = nb[i].size; Q[i * 3] = P[i * 3] + (x / n - P[i * 3]) * f; Q[i * 3 + 1] = P[i * 3 + 1] + (y / n - P[i * 3 + 1]) * f; Q[i * 3 + 2] = P[i * 3 + 2] + (z / n - P[i * 3 + 2]) * f; }
     for (let i = 0; i < nV; i++) { const r = rep[i]; P[i * 3] = Q[r * 3]; P[i * 3 + 1] = Q[r * 3 + 1]; P[i * 3 + 2] = Q[r * 3 + 2]; }
   }
-  // and the cloth never sinks into the body it covers
-  for (let i = 0; i < nV; i++) { const k = i * 7, d = (P[i * 3] - BP[k]) * BP[k + 3] + (P[i * 3 + 1] - BP[k + 1]) * BP[k + 4] + (P[i * 3 + 2] - BP[k + 2]) * BP[k + 5], want = BP[k + 6] * .8;
+  // and sleeves never sink into the arms they cover (the torso is left free, so a jacket's lapels underneath don't show through)
+  for (let i = 0; i < nV; i++) { const k = i * 7; if (BP[k + 6] < 0) continue; const d = (P[i * 3] - BP[k]) * BP[k + 3] + (P[i * 3 + 1] - BP[k + 1]) * BP[k + 4] + (P[i * 3 + 2] - BP[k + 2]) * BP[k + 5], want = BP[k + 6] * .8;
     if (d < want) for (let a = 0; a < 3; a++) P[i * 3 + a] += BP[k + 3 + a] * (want - d); }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
@@ -216,6 +216,7 @@ let LONG = false; // set while dressing a realistic body: sleeves to the wrist, 
 function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false}) {
   const B = study(body);
   if (LONG && !free && to < .8 && from < 1.1) to = SEATED ? .46 : Math.min(to, .1);
+  if (LONG && from > 1.1 && from - to > .1) off += .022; // cloaks and capes from the shoulders sit clear of the tunic underneath, which is fuller on a real body
   include ||= d => TORSO.test(d) || LEGS.test(d);
   const rows = Math.max(2, Math.ceil((from - to) / step) + 1), full = arc[1] - arc[0] >= Math.PI * 2 - 1e-6;
   const cols = full ? SEG : Math.round(SEG * (arc[1] - arc[0]) / (Math.PI * 2)) + 1;
@@ -462,6 +463,12 @@ const LOOKS = {
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.03, to: .99, mat: cloth(0x4a3a2a), off: .025, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
+  }},  // Mikon a year on, sitting on the bank: the same clothes, long enough to cover him seated
+  mikon_bank: {as: "mikon", tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
+    put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
+    put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
+    put(p, drape(body, {from: 1.03, to: .99, mat: cloth(0x4a3a2a), off: .025, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
+    seatedFall(p, B, body, cloth(0xa89a80, {folds: true}));
   }},
   // Orpheus: young and clean-shaven, as the vase painters show him singing; a white tunic, a blue cloak.
   orpheus: {tone: 0xf6dcc0, hair: ["hair_simpleparted"], hairColor: 0x2e1c10, dress(p, B, body) {
@@ -501,6 +508,7 @@ const LOOKS = {
     const black = cloth(0x1c1622, {folds: true});
     put(p, wrap(body, UPPER, {mat: cloth(0x2a2030), clip: `b.y > .97 && b.x < .3 && b.y < max(1.2, 1.32 + 1.5 * b.x) && ${NECKLINE}`}));
     put(p, drape(body, {from: 1.02, to: .08, mat: black, flare: .12, folds: .025, weightsAt: skirtWeights(B, .8)}));
+    if (SEATED) seatedFall(p, B, body, black);
     put(p, drape(body, {from: 1.05, to: 1.0, mat: gold, off: .03, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     put(p, drape(body, {from: 1.52, to: .7, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .045, flare: .08, folds: .03,
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
@@ -527,6 +535,7 @@ const LOOKS = {
 function greek(p, B, body, color, cloak, {veil, wreath, kneel} = {}) { // cloak: a colour, or null for none
   put(p, wrap(body, UPPER, {mat: cloth(color), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`, smooth: 12, off: .022}));
   const skirt = drape(body, {from: 1.0, to: .6, mat: cloth(color, {folds: true}), flare: .06, weightsAt: skirtWeights(B, .8)}); put(p, skirt);
+  if (SEATED) seatedFall(p, B, body, cloth(color, {folds: true}));
   if (kneel) { // a second skirt that hangs from the hips alone: when she kneels it pools on the ground instead of folding through itself
     const k = drape(body, {from: 1.0, to: .6, mat: cloth(color), flare: .2, folds: .01, weightsAt: boneWeights(B, [["pelvis", 1]])}); put(p, k); k.visible = false;
     p.kneel = on => { skirt.visible = !on; k.visible = on; }; }
@@ -557,6 +566,11 @@ function lapFall(B, body, mat) {
   geo.setIndex(I); geo.computeVertexNormals();
   return skinned(geo, mat, body);
 }
+// Seated, a long robe carries on over the shins to the floor: cloth that follows each leg, and a fall from the knees.
+function seatedFall(p, B, body, mat) {
+  put(p, wrap(body, (x, y, z, d) => (/^calf_/.test(d) && y > .1) || (/^thigh_/.test(d) && y < .62), {mat, off: .03, smooth: 6, bulge: (x, y) => Math.max(0, .5 - y) * .08}));
+  put(p, lapFall(B, body, mat));
+}
 // A woman's gown: a fitted silk bodice with a jewelled collar, a gold band under the bust, a skirt that falls from there
 // to the floor with a little train, a sheer cape from the shoulders, gold at the wrists and ears.
 function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
@@ -564,16 +578,16 @@ function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
   // bodice and sleeves in one piece (no seam at the shoulder), smoothed hard so nothing of the jacket underneath shows
   // in its shape; the sleeves open into bells over the last of the forearm, and the hand comes out of the bell
   const w0 = (p.wrist || .6) - .14;
-  put(p, wrap(body, UPPER, {mat: silk(color), clip: `${NECKLINE} && ${SLEEVE(.33)}`, smooth: 6, off: .02, bulge: x => Math.max(0, Math.abs(x) - w0) * .3}));
+  put(p, wrap(body, UPPER, {mat: silk(color), clip: `${NECKLINE} && ${SLEEVE(.33)}`, smooth: 18, off: .02, bulge: x => Math.max(0, Math.abs(x) - w0) * .3}));
   const skirtMat = silk(color, {folds: true});
   // seated, the skirt has to follow the thighs forward, so it stays close; standing, it flares and trails a little behind
   const skirt = SEATED ? drape(body, {from: 1.0, to: .6, mat: skirtMat, flare: .06, weightsAt: skirtWeights(B, .8)})
     : drape(body, {from: 1.2, to: .6, mat: skirtMat, off: .03, flare: .2, folds: .016, weightsAt: skirtWeights(B, .45), hem: a => Math.max(0, -Math.sin(a)) * .06});
   put(p, skirt);
   // seated, the gown carries on over the shins to the floor (following each leg, opening out toward the hem)
-  if (SEATED) { put(p, wrap(body, (x, y, z, d) => /^(calf|foot|ball)_/.test(d) || (/^thigh_/.test(d) && y < .62), {mat: skirtMat, off: .03, smooth: 6, bulge: (x, y) => Math.max(0, .5 - y) * .12})); put(p, lapFall(B, body, skirtMat)); }
+  if (SEATED) seatedFall(p, B, body, skirtMat);
   if (kneel) { const k = drape(body, {from: 1.2, to: .6, mat: silk(color), off: .03, flare: .3, folds: .015, weightsAt: boneWeights(B, [["pelvis", 1]])}); put(p, k); k.visible = false; p.kneel = on => { skirt.visible = !on; k.visible = on; }; }
-  put(p, drape(body, {from: 1.235, to: 1.195, mat: gold, off: .04, flare: 0, folds: 0, weightsAt: boneWeights(B, [["spine_02", 1]])}));
+  put(p, drape(body, {from: 1.235, to: 1.195, mat: gold, off: .062, flare: 0, folds: 0, weightsAt: boneWeights(B, [["spine_02", 1]])}));
   if (cape && !SEATED) put(p, drape(body, {from: 1.3, to: .12, arc: [Math.PI * 1.25, Math.PI * 1.75], mat: silk(cape, {folds: true, sheer: .25}), off: .045, flare: .1, folds: .025, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
   if (veil) put(p, wrap(body, (x, y, z, d) => (d === "Head" || d === "neck_01") && z < .02, {clip: "!(b.z > -.03 && pow(b.x / .09, 2.) + pow((b.y - 1.65) / .14, 2.) < 1.)", mat: cloth(veil), off: .018, bulge: (x, y, z) => Math.max(0, -z) * .1}));
   // a broad collar of gold at the neckline, and drops at the ears
@@ -764,12 +778,16 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   root.traverse(o => { if (o.isMesh && !o.isSkinnedMesh && o.parent?.isBone && /Head/.test(o.parent.name)) headParts.push(o); });
   // First person: only your body from the waist down is drawn, so looking down you see your hem and your feet,
   // never the inside of your own neck. Reflections and cutaways show all of you.
-  const upper = []; root.traverse(o => {
-    if (o.userData.garment && o.userData.top > 1.25) upper.push(o);
+  // Clothes fitted to the body itself (tunic, sleeves) are cut off just below the eyes instead, so you see your own
+  // chest, arms and hands; capes and ornaments are simply hidden.
+  const upper = [], cut = [], fpPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.22);
+  root.traverse(o => {
+    if (o.userData.garment && o.userData.top > 1.25) (o.userData.own && !Array.isArray(o.material) ? cut : upper).push(o);
     if (o.isMesh && !o.isSkinnedMesh && !o.userData.garment && o.parent?.isBone && !/Foot|Toe|Hand|Finger/.test(o.parent.name) && !headParts.includes(o)) upper.push(o);
   });
   person.hideHands = on => { hh.value = on ? 1 : 0; }; // seen from your own eyes, a hand raised to your face would fill the lens
-  person.setHead = show => { person.headShown = show; headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); fp.value = show ? 0 : 1; };
+  person.setHead = show => { person.headShown = show; headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); cut.forEach(o => o.material.clippingPlanes = show ? null : [fpPlane]); fp.value = show ? 0 : 1; };
+  person.fpCut = () => { fpPlane.constant = root.position.y + 1.22 * root.scale.y; }; // keep the cut at eye height as you climb steps
   shareSkeletons(root);
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
