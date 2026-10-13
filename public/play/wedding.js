@@ -37,7 +37,7 @@ export function buildWedding(scene, {noise, lite = false}) {
   pav.repeat.set(10, 8);
   add(new THREE.Mesh(new THREE.BoxGeometry(36, .2, 28), pbr("seaworn_stone_tiles", {size: 2.6, tint: 0xf2e8d6})), 0, -.1, 0);
   const lime = noise("#e6dccb", "#9a8a72", 256, 6, .1);
-  const wallM = pbr("plastered_wall_02", {size: 3, tint: 0xf2e8d6}); // whitewashed lime plaster
+  const wallM = pbr("sandstone_blocks_05", {size: 3.2, tint: 0xa8957c, bump: 1.4}); // cut stone, as in a quarry: dark, warm only where the candles reach
   add(new THREE.Mesh(new THREE.BoxGeometry(36, 4, .5), wallM), 0, 2, 14);
   add(new THREE.Mesh(new THREE.BoxGeometry(36, 4, .5), wallM), 0, 2, -14);
   // the east wall, with the gate Mikon walks in through
@@ -127,7 +127,20 @@ export function buildWedding(scene, {noise, lite = false}) {
   const shroud = new THREE.Mesh(new THREE.BoxGeometry(1.5, .16, .62), S(0xefe8dc, {roughness: .95})); shroud.position.set(.35, .9, 0); bier.add(shroud);
   for (let i = 0; i < 8; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 4), S(i % 2 ? 0xe8d040 : 0xf2f0e8)); fl.position.set(-.4 + Math.random() * 1.4, .99, (Math.random() - .5) * .4); bier.add(fl); }
 
-  dressed(g, S);
+  dressed(g, S, lite);
+  // The light of a night wedding, after the board: candles are the key light, pooling warm over each table and along
+  // the water; above the high table and the dance floor, a shaft of cold light falls from the dark, haze caught in it.
+  for (const tz of [-5.2, 0, 5.2]) for (const x of [-1.6, 1.6]) L(0xffb060, tz === 0 ? 5 : 4, 6.5, x, 1.7, tz);
+  for (const sz of [-1, 1]) for (const x of [-2, 2]) L(0xffa850, 2.2, 3.5, x, .5, sz * 2.7);
+  const shaftMat = new THREE.ShaderMaterial({transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    uniforms: {tint: {value: new THREE.Color(.55, .62, .8)}},
+    vertexShader: `varying float vY; varying vec3 vN, vV; void main(){ vY = uv.y; vec4 mv = modelViewMatrix * vec4(position, 1.); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform vec3 tint; varying float vY; varying vec3 vN, vV; void main(){ float edge = pow(abs(dot(vN, vV)), 1.6); float a = edge * edge * (.04 + .13 * vY) * smoothstep(0., .3, vY); gl_FragColor = vec4(tint * a, 1.); }`});
+  const shafts = [];
+  for (const [x, z, r] of [[0, 0, 1.9], [-9.5, 0, 3]]) {
+    const cone = new THREE.Mesh(new THREE.CylinderGeometry(r * .35, r, 9, 32, 1, true), shaftMat); cone.position.set(x, 4.5, z); g.add(cone); shafts.push(cone);
+    const sp = new THREE.SpotLight(0xc8d4f0, 26, 14, Math.atan(r / 9) * 1.15, .55, 1.2); sp.position.set(x, 9, z); sp.target.position.set(x, 0, z); sp.visible = false; g.add(sp, sp.target); lights.push(sp);
+  }
 
   // The sky, painted as the films paint it. Dusk: deep blue overhead going to peach and gold toward the sun setting
   // beyond the colonnade (to the west), the sun a soft blaze on the horizon, and slow clouds lit pink and gold from
@@ -193,11 +206,11 @@ export function buildWedding(scene, {noise, lite = false}) {
     mood(kind) {
       this.kind = kind;
       const fun = kind === "funeral", day = kind === "day";
-      sun.color.set(day ? 0xfff4e2 : 0xffb46e); sun.position.copy(day ? new THREE.Vector3(Math.cos(2.268) * .669, .743, Math.sin(2.268) * .669) : new THREE.Vector3(-.99, .14, 0)).multiplyScalar(30); // (where the sun stands in the photographed sky)
+      sun.color.set(day ? 0xfff4e2 : 0x9fb4e0); sun.position.copy(day ? new THREE.Vector3(Math.cos(2.268) * .669, .743, Math.sin(2.268) * .669) : new THREE.Vector3(-.3, .9, -.3)).multiplyScalar(30); // (where the sun stands in the photographed sky)
       sun.userData.dir = sun.position.clone().normalize(); // (the shadow rig keeps its own copy of the sun's direction: tell it)
       skyU.mode.value = fun ? 2 : day ? 1 : 0;
       food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
-      sun.intensity = fun ? .15 : day ? 3.4 : 3.6; // (the key light: a low golden sun raking across the courtyard)
+      sun.intensity = fun ? .15 : day ? 3.4 : .3; sun.castShadow = day; // (at night only a little moonlight, too faint to cast shadows: no shadow pass) // (the key light: a low golden sun raking across the courtyard)
       lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
     }
   };
@@ -206,7 +219,7 @@ export function buildWedding(scene, {noise, lite = false}) {
 // The courtyard dressed for the night, after the bride's mood board: a ceiling of great sheer white swags, burgundy
 // gauze falling from the colonnade and pooling on the floor, candles everywhere (down the tables, in clusters on the
 // floor, lining the way in from the gate with white flowers), and over the gate an arch of flowing white strands.
-function dressed(g, S) {
+function dressed(g, S, lite) {
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   // a length of cloth: hung between two ends, sagging, gathered at the ends and falling open in folds between
   function swag(x0, width, z0, z1, top, sag, mat, folds = 7) {
@@ -234,15 +247,32 @@ function dressed(g, S) {
   }
   const sheer = new THREE.MeshStandardMaterial({color: 0x8a8274, roughness: 1, transparent: true, opacity: .26, side: THREE.DoubleSide, depthWrite: false}); // (dim: the torches below light it from close by)
   for (const x of [-11, 10]) swag(x, 3.6, -13.7, 13.7, 4.15, .5 + rnd() * .15, sheer, 5); // (clear of the vine over the high table)
-  const gauze = new THREE.MeshStandardMaterial({color: 0x6e1020, roughness: .75, transparent: true, opacity: .78, side: THREE.DoubleSide, depthWrite: false});
+  const gauze = new THREE.MeshStandardMaterial({color: 0xf4eee2, roughness: .85, transparent: true, opacity: .55, side: THREE.DoubleSide, depthWrite: false}); // ivory sheer, falling and pooling
   for (const z of [-10.5, -7.5, 7.5, 10.5]) cascade(-17.6, z, 2.4, 3.9, gauze);
   for (const z of [-12.8, 12.8]) cascade(17.4, z * .9, 2, 3.9, gauze);
 
+  // Two long pools either side of the high table, so it stands on a stone walk through still water, as a banquet set
+  // through a flooded quarry: dark water that holds the sky and the candlelight, stone copings, floating candles
+  const water = new THREE.MeshPhysicalMaterial({color: 0x0b1416, roughness: .04, metalness: 0, clearcoat: 1, clearcoatRoughness: .02, envMapIntensity: 1.4});
+  const coping = pbr("sandstone_blocks_05", {size: 1.2, tint: 0xd8c4a4});
+  const floats = [];
+  for (const sz of [-1, 1]) {
+    // (dark glossy water holding the sky; a true mirror would draw the whole crowded wedding twice more every frame)
+    const zc = sz * 2.7, pool = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.3), water); pool.rotation.x = -Math.PI / 2; pool.position.set(0, .012, zc); g.add(pool);
+    for (const [w, d, x, z] of [[5.9, .16, 0, zc - .73], [5.9, .16, 0, zc + .73], [.16, 1.62, -2.88, zc], [.16, 1.62, 2.88, zc]]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(w, .07, d), coping); c.position.set(x, .035, z); g.add(c); }
+    for (let i = 0; i < 9; i++) floats.push([-2.4 + i * .6 + (rnd() - .5) * .25, zc + (rnd() - .5) * .8]);
+  }
   // candles
   const spots = []; // [x, y, z, height, radius]
   // (the tables have brass candelabra, placed with the real props once they're loaded)
   const cluster = (cx, cz, n, r = .45) => { for (let i = 0; i < n; i++) { const a = rnd() * 6.3, d = Math.sqrt(rnd()) * r; spots.push([cx + Math.cos(a) * d, 0, cz + Math.sin(a) * d, .18 + rnd() * .55, .045 + rnd() * .04]); } };
   for (const [x, z] of [[-16.6, -12.6], [-16.6, 12.6], [16.4, -12.6], [16.4, 12.6], [-16.8, -9], [-16.8, 9], [-16.8, -6], [-16.8, 6], [-4, -13.1], [4, -13.1], [-4, 13.1], [4, 13.1], [12, -13.1], [12, 13.1]]) cluster(x, z, 7);
+  // a stone ledge round the walls at the height of a hand, lined with candles, like the lamp niches cut in a quarry face
+  const ledgeM = pbr("sandstone_blocks_05", {size: 1.4, tint: 0xd8c4a4});
+  for (const sz of [-1, 1]) { const ledge = new THREE.Mesh(new THREE.BoxGeometry(35, .08, .3), ledgeM); ledge.position.set(0, 1.25, sz * 13.6); g.add(ledge);
+    for (let x = -16.6; x <= 16.6; x += .55) { if ([-8, 4, 12].some(d => Math.abs(x - d) < .9)) continue; spots.push([x + (rnd() - .5) * .1, 1.29, sz * 13.62, .1 + rnd() * .14, .03 + rnd() * .01]); } } // (not across the doorways)
+  for (const [x, z] of floats) spots.push([x, .02, z, .045, .045]); // floating on the pools
   for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .3; cluster(-9.5 + Math.cos(a) * 4.1, Math.sin(a) * 4.1, 3, .2); } // round the dance floor
   for (let x = 13.4; x <= 17; x += .7) for (const z of [-3, -.4]) cluster(x, z, 2, .15);      // the way in from the gate
   const n = spots.length, wax = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 14), S(0xf1e6d2, {roughness: .55}), n);
@@ -253,6 +283,10 @@ function dressed(g, S) {
     fire.setMatrixAt(i, m4.compose(v.set(x, y + h + .025, z), q, sc.set(.011, .028, .011)));
   });
   g.add(wax, fire);
+  // each floating candle's flame mirrored in the black water beneath it, stretched and a little dimmer
+  const glint = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({color: new THREE.Color(1.3, .8, .35), transparent: true, opacity: .7, depthWrite: false}), floats.length);
+  floats.forEach(([x, z], i) => glint.setMatrixAt(i, m4.compose(v.set(x, -.03, z), q, sc.set(.016, .06, .016))));
+  g.add(glint);
   // white flowers heaped round the floor candles: roses and sprays, with a little green
   const blooms = [], leaves = [];
   spots.forEach(([x, y, z, h]) => { if (y > .5) return; for (let k = 0; k < 7; k++) { const a = rnd() * 6.3, d = .1 + rnd() * .32; blooms.push([x + Math.cos(a) * d, .03 + rnd() * .1, z + Math.sin(a) * d, .026 + rnd() * .03]); if (k < 2) leaves.push([x + Math.cos(a + 1) * d, .03, z + Math.sin(a + 1) * d]); } });

@@ -101,7 +101,7 @@ hdri(renderer, "small_cathedral", .1, [.75, .9, 1.15]).then(e => ENV.under = e);
 // to the west), and the same photograph is both the light and the sky you see. The river's sky is a real night sky,
 // the Milky Way across it.
 const TURN = {dusk: .387, day: .266, night: 0};
-hdri(renderer, "kloppenheim_06_puresky", .55, [1, .97, .92], TURN.dusk).then(e => ENV.dusk = e);
+hdri(renderer, "kloppenheim_06_puresky", .32, [1, .95, .9], TURN.dusk).then(e => ENV.dusk = e);
 hdri(renderer, "kloofendal_48d_partly_cloudy_puresky", .5, [1, 1, 1], TURN.day).then(e => ENV.day = e);
 const SKY = {};
 skyPhoto("kloppenheim_06_puresky", TURN.dusk).then(t => SKY.dusk = t);
@@ -113,18 +113,19 @@ hdri(renderer, "small_cathedral", .06, [.8, .8, 1]).then(e => ENV.night = e);
 // the wedding, which muddied it.)
 const AIR = {
   // (the fill is the sky's: cool blue against the warm sun, so shadows read as shade and not just as darker sun)
-  wedding: {fog: 0xd0a080, density: .002, top: 0x8eaad8, ground: 0x7a5640, fill: .6},
+  // (Thea's wedding is at night, by candlelight, as the board has it: a dim cold sky fill, a warm haze for the candles to light)
+  wedding: {fog: 0x1a140f, density: .016, top: 0x2c3a5c, ground: 0x1c140e, fill: .22},
   day: {fog: 0xc8d8e6, density: .002, top: 0xbcd6f4, ground: 0x8a7a5a, fill: .7},
   funeral: {fog: 0x151826, density: .02, top: 0x5a6890, ground: 0x1a140e, fill: .45}
 };
 const NIGHT_SKY = [0x9fb3c8, 0x2a1d12];
 function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
-  const want = ENV[x > 200 ? (mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk") : "under"];
+  const want = ENV[x > 200 ? (mood === "day" ? "day" : "night") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
   // the sky you see: the photograph for the place, once it's loaded (the painted skies stand in until then)
-  const bg = x > 200 ? SKY[mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk"] : SKY.night;
-  if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "funeral" ? .5 : 1.25) : .55; }
+  const bg = x > 200 ? SKY[mood === "day" ? "day" : "night"] : SKY.night;
+  if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "day" ? 1.25 : .32) : .55; /* (the wedding night: the stars faint over the candles) */ }
   starDome.visible = !SKY.night; if (wedding) wedding.sky.visible = !bg || x <= 200;
   moon.visible = x <= 200; // (the river's moon has no business lighting a wedding at sunset)
   if (x > 200) { const a = AIR[mood] || AIR.wedding; scene.fog.color.setHex(a.fog); scene.fog.density = a.density; sky.color.setHex(a.top); sky.groundColor.setHex(a.ground); sky.intensity = a.fill; sky.userData.wed = true; }
@@ -162,9 +163,8 @@ composer.addPass(new RenderPass(scene, camera));
 const ao = LITE ? null : new GTAOPass(scene, camera, innerWidth, innerHeight);
 if (ao) { ao.updateGtaoMaterial({radius: .45, distanceExponent: 1, thickness: 1, scale: 1}); ao.blendIntensity = .85; composer.addPass(ao); }
 if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .5, .96)); // candles, torches and silk highlights glow
-// a real lens in the film shots: whoever is speaking in focus, the room behind them soft
-const lens = LITE ? null : new BokehPass(scene, camera, {focus: 2, aperture: .0009, maxblur: .006});
-if (lens) { lens.enabled = false; composer.addPass(lens); }
+// (no depth-of-field pass: it drew the whole scene a second time for its depth, for a blur hardly anyone saw)
+const lens = null;
 // The grade comes last, after the tone mapping, on the picture as it will be seen. (It used to run before it, on raw
 // light values: every lamp and candle was clipped flat and the mid-tones were crushed, which is what made the colours muddy.)
 composer.addPass(new OutputPass());
@@ -182,8 +182,8 @@ function shadows(now) {
   if (now - lastLook > 1000) {
     lastLook = now; keyLights = [];
     scene.traverse(o => {
-      if (o.isDirectionalLight) { keyLights.push(o); if (!o.userData.dir) { o.userData.dir = o.position.clone().sub(o.target.position).normalize();
-        o.castShadow = true; const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0006; o.shadow.normalBias = .05; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
+      if (o.isDirectionalLight) { keyLights.push(o); o.userData.dir ||= o.position.clone().sub(o.target.position).normalize(); if (!o.userData.rigged) { o.userData.rigged = true; /* (direction and shadow setup apart: a set may give its sun a direction of its own) */
+        o.castShadow = o.castShadow || o.intensity > .5; /* (a faint light, like the wedding's night moon, casts none) */ const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0006; o.shadow.normalBias = .05; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
       if (o.isMesh && !o.userData.shadowed) { o.userData.shadowed = true; o.receiveShadow = true;
         const m = [].concat(o.material)[0]; o.geometry.computeBoundingSphere?.(); const big = (o.geometry.boundingSphere?.radius || 0) * o.scale.x > 25;
         o.castShadow = !big && !m?.transparent && !o.isPoints && !(o.isInstancedMesh && o.count > 200); } // (a meadow of grass blades would cost more than it shows)
@@ -501,7 +501,7 @@ const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.
 }
 
 /* ---------- the far bank (built in farbank.js) ---------- */
-const nearLights = []; scene.traverse(o => { if (o.isPointLight && o !== keyLight) nearLights.push(o); });
+const nearLights = []; scene.traverse(o => { if ((o.isPointLight || o.isSpotLight) && o !== keyLight) nearLights.push(o); }); // (spotlights too: the temple's stayed lit through the wedding)
 const farLights = [];
 const farWorld = buildFarBank({scene, boxes, circles, noise, tex, LIB, lights: farLights});
 let farOn = false;
@@ -1143,7 +1143,7 @@ function tick(now) {
   unblock(camShot.active);
   // the film passes (soft contact shadows, a shallow focus) only in film shots: each draws the scene again, which
   // halves the frame rate, too dear while you're walking
-  if (ao) ao.enabled = camShot.active;
+  if (ao) ao.enabled = camShot.active && camera.position.x < 200; // (not at the wedding: with its crowd, one more drawing of the scene is too many)
   if (lens) { lens.enabled = camShot.active; if (camShot.active) lens.uniforms.focus.value = camera.getWorldPosition(new THREE.Vector3()).distanceTo(camShot.look); }
   // a soft light from beside the camera, the way films keep a face lit: strong in a shot or a conversation, faint otherwise
   keyLight.intensity += ((camShot.active ? 4 : talking ? 3 : .9) - keyLight.intensity) * .15;
