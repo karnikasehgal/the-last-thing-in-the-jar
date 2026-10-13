@@ -65,6 +65,53 @@ for o in keep:
 # 4. the real colours, baked into plain textures so they survive export
 bake(keep, os.path.join(os.path.dirname(out), "bake-" + os.path.basename(out).split(".")[0]), 1024)
 
+# 5. give the deforming bones a proper chain (pelvis > spine > shoulder > arm > hand ...). In the rig they hang off
+#    helper bones the game never sees, so without this a hand wouldn't follow its forearm.
+CHAIN = {"DEF-Spine1": "DEF-Pelvis", "DEF-Head": "DEF-Neck", "DEF-Scarf1": "DEF-Spine3",
+         # hair as chains, so the game can swing it (in the rig each piece hangs straight off the head)
+         "DEF-Hair_Ponytail2": "DEF-Hair_Ponytail1", "DEF-Hair_Ponytail3": "DEF-Hair_Ponytail2", "DEF-Hair_Ponytail4": "DEF-Hair_Ponytail3",
+         "DEF-Hair_Strand2": "DEF-Hair_Strand1"}
+for s in "LR":
+    CHAIN.update({f"DEF-Clavicle.{s}": "DEF-Spine3", f"DEF-Upperarm1.{s}": f"DEF-Clavicle.{s}", f"DEF-Forearm1.{s}": f"DEF-Upperarm2.{s}",
+                  f"DEF-Hand.{s}": f"DEF-Forearm2.{s}", f"DEF-Thigh1.{s}": "DEF-Pelvis", f"DEF-Shin1.{s}": f"DEF-Thigh2.{s}",
+                  f"DEF-Foot.{s}": f"DEF-Shin2.{s}", f"DEF-Toe.{s}": f"DEF-Foot.{s}"})
+bpy.context.view_layer.objects.active = rig
+bpy.ops.object.mode_set(mode="EDIT")
+eb = rig.data.edit_bones
+deform = {b.name for b in rig.data.bones if b.use_deform}
+def nearest_def(b):
+    p = b.parent
+    while p and p.name not in deform: p = p.parent
+    return p
+BODY = ["DEF-Pelvis", "DEF-Spine1", "DEF-Spine2", "DEF-Spine3", "DEF-Neck", "DEF-Head"] + [f"DEF-{n}.{s}" for s in "LR" for n in
+        ("Clavicle", "Upperarm1", "Upperarm2", "Forearm1", "Forearm2", "Hand", "Thigh1", "Thigh2", "Shin1", "Shin2", "Foot", "Toe")]
+def closest_body_bone(p):
+    from mathutils.geometry import intersect_point_line
+    best, bd = None, 1e9
+    for n in BODY:
+        if n not in eb: continue
+        h, t = eb[n].head, eb[n].tail
+        q, f = intersect_point_line(p, h, t); f = min(1, max(0, f)); d = (p - (h + (t - h) * f)).length
+        if d < bd: best, bd = n, d
+    return best
+FACE_PARTS = ("Lip", "LaughLine", "Cheek", "Chin", "Jaw", "Mouth", "Nose", "Teeth", "Tongue")  # (the mouth hangs below the head's pivot)
+fixed = 0
+for b in list(eb):
+    if b.name not in deform or b.name == "DEF-Pelvis": continue
+    want = CHAIN.get(b.name)
+    if not want:
+        if b.parent and b.parent.name in deform: continue
+        p = nearest_def(b)
+        face = b.head.z > eb["DEF-Head"].head.z or any(k in b.name for k in FACE_PARTS)
+        if face and (not p or p.name in ("DEF-Neck", "DEF-Spine3")):
+            want = "DEF-Head"  # the whole face moves with the skull (the lips' helper chain leads back to the neck otherwise)
+        elif p: want = p.name
+        else: want = closest_body_bone(b.head)  # a knee's corrective bone goes with its leg (by distance, not name: "NoseRing" is no finger)
+    if want in eb and (not b.parent or b.parent.name != want):
+        b.use_connect = False; b.parent = eb[want]; fixed += 1
+bpy.ops.object.mode_set(mode="OBJECT")
+print("CHAINED", fixed)
+
 for o in bpy.data.objects: o.select_set(False)
 rig.select_set(True)
 for o in keep: o.select_set(True)
