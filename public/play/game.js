@@ -14,6 +14,7 @@ import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
 import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { pbr, hdri } from "./pbr.js";
+import { buildTemple } from "./temple.js";
 import { PROPS, rockify, place } from "./props.js";
 import { groundHeight } from "./meadow.js";
 import { makeHound, animateHound, rigHound } from "./hound.js";
@@ -425,15 +426,10 @@ torches.push({l: lantern, base: 16, seed: 3});
 const glass = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), new THREE.MeshBasicMaterial({color: 0xffd08a})); glass.position.copy(lantern.position); scene.add(glass);
 const pole = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), M.wood); pole.position.set(.8, 1.1, 36.5); scene.add(pole);
 
-/* ---------- the temple, its two stone chairs, and the altar ---------- */
-const stylobate = new THREE.Mesh(new THREE.BoxGeometry(22, .6, 18), M.marble); stylobate.position.set(56, .3, 4); scene.add(stylobate);
+/* ---------- the temple (built in temple.js), its two stone chairs, and the altar ---------- */
 const STEP = .6;
 const onTemple = p => p.x > 45 && p.x < 67 && p.z > -5 && p.z < 13;
-[[46, -4], [46, 3], [46, 12], [66, -4], [66, 3], [66, 12], [51, -4.5], [56, -4.5], [61, -4.5], [51, 12.5], [61, 12.5]].forEach(([x, z], i) => {
-  const h = [6.5, 4.2, 6.5, 2.8, 6.5, 5, 6.5, 3.4, 6.5, 6.5, 1.8][i];
-  const s = new THREE.Mesh(new THREE.CylinderGeometry(.5, .58, h, 16), M.column); s.position.set(x, STEP + h / 2, z); scene.add(s);
-  circles.push([x, z, .7]);
-});
+const temple = buildTemple(scene, {M, STEP, circles});
 const altar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 1), M.marble); altar.position.copy(PLACES.altar).setY(STEP + .55); scene.add(altar);
 boxes.push([PLACES.altar.x - .8, PLACES.altar.z - .5, PLACES.altar.x + .8, PLACES.altar.z + .5]);
 function stoneChair(x, z) {
@@ -467,7 +463,7 @@ const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.
   const rock = new THREE.MeshStandardMaterial({color: 0x3a2a20, roughness: .95});
   for (let i = 0; i < 16; i++) {
     const r = 1.6 + Math.random() * 2.4, a = i / 16 * Math.PI * 2, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rock);
-    const ring = 4.7 + r * .75; m.position.set(-37.2 - Math.random(), 2.7 + Math.sin(a) * ring, 13 + Math.cos(a) * ring); // outside the opening, never across it m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m);
+    const ring = 4.7 + r * .75; m.position.set(-37.2 - Math.random(), 2.7 + Math.sin(a) * ring, 13 + Math.cos(a) * ring); /* outside the opening, never across it */ m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m);
   }
 }
 
@@ -527,6 +523,7 @@ async function loadAssets(progress) {
 // columns, as a Greek stoa would keep them.
 function dressWorld() {
   rockify(scene, ASSETS);
+  temple.addIcarus(ASSETS);
   for (let i = 0; i < 6; i++) { const x = -36 + i * 12 + 6;
     place(ASSETS, i % 2 ? "antique_ceramic_vase_01" : "ceramic_vase_02", scene, x - 3.2, 0, .55, .95, {tint: 0xd8b89a});
     place(ASSETS, "ceramic_vase_02", scene, x + 3.4, 0, .5, .7, {tint: 0xc8a888}); }
