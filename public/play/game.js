@@ -1104,7 +1104,7 @@ function faceShot(p, {dist = .85, side = .25, up = .04, drift = .12, ms = 5000} 
 const fade = (to, ms) => new Promise(r => { const f = $("#fader"); f.style.transition = `opacity ${ms}ms`; f.style.background = to === "white" ? "#f6efe4" : "#000"; f.style.opacity = to === "clear" ? 0 : 1; setTimeout(r, ms); });
 const pause = ms => new Promise(r => setTimeout(r, ms));
 function setWeddingLights(on) {
-  wedding.lights.forEach(l => l.visible = on);
+  wedding?.lights.forEach(l => l.visible = on);
   if (on) { nearLights.forEach(l => l.visible = false); farLights.forEach(l => l.visible = false); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; sky.intensity = .8; }
   else { scene.fog.color.set(0x1d1813); scene.fog.density = .021; setLightsFar(false); }
 }
@@ -1158,8 +1158,8 @@ function buildCrowd() {
     servers.forEach((p, i) => { const a = now / 9000 * (i % 2 ? 1 : -1) + i * 1.7, rx = 7.5, rz = 8; p.root.position.copy(wpos(3 + Math.cos(a) * rx, 0, Math.sin(a) * rz)); p.root.rotation.y = Math.atan2(-Math.sin(a) * rx * (i % 2 ? 1 : -1), Math.cos(a) * rz * (i % 2 ? 1 : -1)); });
   }, hide() { people.forEach(p => p.root.visible = false); }, show() { people.forEach(p => p.root.visible = true); }};
 }
-async function weddingFilm() {
-  if (!wedding) {
+async function weddingFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to the river bank
+  if (!wedding && !skip) {
     wedding = buildWedding(scene, {noise});
     guests = {
       demeas: Object.assign(G.cast("demeas"), {name: "Demeas"}), kleio: Object.assign(G.cast("aunt", {seated: true}), {name: "Kleio"}),
@@ -1167,15 +1167,16 @@ async function weddingFilm() {
       thea: Object.assign(G.cast("thea", {seated: true}), {name: "Thea"}), piper: Object.assign(G.cast("piper"), {name: "the piper"}), dancer: Object.assign(G.cast("dancer"), {name: "a guest"})
     };
   }
-  if (!crowd) {
+  if (skip) {} else if (!crowd) {
     const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
     $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
     await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
   } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
+  guests ||= {};
   const cast = {...guests, mikon: PLAYER};
   for (const [k, p] of Object.entries(guests)) NPC[k] = p;
   NPC.mikon = PLAYER; PLAYER.name = "Mikon";
-  let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
+  let skipped = skip; skipIntro = () => { skipped = true; skipLine?.(); };
   // for testing only: ?debug&from=<words> jumps the film to the first line containing them
   let fast = new URLSearchParams(location.search).has("debug") && new URLSearchParams(location.search).get("from");
   const say = (who, id, text, how = "voice") => { if (skipped) return null; if (fast) { if (!text.includes(fast)) return pause(20); fast = null; } return line(who, id, text, how); };
@@ -1183,6 +1184,7 @@ async function weddingFilm() {
   talking = true; staging = true; document.body.classList.add("talking", "cinema"); $(".cine").classList.add("on");
   PLAYER.setHead(true);
   await fade("black", 10);
+  if (!skip) { // (with the opening played as video, none of the 3D wedding is staged)
   // seat everyone
   for (const k of ["mikon", "lykon", "kleio", "thea", "nikias"]) { stage(cast[k], SEATS[k]); cast[k].play("sittable", 0); }
   stage(cast.demeas, SEATS.demeas); cast.demeas.play("Idle_Talking_Loop", 0);
@@ -1282,6 +1284,7 @@ async function weddingFilm() {
     await fade("black", 2000);
   };
   await reel();
+  }
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);
   PLAYER.hideHands?.(false); for (const g of Object.values(guests)) g.hideHands?.(false); sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
@@ -1360,7 +1363,14 @@ function playLyre(p, on) {
   };
   poses.add(p.lyrePose);
 }
-async function orpheusFilm() {
+async function orpheusFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to Taenarum
+  if (skip) { // only the hand-over to play: the title, then Orpheus at the foot of the road down
+    const card = $("#titlecard"); card.querySelector("small").textContent = "Chapter II"; card.querySelector("b").textContent = "The Lyre";
+    card.classList.add("on"); await pause(2200); card.classList.remove("on"); await fade("clear", 600);
+    PLAYER.name = "Orpheus"; me.pos.set(-36.5, 0, 13); me.yaw = -Math.PI / 2; me.pitch = -.03; PLAYER.setHead(false); PLAYER.play("Idle_Loop", 0);
+    $(".cine").classList.remove("on"); document.body.classList.remove("talking", "cinema"); staging = false; camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
+    return paintGoal();
+  }
   if (!wedding) wedding = buildWedding(scene, {noise});
   if (!crowd) {
     const card = $("#titlecard"); card.querySelector("small").textContent = "Thrace"; card.querySelector("b").textContent = "Spring";
@@ -1510,12 +1520,47 @@ async function orpheusFilm() {
   document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
   paintGoal();
 }
+/* ---------- the opening as animated video ----------
+   Each chapter's opening can be made as video clips (film/chN.json lists the shots; the clips go in film/chN/01.mp4 and
+   so on). When every clip is there, the game plays them instead of the 3D film; ?clips plays whatever is there so far. */
+async function videoFilm(ch) {
+  const q = new URLSearchParams(location.search);
+  let list, bible;
+  try { [list, bible] = await Promise.all([fetch(`film/ch${ch}.json`).then(r => r.json()), fetch("film/bible.json").then(r => r.json())]); } catch { return false; }
+  const url = s => `film/ch${ch}/${s.id}.mp4`;
+  const have = await Promise.all(list.shots.map(s => fetch(url(s), {method: "HEAD"}).then(r => r.ok && /video|mp4/.test(r.headers.get("content-type") || "")).catch(() => false)));
+  const shots = list.shots.filter((s, i) => have[i]);
+  if (!shots.length || (shots.length < list.shots.length && !q.has("clips"))) return false;
+  const v = $("#clip"), sub = $("#sub");
+  talking = true; staging = true; document.body.classList.add("clipping", "cinema", "talking"); $(".cine").classList.add("on");
+  sound.party(false); sound.birds?.(false);
+  let skipped = false; skipIntro = () => { skipped = true; v.pause(); v.onended?.(); };
+  for (const shot of shots) {
+    if (skipped) break;
+    v.src = url(shot);
+    // subtitles: each line gets a share of the clip in proportion to its length
+    const words = shot.lines.map(l => l.text.split(/\s+/).length), total = words.reduce((a, b) => a + b, 0) || 1;
+    v.ontimeupdate = () => {
+      if (!shot.lines.length || !v.duration) return sub.classList.remove("on");
+      let t = v.currentTime / v.duration, i = 0, acc = words[0] / total; while (t > acc && i < words.length - 1) { i++; acc += words[i] / total; }
+      const l = shot.lines[i]; sub.querySelector("b").textContent = bible.characters[l.who]?.name || ""; sub.querySelector("span").textContent = l.text; sub.classList.add("on");
+    };
+    await new Promise(res => { v.onended = v.onerror = res; v.play().catch(res); });
+    v.ontimeupdate = v.onended = v.onerror = null;
+  }
+  sub.classList.remove("on"); v.pause(); v.removeAttribute("src"); v.load();
+  await fade("black", 10); document.body.classList.remove("clipping");
+  return true;
+}
 $("#begin").onclick = async () => {
   if (CH !== 1 && !chap.ready) { chap.setup(); chap.ready = true; }
   if (!PLAYER) { PLAYER = G.cast(CH === 2 ? "orpheus" : "mikon", {seated: true}); PLAYER.play("Idle_Loop", 0); PLAYER.setHead(false); chap.onBody?.(PLAYER); }
   setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
-  if (!new URLSearchParams(location.search).has("nointro")) await (CH === 1 ? weddingFilm() : orpheusFilm());
+  if (!new URLSearchParams(location.search).has("nointro")) {
+    const film = CH === 1 ? weddingFilm : orpheusFilm;
+    await film({skip: await videoFilm(CH)}); // the animated video when it's there, otherwise the 3D film
+  }
   playing = true; me.started = performance.now();
   grabMouse();
   if (CH !== 1 || new URLSearchParams(location.search).has("nointro")) setTimeout(() => { if (!talking) toast("Hermes is waiting for you, just ahead."); }, 700);

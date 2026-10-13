@@ -210,6 +210,9 @@ body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint
 #trial.won h3{color:var(--gold)} #trial.lost h3{color:#c25a4a}
 #trial.shake .tbar{animation:miss .3s}
 #fader{position:fixed;inset:0;z-index:7;background:#000;opacity:0;pointer-events:none}
+/* the animated opening, when it has been made as video: full screen, letterboxed, under the subtitles and the skip button */
+#clip{position:fixed;inset:0;width:100%;height:100%;z-index:8;background:#000;object-fit:contain;display:none}
+body.clipping #clip{display:block}
 #pov{position:fixed;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity 6s;background:radial-gradient(ellipse at center,transparent 25%,rgba(40,0,0,.55) 60%,#000 95%)}
 #pov.on{opacity:1}
 #artshot{position:fixed;inset:0;z-index:7;background:#000;opacity:0;transition:opacity .8s;pointer-events:none;overflow:hidden}
@@ -254,7 +257,7 @@ body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint
 <div class="cine"><button id="skipIntro">skip</button></div>
 <div id="titlecard"><small></small><b></b></div>
 <div id="artshot"><img alt=""></div>
-<div id="fader"></div><div id="pov"></div>
+<video id="clip" playsinline preload="auto"></video><div id="fader"></div><div id="pov"></div>
 <div id="trial"><h3></h3><div class="thint"></div><div class="tbody"></div><button id="trialQuit">walk away</button></div>
 
 <div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tF" hidden>lyre</button><button id="tE">use</button><button id="tQ">drop</button></div></div>
