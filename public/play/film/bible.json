@@ -5,7 +5,8 @@
     "mikon": {
       "name": "Mikon",
       "sheet": "A stocky, pear-shaped Greek man in his forties: short legs, round belly, broad soft shoulders, big friendly hands. Round face, large warm brown eyes, a big bulbous nose, thick expressive black eyebrows, short black curly hair thinning on top, dark stubble, olive skin, a gap-toothed grin. Wears a coarse undyed oatmeal wool tunic tied with a brown rope belt and worn leather sandals. A salt-fish seller who laughs at his own jokes.",
-      "voice": "warm, slightly husky baritone, cheerful, chuckles easily"
+      "voice": "warm, slightly husky baritone, cheerful, chuckles easily",
+      "canva": "MAHX42SAltw"
     },
     "lykon": {
       "name": "Lykon",
@@ -15,42 +16,50 @@
     "kleio": {
       "name": "Kleio",
       "sheet": "Mikon's aunt: a short, round, formidable Greek woman in her sixties with sharp clever eyes, a strong nose, grey hair pinned up under a navy-blue veil, a navy silk dress and a string of gold beads. Bossy, loving, always holding something.",
-      "voice": "crisp, commanding older woman's voice, dry wit"
+      "voice": "crisp, commanding older woman's voice, dry wit",
+      "canva": "MAHX46Pl0Yo"
     },
     "demeas": {
       "name": "Demeas",
       "sheet": "Mikon's uncle: a huge barrel-chested bald Greek man in his sixties with a bushy white beard, rosy cheeks, a booming laugh and tiny eyes that vanish when he smiles. Cream tunic with a plum-purple cloak, always holding a wine cup.",
-      "voice": "booming, jolly bass, a bit tipsy"
+      "voice": "booming, jolly bass, a bit tipsy",
+      "canva": "MAHX4wb394w"
     },
     "thea": {
       "name": "Thea",
       "sheet": "The bride, Mikon's cousin: a petite young Greek woman with huge amber eyes, freckles, a short glossy auburn bob, a myrtle wreath, and a saffron-gold silk wedding gown with a gold collar and gold cuffs. Warm, quick, a little bossy.",
-      "voice": "bright, quick young woman's voice"
+      "voice": "bright, quick young woman's voice",
+      "canva": "MAHX4zS4GGI"
     },
     "nikias": {
       "name": "Nikias",
       "sheet": "The groom: a tall, gentle, slightly awkward young Greek man with soft brown curls, kind eyes and big ears, a white tunic and a myrtle wreath.",
-      "voice": "soft, earnest young man's voice"
+      "voice": "soft, earnest young man's voice",
+      "canva": "MAHX4zS4GGI"
     },
     "hermes": {
       "name": "Hermes",
       "sheet": "The messenger god, young-looking and slim, with a sly charming grin, bright quick eyes and tousled light-brown hair under a wide-brimmed traveller's hat with two small white wings. Short white tunic, a red cloak pinned with a gold brooch, winged sandals, and a herald's staff with two snakes curled round it. Moves lightly, never quite still.",
-      "voice": "light, smooth, amused young man's voice, a little mischievous"
+      "voice": "light, smooth, amused young man's voice, a little mischievous",
+      "canva": "MAHX44rb42o"
     },
     "charon": {
       "name": "Charon",
       "sheet": "The ferryman of the dead: very tall and gaunt, stooped, in a ragged dark-brown hooded robe; a long craggy grey-bearded face, deep-set eyes that glow faintly like embers, long bony hands, and a long black punting pole. Dry, weary, quietly funny.",
-      "voice": "very deep, slow, gravelly old voice"
+      "voice": "very deep, slow, gravelly old voice",
+      "canva": "MAHX49a36V4"
     },
     "orpheus": {
       "name": "Orpheus",
       "sheet": "A slim, long-limbed Greek musician in his late twenties with soft dark wavy hair to his jaw, gentle dark eyes, a shy crooked smile and long expressive fingers. Cream tunic, a dark-blue cloak, and a small wooden lyre with a tortoise-shell sound box that he always carries.",
-      "voice": "gentle, warm tenor, soft-spoken"
+      "voice": "gentle, warm tenor, soft-spoken",
+      "canva": "MAHX40ePUNg"
     },
     "eurydice": {
       "name": "Eurydice",
       "sheet": "Orpheus's bride: a lively young Greek woman with big hazel eyes, a light dusting of freckles, long wavy chestnut hair, a myrtle wreath, and an ivory silk wedding gown with a gold beaded collar and long bell sleeves. Laughs with her whole face; teasing, brave, impatient.",
-      "voice": "lively, playful young woman's voice with a laugh in it"
+      "voice": "lively, playful young woman's voice with a laugh in it",
+      "canva": "MAHX4z3PlIs"
     },
     "hymen": {
       "name": "Hymen",
