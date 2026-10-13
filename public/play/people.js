@@ -152,7 +152,7 @@ function skinned(geo, mat, body) {
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
 function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
   const B = study(body), ix = B.g.index.array, tri = [];
-  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE_HIGH} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
+  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
   if (clip) { mat = clipped(mat, clip, B); mat.userData.own = true; } // (a clipped material belongs to this one body)
   const ok = new Uint8Array(B.N); for (let i = 0; i < B.N; i++) ok[i] = keep(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2], B.dom[i]) ? 1 : 0;
   for (let t = 0; t < ix.length; t += 3) if (ok[ix[t]] && ok[ix[t + 1]] && ok[ix[t + 2]]) tri.push(ix[t], ix[t + 1], ix[t + 2]);
@@ -403,8 +403,19 @@ let NECKLINE = NECKLINE_LOW;
 // sleeves stop just short of this person's own wrists (measured from their skeleton), so their hands always show
 let WRIST = .675;
 const SLEEVE = w => `abs(b.x) < ${LONG ? WRIST.toFixed(3) : w}`;
-const UPPER = (x, y, z, d) => y < 1.6 && (ARMS.test(d) || (LONG && /^hand_/.test(d) && Math.abs(x) < WRIST + .01) || (y > .96 && (TORSO.test(d) || d === "neck_01"))); // arms whole, wherever the hands hang, to just past the wrist
+let TOONDRESS = false; // dressing an animated-film body: its neck is partly weighted to the head
+const UPPER = (x, y, z, d) => y < 1.6 && (ARMS.test(d) || (LONG && /^hand_/.test(d) && Math.abs(x) < WRIST + .01) || (y > .96 && (TORSO.test(d) || d === "neck_01" || (TOONDRESS && d === "Head" && y < 1.51)))); // arms whole, wherever the hands hang, to just past the wrist
 const put = (p, m) => { const h = m.userData.home; delete m.userData.home; (h || p.root).add(m); };
+// A beard for an animated-film face, grown from the face itself: the jaw, chin and (optionally) upper lip, pushed out
+// into a soft shell, fuller toward the chin. In the tailor's space the head's pivot sits at 1.6, level with the mouth.
+function beard(p, body, color, {thick = .012, chin = .25, moustache = true} = {}) {
+  if (!p.toon) return;
+  const H = 1.6, lips = (x, y, z) => Math.abs(x) < .036 && y > H - .028 && y < H + .028 && z > .1;
+  const keep = (x, y, z, d) => d === "Head" && z > -.005 && y > H - .09 && !lips(x, y, z) &&
+    (y < H + .012 || (moustache && y < H + .042 && Math.abs(x) < .048 && z > .12));
+  const mat = new THREE.MeshStandardMaterial({color: new THREE.Color(color), map: STRANDS, roughness: .9});
+  put(p, wrap(body, keep, {mat, off: thick, smooth: 5, bulge: (x, y) => Math.max(0, H - .01 - y) * chin}));
+}
 const LOOKS = {
   // Hermes: young and beardless as the classical painters show him, in a traveller's hat with
   // wings, a short pinned cloak over a short tunic, winged sandals, and the herald's staff.
@@ -432,6 +443,7 @@ const LOOKS = {
     put(p, drape(body, {from: 1.56, to: .5, arc: [Math.PI * 1.02, Math.PI * 1.98], mat: robe, off: .05, flare: .1, folds: .03, hem: a => .06 * Math.abs(Math.sin(a * 5)),
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .5], ["spine_02", .3], ["pelvis", .2]])}));
     if (!p.norm) mount(p, "Head", longBeard(0xd8d3c8), new THREE.Vector3(0, 1.62, .075)); // a real face has its own beard; the stiff false one looked pasted on
+    if (p.toon) { beard(p, body, 0xcfcac0, {thick: .016, chin: .5}); mount(p, "Head", longBeard(0xd8d3c8), new THREE.Vector3(0, 1.5, .1)); } // a cartoon face has none: a full one, and the long fall below
     // his pole, held in the raised hand
     if (!p.norm) mount(p, "hand_r", pole(), new THREE.Vector3(-.75, 1.42, -.02), [Math.PI / 2, 0, 0]);
   }},
@@ -445,6 +457,7 @@ const LOOKS = {
   }},
   // Theseus: the hero of Athens, older now and bearded, in a red cloak with his father's sword.
   theseus: {tone: 0xf6dfc6, hair: ["hair_simpleparted", "hair_beard"], hairColor: 0x3a2516, dress(p, B, body) {
+    beard(p, body, 0x3a2516);
     put(p, wrap(body, UPPER, {mat: cloth(0xd8cdb6), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0xd8cdb6, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
@@ -455,6 +468,7 @@ const LOOKS = {
   }},
   // Pirithous: king of the Lapiths, long-haired and bearded, a gold band on his head.
   pirithous: {tone: 0xe9cdb0, hair: ["hair_long", "hair_beard"], hairColor: 0x1d140d, dress(p, B, body) {
+    beard(p, body, 0x1d140d, {chin: .4});
     put(p, wrap(body, UPPER, {mat: cloth(0x6b4a7a), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0x6b4a7a, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: gold, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
@@ -465,11 +479,13 @@ const LOOKS = {
   }},
   // Mikon: nobody in particular. A plain undyed tunic, a few days of beard, an olive pit's worth of bad luck.
   mikon: {tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
+    beard(p, body, 0x3b2a1c, {thick: .004, chin: 0, moustache: false}); // a few days of it
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.03, to: .99, mat: cloth(0x4a3a2a), off: .025, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
   }},  // Mikon a year on, sitting on the bank: the same clothes, long enough to cover him seated
   mikon_bank: {as: "mikon", tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
+    beard(p, body, 0x3b2a1c, {thick: .006, chin: .05}); // a year of it
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.03, to: .99, mat: cloth(0x4a3a2a), off: .025, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
@@ -510,6 +526,7 @@ const LOOKS = {
   // Hades: the vase painters' Plouton, a grave bearded king in a dark cloak over one shoulder, an iron crown,
   // and a sceptre (left by his throne).
   hades: {tone: 0xead2bc, hair: ["hair_long", "hair_beard"], hairColor: 0x15100c, dress(p, B, body) {
+    beard(p, body, 0x15100c, {thick: .016, chin: .6});
     const black = cloth(0x1c1622, {folds: true});
     put(p, wrap(body, UPPER, {mat: cloth(0x2a2030), clip: `b.y > .97 && b.x < .3 && b.y < max(1.2, 1.32 + 1.5 * b.x) && ${NECKLINE}`}));
     put(p, drape(body, {from: 1.02, to: .08, mat: black, flare: .12, folds: .025, weightsAt: skirtWeights(B, .8)}));
@@ -521,6 +538,7 @@ const LOOKS = {
   }},
   // Sisyphus: dust, a work tunic gone brown, and a boulder that comes back down.
   sisyphus: {tone: 0xd8bfa4, ash: .15, hair: ["hair_long", "hair_beard"], hairColor: 0x6a5c4c, dress(p, B, body) {
+    beard(p, body, 0x6a5c4c, {chin: .35});
     put(p, wrap(body, UPPER, {mat: cloth(0x6b5440), clip: `${NECKLINE} && b.x < .3 && b.y > .97 && b.y < max(1.24, 1.31 + 1.5 * b.x)`}));
     put(p, drape(body, {from: 1.0, to: .66, mat: cloth(0x6b5440, {folds: true}), flare: .03, hem: a => .03 * Math.abs(Math.sin(a * 6)), weightsAt: skirtWeights(B, .8)}));
   }},
@@ -756,11 +774,11 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   tailor.skeleton = skel; tailor.bindMatrix = new THREE.Matrix4();
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const hand = n => w(n).applyMatrix4(norm), wrist = Math.min(Math.abs(hand("Bip01_L_Hand").x), Math.abs(hand("Bip01_R_Hand").x)) + .012; // the sleeves end at the wrist joint
-  const person = {root, bones, body: ref, norm: {k, turn}, female, wrist};
+  const person = {root, bones, body: ref, norm: {k, turn}, female, wrist, toon};
   if (toon) { // a cartoon head is bigger and higher than the realistic one hats and crowns were placed for: move them up and size them to it
     const hb = w("Bip01_Head").applyMatrix4(norm), box = new THREE.Box3(), v = new THREE.Vector3();
     for (const o of skins) if (o.userData.head && /head/i.test(o.name)) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); box.expandByPoint(v.applyMatrix4(o.matrixWorld).applyMatrix4(norm)); } }
-    person.hat = {dy: box.max.y - hb.y - .223 + .025, s: (box.max.x - box.min.x) / .196 / Math.sqrt(1 / k)}; // (measured on the realistic heads)
+    person.hat = {dy: box.max.y - hb.y - .223 + .025, s: (box.max.z - box.min.z) / .247 * 1.08}; // (measured on the realistic heads; front to back, since ears make width a poor guide)
   }
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
   const low = seated ? .58 : .1, fp = {value: 0}, hh = {value: 0};
@@ -782,8 +800,16 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     o.material = m;
   }
   // dress: long sleeves, long hems, a high neckline, so nothing modern shows
-  LONG = true; WRIST = wrist + .055; SEATED = seated; NECKLINE = NECKLINE_HIGH; const keepF = [FNECK, FUPPER]; FNECK = NECKLINE_HIGH; FUPPER = UPPER;
-  try { look.dress(person, study(tailor), tailor); } finally { LONG = false; WRIST = .675; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
+  // (an animated man's chin hangs lower than the realistic neckline: a round neck just under it)
+  const neck = toon && !female ? "b.y < 1.5 && !(b.z > .0 && pow(b.x / .075, 2.) + pow((b.y - 1.5) / .05, 2.) < 1.)" : NECKLINE_HIGH;
+  LONG = true; WRIST = wrist + .055; SEATED = seated; NECKLINE = neck; const keepF = [FNECK, FUPPER]; FNECK = neck; FUPPER = UPPER;
+  TOONDRESS = toon;
+  try { look.dress(person, study(tailor), tailor); } finally { TOONDRESS = false; LONG = false; WRIST = .675; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
+  if (toon && !female) { // the animated man's body ends in a ragged edge where his modern collar was: a neckband in the tunic's colour covers it
+    let tunic = null; root.traverse(o => { if (!tunic && o.userData.garment && o.userData.own && o.userData.top > 1.3) tunic = o; });
+    if (tunic) put(person, drape(tailor, {from: 1.53, to: 1.39, mat: cloth(tunic.material.color.getHex()), off: .011, flare: .004, folds: 0, step: .02,
+      include: d => d === "neck_01" || d === "spine_03" || d === "Head", weightsAt: boneWeights(study(tailor), (x, y) => y > 1.46 ? [["neck_01", .7], ["spine_03", .3]] : [["spine_03", 1]])}));
+  }
   if (look.eyes) { // Charon's eyes of flame
     root.traverse(o => { if (o.isMesh && /head/i.test([].concat(o.material)[0].name)) { o.material = o.material.clone(); } });
     const l = new THREE.PointLight(look.eyes, .35, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
@@ -807,7 +833,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   root.scale.setScalar(scale);
   const clips = toon ? toonClips(src, ASSETS["rb_anims_" + (female ? "f" : "m")], rbClips(ASSETS, female)) : rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
   if (toon) { const swing = hairSprings(root), tick = mixer.update.bind(mixer); mixer.update = dt => { tick(dt); swing(dt); return mixer; }; } // hair settles after the body moves
-  person.expr = makeFace(root); person.clips = clips; person.toon = toon;
+  person.expr = makeFace(root); person.clips = clips;
   Object.assign(person, {mixer, action: null, current: null, speaking: false, play(name, fade = .35) {
     const want = CLIPMAP[name] || name, clip = clips[want] || clips.idle;
     if (!clip || this.current === name) return;
