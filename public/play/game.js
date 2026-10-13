@@ -1123,7 +1123,8 @@ function setWeddingLights(on) {
 let crowd = null;
 const PALETTE = [[0xe9e0cc, 0x8a2f24], [0x6b7a4a, 0x3a2a1a], [0x2f4a6b, 0xd8cdb6], [0xa8823a, 0x5a3a20], [0xd8d4ca, 0x6b4a7a], [0x8a3a2a, 0xe0d0b0], [0xc8b48a, 0x2a3a5a], [0x5a6b78, 0xa86a3a], [0xd89a2a, 0xf2ede2], [0x7a2a4a, 0xd8cdb6]];
 // the women's gowns: rich colours, each with a lighter cape
-const GOWNS = [[0xc84a6a, 0xf0b8c8], [0x2a5a8a, 0xa8c8e8], [0x6a2a7a, 0xd8b8e8], [0xe8a83a, 0xf6e2b0], [0x1e6a5a, 0xa8e0d0], [0xf2ead8, 0xe8c87a], [0xa82a2a, 0xf0c0a0], [0x3a3a6a, 0xc8b0e0]];
+// (silk jersey in warm, deep colours; ivory is the bride's alone)
+const GOWNS = [[0xb5562e, 0], [0xc77a52, 0], [0x8a9a6a, 0], [0xc98a8a, 0], [0x1f5a5a, 0], [0x6b6a2e, 0], [0x7a2232, 0], [0xcdb48a, 0]];
 function buildCrowd() {
   const people = [], few = LITE ? 14 : 44;
   const pal = () => PALETTE[Math.random() * PALETTE.length | 0];

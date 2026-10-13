@@ -150,9 +150,9 @@ function skinned(geo, mat, body) {
 
 /* ---------- garments ---------- */
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
-function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
+function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3, exact = false}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
   const B = study(body), ix = B.g.index.array, tri = [];
-  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
+  if (LONG && clip && !exact && !/1\.65/.test(clip)) clip = `${NECKLINE} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
   if (clip) { mat = clipped(mat, clip, B); mat.userData.own = true; } // (a clipped material belongs to this one body)
   const ok = new Uint8Array(B.N); for (let i = 0; i < B.N; i++) ok[i] = keep(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2], B.dom[i]) ? 1 : 0;
   for (let t = 0; t < ix.length; t += 3) if (ok[ix[t]] && ok[ix[t + 1]] && ok[ix[t + 2]]) tri.push(ix[t], ix[t + 1], ix[t + 2]);
@@ -504,20 +504,20 @@ const LOOKS = {
   // The wedding at Corinth. Demeas, the uncle who gives the toast.
   demeas: {dress(p, B, body) { greek(p, B, body, 0xd9cdb0, 0x6b2a5a); }},
   // Kleio, the aunt who runs everything.
-  aunt: {body: "female", dress(p, B, body) { gown(p, B, body, 0x1f3a6a, 0x9ab0d8, {veil: 0x26385f}); }},
+  aunt: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0x1f3a6a, fabric: "jersey", armband: true}); }},
   // Lykon, Mikon's friend, who has heard the goat joke before.
   lykon: {dress(p, B, body) { greek(p, B, body, 0x6b7a4a, 0x4a3a2a); }},
   // Nikias, the groom, in white with a myrtle wreath.
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
-  thea: {body: "female", dress(p, B, body) { gown(p, B, body, 0xe8a83a, 0xf6e2b0, {wreath: true}); }},
+  thea: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); }}, // a bride too: the same liquid silk, in saffron
   // Eurydice on her wedding day: alive, in saffron, with a myrtle wreath
-  eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true}); }},
+  eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { weddingDrape(p, B, body, {wreath: true}); }},
   // the same, standing, for the meadow: a full-length chiton, and a skirt for when she falls
-  eurydice_meadow: {as: "eurydice", body: "female", dress(p, B, body) { gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true, kneel: true}); }},
+  eurydice_meadow: {as: "eurydice", body: "female", dress(p, B, body) { weddingDrape(p, B, body, {wreath: true, kneel: true}); }},
   // the piper, who does not stop playing for anything
   piper: {dress(p, B, body) { greek(p, B, body, 0x8a2a20, 0x5a1a14); mount(p, "Head", aulos(), new THREE.Vector3(0, 1.6, .2), [1.15, 0, 0]); }},
-  dancer: {body: "female", dress(p, B, body) { gown(p, B, body, 0xc84a6a, 0xf0b8c8); }},
+  dancer: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0xb5562e, fabric: "jersey", armband: true}); }},
   // A shade on the meadow: anyone at all, faded.
   shade: {tone: 0xffffff, hair: ["hair_simpleparted"], hairColor: 0x3a3028, sandals: false, ghost: true, dress(p, B, body) {
     put(p, wrap(body, UPPER, {mat: cloth(0xd8d4ca), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
@@ -550,7 +550,7 @@ const LOOKS = {
   }},
   // Eurydice: a shade, so she's pale and not quite there, still in her wedding gown.
   eurydice: {body: "female", tone: 0xffffff, hair: ["hair_long"], hairColor: 0x3a2a1c, sandals: false, ghost: true, dress(p, B, body) {
-    gown(p, B, body, 0xeeeae0, 0xf6f2ea, {wreath: true}); // her wedding gown, and the wreath she died in
+    weddingDrape(p, B, body, {wreath: true}); // her wedding dress, and the wreath she died in
   }}
 };
 // Plain Greek dress for anyone: a chiton, a belt, a cloak behind; a veil or a myrtle wreath if they want one.
@@ -619,6 +619,61 @@ function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
   // gold cuffs where the sleeves end
   if (p.wrist) for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.TorusGeometry(.04, .008, 8, 24), gold), lw = new THREE.Vector3(), hw = new THREE.Vector3(); p.root.updateMatrixWorld(true); p.bones["lowerarm_" + side].getWorldPosition(lw); p.bones["hand_" + side].getWorldPosition(hw);
     const dir = hw.clone().sub(lw).normalize(); c.position.copy(hw).addScaledVector(dir, .03); /* a gold edge on the bell of the sleeve */ c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
+  if (wreath) { const w = new THREE.Group(), leaf = new THREE.MeshStandardMaterial({color: 0x3d5a2a, roughness: .7, side: THREE.DoubleSide}), r = .1, leafG = new THREE.SphereGeometry(.009, 6, 4);
+    for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, l = new THREE.Mesh(leafG, i % 8 ? leaf : gold); l.scale.set(1.8, .45, .8); l.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * .008, Math.sin(a) * r); l.rotation.y = -a; w.add(l); }
+    mount(p, "Head", w, new THREE.Vector3(0, (p.norm ? 1.8 : 1.74) - .042, -.02), [.05, 0, 0]); }
+}
+// Eurydice's wedding dress: ivory silk in fine pleats with a liquid sheen, draped like a sari over one shoulder.
+// A one-shoulder bodice; a pleated sash crossing from the left shoulder to the right hip; the midriff bare; a skirt slung
+// low on the hips, gathered into a knot at one side; and the end of the cloth falling from the shoulder down the back.
+// (Heights are the tailor's, for the animated women: shoulders 1.44, chest 1.33, waist 1.17, hips .94.)
+const PLEATS = canvasTex(256, (g, S) => { // fine vertical pleats, as a normal map
+  const d = g.createImageData(S, S);
+  for (let x = 0; x < S; x++) { const a = x / S * Math.PI * 2 * 24, w = Math.sin(a) + .35 * Math.sin(a * 2.3 + 1), n = Math.max(-1, Math.min(1, w * .8));
+    for (let y = 0; y < S; y++) { const i = (y * S + x) * 4; d.data[i] = 128 + n * 110; d.data[i + 1] = 128; d.data[i + 2] = 230; d.data[i + 3] = 255; } }
+  g.putImageData(d, 0, 0);
+}, false);
+// two cloths: the brides' liquid silk in fine pleats, and the guests' soft silk jersey that falls in loose folds
+const DRAPES = {};
+function drapeCloth(color, fabric) {
+  return DRAPES[color + fabric] ||= fabric === "liquid"
+    ? new THREE.MeshPhysicalMaterial({color, roughness: .3, metalness: .12, sheen: 1, sheenRoughness: .3, sheenColor: new THREE.Color(0xffffff),
+        clearcoat: .35, clearcoatRoughness: .4, normalMap: PLEATS, normalScale: new THREE.Vector2(.55, .55), side: THREE.DoubleSide})
+    : new THREE.MeshPhysicalMaterial({color, roughness: .5, sheen: .9, sheenRoughness: .35, sheenColor: new THREE.Color(color).lerp(new THREE.Color(0xffffff), .45),
+        normalMap: FOLDS, normalScale: new THREE.Vector2(.25, .25), side: THREE.DoubleSide});
+}
+// a gold armlet coiled like a snake around the upper arm
+function armlet() {
+  const pts = []; for (let i = 0; i <= 120; i++) { const t = i / 120, a = t * Math.PI * 2 * 3.2; pts.push(new THREE.Vector3(Math.cos(a) * .042, t * .075 - .037, Math.sin(a) * .042)); }
+  const g = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, .0042, 6), gold);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.008, 8, 6), gold); head.scale.set(1, .7, 1.6); head.position.copy(pts[120]); g.add(head);
+  return g;
+}
+function weddingDrape(p, B, body, {color = 0xf3ead9, fabric = "liquid", wreath, kneel, armband = false} = {}) {
+  const liquidSilk = drapeCloth(color, fabric);
+  const line = "(1.47 + 1.55 * (b.x - .12))"; // the sash: from the left shoulder down across to the right hip
+  // the bodice: over the left shoulder and the bust, the right shoulder and the midriff left bare
+  put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || (d === "upperarm_l" && x < .19)) && y > 1.17 && y < 1.58,
+    {mat: liquidSilk, exact: true, off: .014, smooth: 10, clip: `b.y > 1.2 && b.y < max(1.31, 1.43 + 1.2 * b.x) && b.y < 1.53`}));
+  // the sash, a little proud of the bodice, crossing the front and the back
+  put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || (d === "upperarm_l" && x < .19)) && y > .98 && y < 1.56,
+    {mat: liquidSilk, exact: true, off: .03, smooth: 10, clip: `abs(b.y - ${line}) < .075 && b.y > 1.0 && b.y < 1.53`, bulge: (x, y) => .008 * Math.sin(y * 60)}));
+  // the skirt, slung low and pleated, to the floor
+  const skirt = SEATED ? drape(body, {from: 1.07, to: .6, mat: liquidSilk, flare: .06, folds: .02, weightsAt: skirtWeights(B, .8)})
+    : drape(body, {from: 1.07, to: .6, mat: liquidSilk, off: .018, flare: .06, folds: .03, weightsAt: skirtWeights(B, .55), hem: a => Math.max(0, -Math.sin(a)) * .05 - .02});
+  put(p, skirt);
+  if (SEATED) seatedFall(p, B, body, liquidSilk);
+  if (kneel) { const k = drape(body, {from: 1.07, to: .6, mat: liquidSilk, off: .03, flare: .3, folds: .02, weightsAt: boneWeights(B, [["pelvis", 1]])}); put(p, k); k.visible = false; p.kneel = on => { skirt.visible = !on; k.visible = on; }; }
+  // the knot where the skirt is gathered, at the right hip
+  const knot = new THREE.Group();
+  for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.TorusGeometry(.019 - i * .002, .009, 8, 16), liquidSilk); m.rotation.set(i * .7, i * 1.3, i * .4); m.position.set((i - 1.5) * .005, (i % 2) * .006, 0); knot.add(m); }
+  mount(p, "pelvis", knot, new THREE.Vector3(-.135, 1.06, .075));
+  // the end of the cloth, from the left shoulder down the back
+  put(p, drape(body, {from: 1.49, to: SEATED ? .75 : .2, arc: [Math.PI * 1.5, Math.PI * 2.02], mat: liquidSilk, off: .05, flare: .1, folds: .03, free: true,
+    include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
+  if (armband && p.bones.upperarm_r) { const s = p.bones.upperarm_r.getWorldPosition(new THREE.Vector3()), e = p.bones.lowerarm_r.getWorldPosition(new THREE.Vector3());
+    const a = armlet(); p.root.add(a); a.position.copy(s).lerp(e, .4); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), e.clone().sub(s).normalize()); a.scale.setScalar(p.toon ? .85 : 1); a.updateMatrixWorld(true); p.bones.upperarm_r.attach(a); }
   if (wreath) { const w = new THREE.Group(), leaf = new THREE.MeshStandardMaterial({color: 0x3d5a2a, roughness: .7, side: THREE.DoubleSide}), r = .1, leafG = new THREE.SphereGeometry(.009, 6, 4);
     for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, l = new THREE.Mesh(leafG, i % 8 ? leaf : gold); l.scale.set(1.8, .45, .8); l.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * .008, Math.sin(a) * r); l.rotation.y = -a; w.add(l); }
     mount(p, "Head", w, new THREE.Vector3(0, (p.norm ? 1.8 : 1.74) - .042, -.02), [.05, 0, 0]); }
@@ -789,12 +844,12 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
       sh.fragmentShader = "uniform float uFP; uniform float uHH;\n" + sh.fragmentShader;
       sh.vertexShader = "attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind; vH = aHand;");
       sh.fragmentShader = "varying vec3 vB; varying float vH;\n" + sh.fragmentShader.replace("void main() {", `void main() {
-        if (vH < .6 && abs(vB.x) < .72 && vB.y > ${low.toFixed(2)} && vB.y < 1.5 && (vB.y > .95 || abs(vB.x) > .28)) discard;
+        ${toon ? "" : `if (vH < .6 && abs(vB.x) < .72 && vB.y > ${low.toFixed(2)} && vB.y < 1.5 && (vB.y > .95 || abs(vB.x) > .28)) discard;`}
         ${toon ? "" : "if (vB.y > 1.46 && abs(vB.x) < .22) discard;"}
         if (uFP > .5 && vB.y > 1.2) discard;
         if (uHH > .5 && vH > .3) discard;
-        if (abs(vB.x) < ${(wrist - .004).toFixed(3)} && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
-        if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`);
+        ${toon ? "" : `if (abs(vB.x) < ${(wrist - .004).toFixed(3)} && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`}`).replace("#include <map_fragment>", `#include <map_fragment>
+        ${toon ? "" : `if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`}`);
     };
     m.customProgramCacheKey = () => "rbbody" + low + wrist.toFixed(3) + toon;
     o.material = m;
@@ -849,7 +904,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
 
 // Someone in a crowd: a lighter body, plain Greek dress in their own colours.
 export function makeExtra(asset, {ASSETS, scene, female, seated = false, colors, veil}) {
-  const look = {dress(p, B, body) { (female ? gown : greek)(p, B, body, colors[0], colors[1], {veil: veil ? colors[2] : undefined}); }};
+  const look = {dress(p, B, body) { if (female && p.toon) weddingDrape(p, B, body, {color: colors[0], fabric: "jersey", armband: true}); else (female ? gown : greek)(p, B, body, colors[0], colors[1], {veil: veil ? colors[2] : undefined}); }};
   return makeRealPerson("extra", look, {ASSETS, scene, scale: 1, seated, asset, female});
 }
 // Another of the same person, cheaply: the same body and clothes, a new skeleton, its own colours.
