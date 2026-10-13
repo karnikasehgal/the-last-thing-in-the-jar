@@ -18,14 +18,21 @@ export function prepareToon(g) {
     if (o.isBone && to[o.name]) o.name = to[o.name];
     if (!o.isMesh) return;
     o.castShadow = true;
+    for (const a of ["color", "color_1", "uv1"]) o.geometry.deleteAttribute(a); // (shader masks from Blender, not colours)
     const head = HEADY.test(o.name);
+    if (head) o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone(); // (the head may share the body's skin)
     for (const m of [].concat(o.material)) {
+      m.vertexColors = false;
       if (head) m.name = m.name.replace("skin_body", "skin_head");
       if (/hair|brow|lash/i.test(m.name)) m.userData.hair = true;
       if (/skin_/.test(m.name)) m.userData.skin = true;
     }
     if (head) o.userData.head = true;
   });
+  // a skin can list helper bones that aren't in the skeleton's tree (a face cage's root); hang them on the head
+  const inTree = new Set(); g.scene.traverse(o => inTree.add(o));
+  const headBone = g.scene.getObjectByName("Bip01_Head");
+  g.scene.traverse(o => { if (o.isSkinnedMesh) for (const b of o.skeleton.bones) if (!inTree.has(b)) { headBone.attach(b); inTree.add(b); } });
   g.scene.userData.toon = true;
   return g;
 }
@@ -134,13 +141,26 @@ export function toonFace(w) {
   };
 }
 
-// Their own colouring: skin tone and hair colour, on materials of their own.
+// Everyone shares two faces, so colouring does the rest: skin a little lighter or darker than the model's own (a
+// multiplier: 1 is as painted), hair from black to grey. Named characters are chosen; a crowd is mixed.
+const LOOK = {
+  orpheus: [1.08, 0x2a1a10], hermes: [1.18, 0x6a4422], charon: [.78, 0xb8b0a4], hades: [.9, 0x0e0a08], sisyphus: [.95, 0x7a6a58],
+  mikon: [1.1, 0x3b2a1c], mikon_bank: [1.1, 0x3b2a1c], elpenor: [1.2, 0x5a3a20], theseus: [1.05, 0x3a2516], pirithous: [.85, 0x1d140d],
+  demeas: [1.12, 0x8a8278], nikias: [1.15, 0x4a3018], lykon: [.92, 0x1a120c], piper: [1.0, 0x2a1d14], shade: [1.2, 0x3a3028],
+  persephone: [1.28, 0x2a160e], eurydice: [1.22, 0x3a2a1c], eurydice_alive: [1.22, 0x3a2a1c], eurydice_meadow: [1.22, 0x3a2a1c],
+  aunt: [1.05, 0x9a9088], thea: [1.2, 0x6a3a1a], dancer: [.95, 0x120c08],
+};
+export function toonLook(id) {
+  const [tone, hair] = LOOK[id] || [.82 + Math.random() * .45, [0x120c08, 0x2a1a10, 0x4a3018, 0x6a4422, 0x8a8278][Math.random() * 5 | 0]];
+  return {tone, hairColor: hair};
+}
 export function tintToon(root, {tone, hairColor}) {
+  const warm = new THREE.Color(1, .97, .93); // lighter skin also goes a touch rosier
   root.traverse(o => {
     if (!o.isMesh) return;
     o.material = [].concat(o.material).map(m => {
-      if (tone && m.userData.skin) { m = m.clone(); m.color = new THREE.Color(tone); }
-      else if (hairColor && m.userData.hair) { m = m.clone(); m.color = new THREE.Color(hairColor).multiplyScalar(2.2); }
+      if (tone && m.userData.skin) { m = m.clone(); m.color.setScalar(tone); if (tone > 1) m.color.multiply(warm); }
+      else if (hairColor && m.userData.hair) { m = m.clone(); const h = new THREE.Color(hairColor), l = h.getHSL({}).l; m.color = h.multiplyScalar(1.2 / Math.max(.08, .1 + l * .3)); } // (the painted hair is near black: lift it toward the colour)
       return m;
     });
     if (o.material.length === 1) o.material = o.material[0];

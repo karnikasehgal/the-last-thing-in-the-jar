@@ -26,13 +26,16 @@ def reset(rig):
     for pb in rig.pose.bones:
         pb.location = (0, 0, 0); pb.rotation_quaternion = (1, 0, 0, 0); pb.rotation_euler = (0, 0, 0); pb.scale = (1, 1, 1)
 
+def pick(P, *names):  # the same control goes by different names in different generations of the rig
+    return next(P[n] for n in names if n in P)
+
 def apply(rig, f, sign):
     P = rig.pose.bones
     for n in CORNERS: P[n].location = (sign[n] * f.get("out", 0), f.get("up", 0), 0)
-    P["MSTR-Jaw"].rotation_mode = "XYZ"; P["MSTR-Jaw"].rotation_euler = (math.radians(f.get("jaw", 0)), 0, 0)
+    jaw = pick(P, "MSTR-Jaw", "Jaw"); jaw.rotation_mode = "XYZ"; jaw.rotation_euler = (math.radians(f.get("jaw", 0)), 0, 0)
     for s in "LR":
-        P[f"ACT-Eyelid_Upper.{s}"].location = (0, f.get("lid", 0), 0)
-        P[f"ACT-Eyelid_Lower.{s}"].location = (0, f.get("lidlow", 0), 0)
+        pick(P, f"ACT-Eyelid_Upper.{s}", f"MSTR-Eyelid_Upper.{s}").location = (0, f.get("lid", 0), 0)
+        pick(P, f"ACT-Eyelid_Lower.{s}", f"MSTR-Eyelid_Lower.{s}").location = (0, f.get("lidlow", 0), 0)
         P[f"MSTR-Eyebrow.{s}"].location = (0, f.get("brow", 0), 0)
         if f"ACT-Sneer.{s}" in P: P[f"ACT-Sneer.{s}"].location = (0, f.get("sneer", 0), 0)
 

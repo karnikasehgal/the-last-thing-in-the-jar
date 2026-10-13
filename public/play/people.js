@@ -5,7 +5,7 @@
 // so the clothes move with the animations. Hats, beards, props and jewellery ride on the bones.
 import * as THREE from "three";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
-import { toonClips, hairSprings, toonFace, tintToon } from "./toon.js";
+import { toonClips, hairSprings, toonFace, tintToon, toonLook } from "./toon.js";
 
 const TORSO = /^(pelvis|spine_0[123]|neck_01|clavicle_[lr])$/;
 const LEGS = /^(thigh|calf|foot|ball)_/;
@@ -714,7 +714,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   const female = fem ?? (FEMALE.has(id) || look.body === "female");
   const src = asset || ASSETS["rb_" + id], toon = !!src.scene.userData.toon;
   const root = SkeletonUtils.clone(src.scene);
-  if (toon) tintToon(root, look);
+  if (toon) tintToon(root, toonLook(look.id || id));
   root.updateMatrixWorld(true);
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
   // stand them up in the tailor's space: facing +z, scaled so the head sits where the tailor expects it
@@ -807,7 +807,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   root.scale.setScalar(scale);
   const clips = toon ? toonClips(src, ASSETS["rb_anims_" + (female ? "f" : "m")], rbClips(ASSETS, female)) : rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
   if (toon) { const swing = hairSprings(root), tick = mixer.update.bind(mixer); mixer.update = dt => { tick(dt); swing(dt); return mixer; }; } // hair settles after the body moves
-  person.expr = makeFace(root);
+  person.expr = makeFace(root); person.clips = clips; person.toon = toon;
   Object.assign(person, {mixer, action: null, current: null, speaking: false, play(name, fade = .35) {
     const want = CLIPMAP[name] || name, clip = clips[want] || clips.idle;
     if (!clip || this.current === name) return;
@@ -832,7 +832,8 @@ export function cloneExtra(p, ASSETS, scene, tint) {
   root.traverse(o => { if (o.isMesh && o.userData.garment && !/gold|leather/.test(o.material.name)) { o.material = o.material.clone(); if (o.material.color) o.material.color.offsetHSL(tint, (Math.random() - .5) * .2, (Math.random() - .5) * .15); } });
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
   shareSkeletons(root);
-  const clips = rbClips(ASSETS, p.female), mixer = new THREE.AnimationMixer(root);
+  const clips = p.clips || rbClips(ASSETS, p.female), mixer = new THREE.AnimationMixer(root);
+  if (p.toon) { const swing = hairSprings(root), tick = mixer.update.bind(mixer); mixer.update = dt => { tick(dt); swing(dt); return mixer; }; }
   const q = {root, bones, mixer, female: p.female, action: null, current: null, play(name, fade = .35) {
     const clip = clips[CLIPMAP[name] || name] || clips.idle; if (!clip || this.current === name) return;
     const a = mixer.clipAction(clip); a.reset().fadeIn(fade).play(); a.time = Math.random() * clip.duration;
@@ -840,7 +841,7 @@ export function cloneExtra(p, ASSETS, scene, tint) {
   scene.add(root); return q;
 }
 export function makeCastMember(id, {ASSETS, CLIPS, scene, scale = 1, seated = false}) {
-  const look = LOOKS[id];
+  const look = {...LOOKS[id], id};
   if (ASSETS["rb_" + (look.as || id)]) return makeRealPerson(look.as || id, look, {ASSETS, scene, scale, seated});
   const root = SkeletonUtils.clone((look.body === "female" ? ASSETS.body_female : ASSETS.head_male).scene);
   const bones = {}; root.traverse(o => { if (o.isBone) bones[o.name] = o; });

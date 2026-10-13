@@ -353,14 +353,15 @@ async function loadAssets(progress) {
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
     ...Array.from({length: 10}, (_, i) => "crowd/m" + i), ...Array.from({length: 9}, (_, i) => "crowd/f" + i)];
   // the animated-film cast: one character model each for the women and the men, dressed and coloured per person
-  for (const n of TOON_F) list.splice(list.indexOf("rb/" + n), 1);
-  for (let i = 0; i < 9; i++) list.splice(list.indexOf("crowd/f" + i), 1);
-  list.push("toon/rain");
+  for (const n of REAL) list.splice(list.indexOf("rb/" + n), 1);
+  for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
+  list.push("toon/rain", "toon/snow");
   let done = 0;
   await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
-  prepareToon(ASSETS.toon_rain);
-  for (const n of TOON_F) ASSETS["rb_" + n] = ASSETS.toon_rain;
+  prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow);
+  for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
   for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
+  for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
 }
 const NPC = {};

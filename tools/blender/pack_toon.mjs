@@ -8,9 +8,9 @@ const [inp, out, dir] = process.argv.slice(2);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const doc = await io.read(inp);
 for (const m of doc.getRoot().listMaterials()) {
-  const t = m.getName().match(/body\.(100\d)$/); if (!t) continue;
-  const f = fs.readdirSync(dir).find(n => n.endsWith(`body.${t[1]}.png`));
-  const tex = doc.createTexture("skin" + t[1]).setImage(fs.readFileSync(`${dir}/${f}`)).setMimeType("image/png");
-  m.setBaseColorTexture(tex).setBaseColorFactor([1, 1, 1, 1]).setName(m.getName().replace("body.", "skin_body."));
+  const t = m.getName().match(/(body|skin)\.(100\d)$/); if (!t) continue;
+  const f = fs.readdirSync(dir).find(n => n.endsWith(`${t[1]}.${t[2]}.png`));
+  const tex = doc.createTexture("skin" + t[2]).setImage(fs.readFileSync(`${dir}/${f}`)).setMimeType("image/png");
+  m.setBaseColorTexture(tex).setBaseColorFactor([1, 1, 1, 1]).setName(m.getName().replace(/(body|skin)\./, "skin_body."));
 }
 await io.write(out, doc);
