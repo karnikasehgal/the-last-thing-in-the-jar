@@ -745,7 +745,7 @@ function sleeveless(p, B, body, mat) {
   // a short mantle round the shoulders and down the upper back, as the references drape them (it also covers where the
   // body was cut away under a modern shirt collar)
   let mm = p.mantle || mat; if (mm.normalMap) { mm = mm.clone(); mm.normalMap = null; } // (the fold texture runs across it in stripes)
-  put(p, drape(body, {from: 1.49, to: 1.2, arc: [Math.PI * 1.04, Math.PI * 1.96], mat: mm, off: .038, flare: .05, folds: .03, free: true,
+  put(p, drape(body, {from: 1.47, to: 1.2, arc: [Math.PI * 1.17, Math.PI * 1.83], mat: mm, off: .03, flare: .03, folds: .03, free: true,
     include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.3 ? [["spine_03", 1]] : [["spine_03", .7], ["spine_02", .3]])}));
   // the front follows the body (cut from its own surface, to just past the shoulders)
   return wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || ARMS.test(d)) && y > .95 && y < 1.5,
@@ -1065,6 +1065,9 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     if (this.action && this.action !== a) this.action.fadeOut(fade);
     this.action = a; this.current = name;
   }});
+  // Snow, the animated man, was drawn with a long neck; ours sits the head lower on the shoulders. Done after the
+  // clothes are fitted (they and the body share the same rest pose), so everything above the neck moves down together.
+  if (toon && !female) { const h = bones.Head; h.position.multiplyScalar(.62); h.updateMatrixWorld(true); }
   scene.add(root);
   return person;
 }
