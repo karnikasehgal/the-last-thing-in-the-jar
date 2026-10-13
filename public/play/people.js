@@ -24,7 +24,7 @@ const WEAVE = canvasTex(256, (g, S) => {
   for (let y = 0; y < S; y += 2) { g.fillStyle = "rgba(0,0,0,.05)"; g.fillRect(0, y, S, 1); }
   for (let i = 0; i < 26; i++) { // grime and wear
     const x = Math.random() * S, y = Math.random() * S, r = 10 + Math.random() * 40, gr = g.createRadialGradient(x, y, 0, x, y, r);
-    gr.addColorStop(0, "rgba(60,50,40,.18)"); gr.addColorStop(1, "rgba(60,50,40,0)"); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+    gr.addColorStop(0, "rgba(60,50,40,.07)"); gr.addColorStop(1, "rgba(60,50,40,0)"); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
   }
 });
 // Folds hanging straight down: a normal map that ripples across u.
@@ -49,7 +49,7 @@ function cloth(hex, {folds = false, rough = .92, sheen = 0} = {}) {
   const k = hex + "|" + folds + "|" + sheen;
   return clothCache[k] ||= new THREE.MeshStandardMaterial({
     color: hex, map: WEAVE, roughness: rough, metalness: sheen, side: THREE.DoubleSide,
-    normalMap: folds ? FOLDS : null, normalScale: new THREE.Vector2(.28, .28)
+    normalMap: folds ? FOLDS : null, normalScale: new THREE.Vector2(.1, .1)
   });
 }
 // The same cloth, trimmed to a clean edge: anything outside the GLSL test (in bind-pose metres) is cut away.
@@ -139,7 +139,7 @@ function skinned(geo, mat, body) {
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
 function wrap(body, keep, {off = .016, mat, bulge = () => 0, clip}) {
   const B = study(body), ix = B.g.index.array, tri = [];
-  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE_HIGH} && abs(b.x) < .6 && b.y > .95`; // cover everything modern (the hood keeps its own shape)
+  if (LONG && clip && !/1\.65/.test(clip)) clip = `${NECKLINE_HIGH} && abs(b.x) < .675 && b.y > .95`; // cover everything modern (the hood keeps its own shape)
   if (clip) mat = clipped(mat, clip, B);
   const ok = new Uint8Array(B.N); for (let i = 0; i < B.N; i++) ok[i] = keep(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2], B.dom[i]) ? 1 : 0;
   for (let t = 0; t < ix.length; t += 3) if (ok[ix[t]] && ok[ix[t + 1]] && ok[ix[t + 2]]) tri.push(ix[t], ix[t + 1], ix[t + 2]);
@@ -217,11 +217,11 @@ function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc =
       let rad = o.r[s] + off;
       if (prev) rad = Math.max(rad, prev[c] * .985); // cloth hangs from the widest point, it doesn't cling
       cur.push(rad);
-      const fold = folds * t * (Math.sin(a * 9 + seed) * .6 + Math.sin(a * 17 + seed * 2) * .4);
+      const fold = folds * .6 * t * (Math.sin(a * 7 + seed) * .7 + Math.sin(a * 13 + seed * 2) * .3);
       const R = rad + flare * t * t + fold;
       const y = y0 - (t > .999 ? hem(a) : hem(a) * t * t);
       const x = Math.cos(a) * R, z = cz0 * (1 - t) + o.cz * t + Math.sin(a) * R;
-      P.push(x, y, z); UV.push(c / (full ? cols : cols - 1) * (arc[1] - arc[0]) / Math.PI, y * 1.5);
+      P.push(x, y, z); UV.push(c / (full ? cols : cols - 1) * (arc[1] - arc[0]) / Math.PI * 2, y * 4);
       const [Ii, Ww] = packWeights(weightsAt(x, y, z, t, a));
       SI.push(...Ii); SW.push(...Ww);
     }
@@ -364,7 +364,7 @@ function skinMaterial(base, {tone = 0xffffff, sandals = true, ash = 0, ghost: un
 const NECKLINE_LOW = "b.y < 1.535 && !(b.z > -.02 && pow(b.x / .12, 2.) + pow((b.y - 1.535) / .085, 2.) < 1.)";
 const NECKLINE_HIGH = "b.y < 1.585 && !(b.z > .0 && pow(b.x / .085, 2.) + pow((b.y - 1.585) / .05, 2.) < 1.)";
 let NECKLINE = NECKLINE_LOW;
-const SLEEVE = w => `abs(b.x) < ${LONG ? .6 : w}`;
+const SLEEVE = w => `abs(b.x) < ${LONG ? .675 : w}`;
 const UPPER = (x, y, z, d) => y > .96 && y < 1.6 && (TORSO.test(d) || ARMS.test(d) || d === "neck_01");
 const put = (p, m) => { const h = m.userData.home; delete m.userData.home; (h || p.root).add(m); };
 const LOOKS = {
@@ -390,7 +390,7 @@ const LOOKS = {
     put(p, drape(body, {from: 1.0, to: .07, mat: robe, flare: .14, folds: .025, hem: a => .04 * Math.abs(Math.sin(a * 7)) + .03 * Math.abs(Math.sin(a * 13 + 1)), weightsAt: skirtWeights(B, .35)}));
     put(p, drape(body, {from: 1.035, to: .99, mat: cloth(0x3a2c20), off: .028, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     // a hood over the head and shoulders, open at the face
-    put(p, wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.01 && pow(b.x / .08, 2.) + pow((b.y - 1.65) / .12, 2.) < 1.)", mat: dark, off: .03, bulge: (x, y, z) => Math.max(0, -z) * .22 + Math.max(0, y - 1.7) * .2}));
+    put(p, wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.035 && pow(b.x / .1, 2.) + pow((b.y - 1.655) / .15, 2.) < 1.)", mat: dark, off: .03, bulge: (x, y, z) => Math.max(0, -z) * .22 + Math.max(0, y - 1.7) * .2}));
     put(p, drape(body, {from: 1.56, to: .5, arc: [Math.PI * 1.02, Math.PI * 1.98], mat: robe, off: .05, flare: .1, folds: .03, hem: a => .06 * Math.abs(Math.sin(a * 5)),
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .5], ["spine_02", .3], ["pelvis", .2]])}));
     mount(p, "Head", longBeard(0xd8d3c8), new THREE.Vector3(0, 1.62, .075));
@@ -450,7 +450,7 @@ const LOOKS = {
   // Nikias, the groom, in white with a myrtle wreath.
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
-  thea: {body: "female", dress(p, B, body) { greek(p, B, body, 0xd89a2a, 0xe8b850, {veil: 0xf6eadb, wreath: true}); }},
+  thea: {body: "female", dress(p, B, body) { greek(p, B, body, 0xd89a2a, 0xe8b850, {wreath: true}); }},
   // the piper, who does not stop playing for anything
   piper: {dress(p, B, body) { greek(p, B, body, 0x8a2a20, 0x5a1a14); mount(p, "Head", aulos(), new THREE.Vector3(0, 1.6, .2), [1.15, 0, 0]); }},
   dancer: {body: "female", dress(p, B, body) { greek(p, B, body, 0xc8d4c0, 0x8aa070); }},
@@ -468,7 +468,8 @@ const LOOKS = {
     put(p, drape(body, {from: 1.05, to: 1.0, mat: gold, off: .03, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     put(p, drape(body, {from: 1.52, to: .7, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .045, flare: .08, folds: .03,
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
-    mount(p, "Head", crown(0x2b2622, true), new THREE.Vector3(0, 1.755, -.012));
+    mount(p, "Head", crown(0x2b2622, true), new THREE.Vector3(0, p.norm ? 1.8 : 1.755, -.012));
+    if (p.norm) { const b = longBeard(0x1c1410); b.scale.set(.85, .45, .8); mount(p, "Head", b, new THREE.Vector3(0, 1.625, .07)); }
   }},
   // Sisyphus: dust, a work tunic gone brown, and a boulder that comes back down.
   sisyphus: {tone: 0xd8bfa4, ash: .15, hair: ["hair_long", "hair_beard"], hairColor: 0x6a5c4c, dress(p, B, body) {
@@ -482,7 +483,7 @@ const LOOKS = {
     put(p, drape(body, {from: .99, to: .03, mat: red, flare: .14, folds: .022, weightsAt: skirtWeights(B, .45)}));
     put(p, drape(body, {from: 1.3, to: .86, mat: cloth(0x7d2129, {folds: true}), off: .035, flare: .05, folds: .015, include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.1 ? [["spine_03", .6], ["spine_02", .4]] : [["spine_01", .6], ["pelvis", .4]])}));
     put(p, drape(body, {from: 1.015, to: .985, mat: gold, off: .045, flare: 0, folds: 0, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_01", 1]])}));
-    mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, p.norm ? 1.76 : 1.675, -.012));
+    mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, p.norm ? 1.735 : 1.675, -.012));
     const pom = pomegranate(); mount(p, "hand_l", pom, p.norm ? new THREE.Vector3(.76, 1.43, .02) : new THREE.Vector3(.7, 1.38, .01));
   }},
   // Eurydice: a shade, so she's pale and not quite there. A plain white peplos; barefoot, because of the snake.
@@ -498,10 +499,10 @@ function greek(p, B, body, color, cloak, {veil, wreath} = {}) {
   put(p, drape(body, {from: 1.0, to: .6, mat: cloth(color, {folds: true}), flare: .06, weightsAt: skirtWeights(B, .8)}));
   put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
   put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
-  if (veil) put(p, wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.01 && pow(b.x / .085, 2.) + pow((b.y - 1.65) / .13, 2.) < 1.)", mat: cloth(veil), off: .03, bulge: (x, y, z) => Math.max(0, -z) * .3 + Math.max(0, y - 1.7) * .15}));
+  if (veil) put(p, wrap(body, (x, y, z, d) => (d === "Head" || d === "neck_01") && z < .02, {clip: "!(b.z > -.03 && pow(b.x / .09, 2.) + pow((b.y - 1.65) / .14, 2.) < 1.)", mat: cloth(veil), off: .018, bulge: (x, y, z) => Math.max(0, -z) * .1}));
   if (wreath) { const w = new THREE.Group(), leaf = new THREE.MeshStandardMaterial({color: 0x3d5a2a, roughness: .7, side: THREE.DoubleSide});
-    for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, l = new THREE.Mesh(new THREE.SphereGeometry(.02, 6, 4), leaf); l.scale.set(1.6, .5, .8); l.position.set(Math.cos(a) * .115, Math.sin(i * 1.7) * .01, Math.sin(a) * .115); l.rotation.y = -a; w.add(l); }
-    mount(p, "Head", w, new THREE.Vector3(0, 1.74, -.01), [.12, 0, 0]); }
+    for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, l = new THREE.Mesh(new THREE.SphereGeometry(.012, 6, 4), leaf); l.scale.set(1.8, .45, .8); l.position.set(Math.cos(a) * .115, Math.sin(i * 1.7) * .01, Math.sin(a) * .115); l.rotation.y = -a; w.add(l); }
+    mount(p, "Head", w, new THREE.Vector3(0, p.norm ? 1.81 : 1.74, -.02), [.05, 0, 0]); }
 }
 function aulos() { // the double pipes
   const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x6a4a2a, roughness: .5});
@@ -542,6 +543,17 @@ function ghostly(mat, opacity = .62) {
   };
   m.customProgramCacheKey = () => (mat.customProgramCacheKey?.() || "") + "ghost";
   return m;
+}
+
+// A person is a dozen skinned pieces; give pieces with the same bones one shared skeleton,
+// so the graphics card animates each person once, not a dozen times.
+function shareSkeletons(root) {
+  const skins = []; root.traverse(o => { if (o.isSkinnedMesh) skins.push(o); });
+  const shared = [];
+  for (const o of skins) {
+    const hit = shared.find(sk => sk.bones.length === o.skeleton.bones.length && sk.bones.every((b, i) => b === o.skeleton.bones[i]) && sk.boneInverses.every((m, i) => m.equals(o.skeleton.boneInverses[i])));
+    if (hit) { if (o.skeleton !== hit) { o.skeleton.dispose?.(); o.skeleton = hit; } } else shared.push(o.skeleton);
+  }
 }
 
 /* ---------- the realistic cast (Microsoft Rocketbox, MIT) ----------
@@ -636,7 +648,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
       sh.fragmentShader = "varying vec3 vB;\n" + sh.fragmentShader.replace("void main() {", `void main() {
         if (vB.y > 1.46 && abs(vB.x) < .22) discard;
         if (uFP > .5 && vB.y > 1.2) discard;
-        if (abs(vB.x) < .6 && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
+        if (abs(vB.x) < .67 && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
         if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`);
     };
     m.customProgramCacheKey = () => "rbbody" + low;
@@ -658,6 +670,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     if (o.isMesh && !o.isSkinnedMesh && !o.userData.garment && o.parent?.isBone && !/Foot|Toe|Hand|Finger/.test(o.parent.name) && !headParts.includes(o)) upper.push(o);
   });
   person.setHead = show => { person.headShown = show; headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); fp.value = show ? 0 : 1; };
+  shareSkeletons(root);
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
   const clips = rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
@@ -684,6 +697,7 @@ export function cloneExtra(p, ASSETS, scene, tint) {
   const root = SkeletonUtils.clone(p.root);
   root.traverse(o => { if (o.isMesh && o.userData.garment && !/gold|leather/.test(o.material.name)) { o.material = o.material.clone(); if (o.material.color) o.material.color.offsetHSL(tint, (Math.random() - .5) * .2, (Math.random() - .5) * .15); } });
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
+  shareSkeletons(root);
   const clips = rbClips(ASSETS, p.female), mixer = new THREE.AnimationMixer(root);
   const q = {root, bones, mixer, female: p.female, action: null, current: null, play(name, fade = .35) {
     const clip = clips[CLIPMAP[name] || name] || clips.idle; if (!clip || this.current === name) return;

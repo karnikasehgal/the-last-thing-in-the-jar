@@ -9,15 +9,15 @@ export const W = new THREE.Vector3(300, 0, 0);
 // Kleio, Thea and Nikias across from them; Demeas standing at the end for the toast.
 export const SEATS = {
   mikon: [-.7, -1.02, 0], lykon: [.1, -1.02, 0], kleio: [-.9, 1.02, Math.PI], thea: [.3, 1.02, Math.PI], nikias: [1.1, 1.02, Math.PI],
-  demeas: [3.35, 0, -Math.PI / 2], piper: [-3.6, 2.6, Math.PI * .8], dancer: [-2.2, 3.4, Math.PI]
+  demeas: [-3.35, 0, Math.PI / 2], piper: [-3.6, 2.6, Math.PI * .8], dancer: [-2.2, 3.4, Math.PI]
 };
 
 // Where the crowd goes (relative to W): two more long tables, a ring dance, people standing and talking,
 // servers carrying trays, the band.
 export const CROWD = {
   tables: [-5.2, 5.2].flatMap(z => [-2.4, -1.6, -.8, 0, .8, 1.6, 2.4].flatMap(x => [[x, z - 1.02, 0], [x, z + 1.02, Math.PI]])),
-  ring: {x: -9.5, z: 0, r: 2.7, n: 10},
-  groups: [[5.5, -9.5], [10, 7.5], [-3, 10], [11, -3], [-13, 8.5], [-13, -8.5]],
+  ring: {x: -9.5, z: 0, r: 2.9, n: 12},
+  groups: [[5.5, -9.5], [10, 7.5], [-3, 10], [11, -3], [-13, 8.5], [-13, -8.5], [2, -10.5], [-6, -11], [12.5, 10.5]],
   band: [[-9.5, -5.6, 0], [-8.1, -5.9, -.2]],
   servers: 4,
   gate: [16.5, -1.7]
@@ -71,8 +71,8 @@ export function buildWedding(scene, {noise}) {
     add(new THREE.Mesh(new THREE.SphereGeometry(.13, 8, 6), new THREE.MeshBasicMaterial({color: 0xffb060})), x, 2.5, z);
   }
   // petals and sparks hanging in the warm air
-  const pn = 700, pg = new THREE.BufferGeometry(), pp = new Float32Array(pn * 3), pc = new Float32Array(pn * 3);
-  for (let i = 0; i < pn; i++) { pp[i * 3] = -16 + Math.random() * 32; pp[i * 3 + 1] = Math.random() * 5; pp[i * 3 + 2] = -12 + Math.random() * 24; const c = new THREE.Color(Math.random() < .5 ? 0xf6d0d8 : Math.random() < .5 ? 0xfff2c8 : 0xffa860); pc.set([c.r, c.g, c.b], i * 3); }
+  const pn = 380, pg = new THREE.BufferGeometry(), pp = new Float32Array(pn * 3), pc = new Float32Array(pn * 3);
+  for (let i = 0; i < pn; i++) { pp[i * 3] = -16 + Math.random() * 32; pp[i * 3 + 1] = 2.6 + Math.random() * 3; pp[i * 3 + 2] = -12 + Math.random() * 24; const c = new THREE.Color(Math.random() < .5 ? 0xf6d0d8 : Math.random() < .5 ? 0xfff2c8 : 0xffa860); pc.set([c.r, c.g, c.b], i * 3); }
   pg.setAttribute("position", new THREE.BufferAttribute(pp, 3)); pg.setAttribute("color", new THREE.BufferAttribute(pc, 3));
   const dot = document.createElement("canvas"); dot.width = dot.height = 32; { const x = dot.getContext("2d"), gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.5, "rgba(255,255,255,.6)"); gr.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = gr; x.fillRect(0, 0, 32, 32); }
   const petals = new THREE.Points(pg, new THREE.PointsMaterial({size: .07, map: new THREE.CanvasTexture(dot), vertexColors: true, transparent: true, opacity: .9, depthWrite: false})); g.add(petals);
@@ -134,7 +134,7 @@ export function buildWedding(scene, {noise}) {
 
   return {
     g, lights, food, bier, olives, sky, petals,
-    animate(now) { const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0025; if (y < 0) y = 5; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
+    animate(now) { const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0015; if (y < 2.6) y = 5.6; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
     // "wedding": warm dusk; "funeral": the next night, lamps only
     mood(kind) {
       const fun = kind === "funeral";

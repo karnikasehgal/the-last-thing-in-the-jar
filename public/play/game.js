@@ -45,7 +45,8 @@ const canvas = $("#view");
 // Phones, tablets and modest laptops get a lighter version so it stays smooth.
 const LITE = matchMedia("(pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4 || innerWidth * innerHeight * devicePixelRatio ** 2 > 6e6;
 const renderer = new THREE.WebGLRenderer({canvas, antialias: !LITE, powerPreference: "high-performance"});
-renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.25 : 1.75));
+const pixelRatio = () => Math.max(1, Math.min(devicePixelRatio || 1, LITE ? 1.25 : 1.75)); // never below 1, or the picture shrinks into a corner
+renderer.setPixelRatio(pixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
@@ -57,9 +58,9 @@ camera.rotation.order = "YXZ"; scene.add(camera); // so things held in your hand
 
 // A painterly finish: soft brushy patches, warm old-pigment grade, vignette, grain.
 const Painterly = {
-  uniforms: {tDiffuse: {value: null}, time: {value: 0}, danger: {value: 0}, lite: {value: LITE ? 1 : 0}},
+  uniforms: {tDiffuse: {value: null}, time: {value: 0}, danger: {value: 0}, lite: {value: LITE ? 1 : 0}, blur: {value: 0}, dim: {value: 0}},
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float time; uniform float danger; uniform float lite; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float time; uniform float danger; uniform float lite; uniform float blur; uniform float dim; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
     void main(){
       vec2 px = 1.0 / vec2(1600.0, 900.0);
@@ -68,12 +69,14 @@ const Painterly = {
       if (lite < .5) for (int i = 0; i < 6; i++) { float a = float(i) * 1.047; vec2 o = vec2(cos(a), sin(a)) * px * 2.2;
         vec3 s = texture2D(tDiffuse, vUv + o).rgb; float k = 1.0 - smoothstep(0.0, 0.25, distance(s, c)); acc += s * k; w += k; }
       c = acc / w;
+      if (blur > .001) { vec3 b = c; for (int i = 0; i < 12; i++) { float a = float(i) * .5236; b += texture2D(tDiffuse, vUv + vec2(cos(a), sin(a)) * blur * .012).rgb; } c = b / 13.; }
       float l = dot(c, vec3(.299,.587,.114));
       c = mix(vec3(l), c, .82);
       c *= vec3(1.06, .98, .86);
       c = mix(c, c * vec3(1.25,.55,.45), danger * .35);
       float v = smoothstep(1.05, .35, distance(vUv, vec2(.5)));
       c *= mix(.42, 1.0, v);
+      c *= 1. - dim * smoothstep(.15, .75, distance(vUv, vec2(.5)) + dim * .3);
       c += (h(vUv * 900. + time) - .5) * .035;
       gl_FragColor = vec4(c, 1.);
     }`
@@ -82,7 +85,7 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
 composer.addPass(new OutputPass());
-function resize() { renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 addEventListener("resize", resize); resize();
 
 /* ---------- light ---------- */
@@ -290,7 +293,7 @@ for (let i = 0; i < 14; i++) {
   r.position.set(PLACES.dogHome.x + Math.cos(a) * d, Math.random() * .8, PLACES.dogHome.z - Math.sin(a) * d * .8);
   r.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(r);
 }
-const lairGlow = new THREE.PointLight(0xff3a1a, 10, 12, 2); lairGlow.position.set(PLACES.dogHome.x, 1.2, PLACES.dogHome.z - 1); scene.add(lairGlow);
+const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.set(PLACES.dogHome.x, 1.2, PLACES.dogHome.z - 1); scene.add(lairGlow);
 
 /* ---------- the way up: a sea cave of layered sandstone at the west end of the bank, opening on a sunrise ---------- */
 {
@@ -405,7 +408,9 @@ const sound = {
     const room = actx.createConvolver(), len = actx.sampleRate * 1.8, ir = actx.createBuffer(2, len, actx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
     room.buffer = ir; const wet = actx.createGain(); wet.gain.value = .16;
-    vsrc.connect(master); vsrc.connect(room).connect(wet).connect(master);
+    // voices in the world go through the mix (so they can be muffled); narration can bypass it and stay clear
+    this.vWet = actx.createGain(); this.vDry = actx.createGain(); this.vDry.gain.value = 0;
+    vsrc.connect(this.vWet).connect(master); this.vWet.connect(room).connect(wet).connect(master); vsrc.connect(this.vDry).connect(actx.destination);
   },
   noise(s) { const b = actx.createBuffer(1, actx.sampleRate * s, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const x = actx.createBufferSource(); x.buffer = b; return x; },
   env(node, peak, a, d, at) { const g = actx.createGain(); at = at ?? actx.currentTime; g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(peak, at + a); g.gain.exponentialRampToValueAtTime(.0001, at + a + d); node.connect(g).connect(master); },
@@ -440,6 +445,7 @@ const sound = {
   cheer() { if (!actx) return; for (let i = 0; i < 9; i++) { const at = actx.currentTime + i * .06, n = this.noise(.5), f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 600 + Math.random() * 900; n.connect(f); this.env(f, .14, .05, .5, at); n.start(at); } },
   cough() { if (!actx) return; [0, .32, .6, 1.1].forEach(d => { const at = actx.currentTime + d, n = this.noise(.25), f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 800; f.Q.value = 1.5; n.connect(f); this.env(f, .5, .01, .2, at); n.start(at); }); },
   heart() { if (!actx) return; for (let i = 0; i < 6; i++) for (const d of [0, .18]) { const at = actx.currentTime + i * .9 + d, o = actx.createOscillator(); o.frequency.value = 52; this.env(o, .5, .01, .2, at); o.start(at); o.stop(at + .3); } },
+  narration(on) { if (!this.vWet) return; this.vWet.gain.value = on ? 0 : 1; this.vDry.gain.value = on ? 1 : 0; },
   setMuffle(hz, secs = 1) { if (this.muffle) this.muffle.frequency.linearRampToValueAtTime(hz, actx.currentTime + secs); },
   // how loud the voice is right now (0..1), for moving mouths
   voiceLevel() { if (!this.voiceMeter) return 0; this.voiceMeter.getFloatTimeDomainData(this.voiceBuf); let s = 0; for (const v of this.voiceBuf) s += v * v; return Math.sqrt(s / this.voiceBuf.length); },
@@ -477,6 +483,7 @@ const voiceEl = $("#voice");
 let skipLine = null, choicePick = null, talkingTo = null;
 const camShot = {active: false, pos: new THREE.Vector3(), look: new THREE.Vector3()};
 function frameOn(p, side = 1) { // over-the-shoulder close-up
+  shot.cur = null;
   const head = new THREE.Vector3(); (p.bones.Head || p.root).getWorldPosition(head);
   const toMe = flat(me.pos).sub(flat(p.root.position)).normalize();
   const right = V(toMe.z, 0, -toMe.x).multiplyScalar(side * .55);
@@ -488,14 +495,15 @@ function frameOn(p, side = 1) { // over-the-shoulder close-up
 const CUTS = {
   ferry:  {pos: V(4, 3, 28), look: V(0, 1.4, 37.5)},
   charon: {pos: V(1.2, 2.3, 33.6), look: V(0, 2.1, 37.2)},
-  grotto: {pos: V(64, 3.2, 18), look: V(72, .6, 12)},
+  grotto: {pos: V(68.2, 2.1, 18.6), look: V(71.8, .6, 12.4)},
   altar:  {pos: V(56, 2.3, 13.2), look: V(56, 1.7, 9)},
   river:  {pos: V(-20, 3, 14), look: V(0, -.3, 40)},
   chairs: {pos: V(56, 2.2, 4.5), look: V(56, 1.3, -1)}
 };
-function cutTo(name) { const c = CUTS[name]; camShot.pos.copy(c.pos); camShot.look.copy(c.look); camShot.active = true; camShot.snap = true; }
+function cutTo(name) { shot.cur = null; const c = CUTS[name]; camShot.pos.copy(c.pos); camShot.look.copy(c.look); camShot.active = true; camShot.snap = true; }
 async function line(who, id, text, cut) {
-  const p = NPC[who], heard = cut === "voice"; // "voice": heard, not seen; the camera stays where it is
+  const p = NPC[who], heard = cut === "voice" || cut === "vo"; // "voice": heard, not seen; "vo": narration, clear of the world's sound
+  sound.narration(cut === "vo");
   $("#sub b").textContent = p ? p.name : chap.player;
   $("#sub span").textContent = text; $("#sub").classList.add("on");
   if (heard) {} else if (cut) cutTo(cut); else if (p) frameOn(p, 1); else if (talkingTo) frameOn(talkingTo, -1);
@@ -512,6 +520,7 @@ async function line(who, id, text, cut) {
   });
   if (p && !heard) p.play(p.idle);
   if (p) p.speaking = false;
+  sound.narration(false);
   $("#sub").classList.remove("on");
   await new Promise(r => setTimeout(r, 160));
 }
@@ -541,20 +550,23 @@ async function conversation(id) {
   beginTalk(NPC[id], id);
   const say = (who, lid, text, cut) => line(who, lid, text, cut);
   if (id === "hermes") {
-    await say("hermes", "v3_h1", "Ah, there you are. Take a deep breath. Well, don't, you don't actually need to anymore, but it calms people down. You're dead, Mikon. I'm so sorry. I'm Hermes. Messenger of the gods, guide of the dead, and on my days off, patron of thieves, so do keep an eye on your sandals.");
-    await say("mikon", "v3_m1", "I'm dead? At a wedding? I was halfway through a joke.");
-    await say("hermes", "v3_h2", "Was it a good joke?");
-    await say("mikon", "v3_m2", "It was about a goat. The olive got there before the punchline did.");
-    await say("hermes", "v3_h3", "Then the goat will live forever in mystery, which is more than most of us get. Come, look past the columns. That glowing thing is the River Styx, and the boat at the end of the dock is the only way across it.", "ferry");
-    await say("hermes", "v3_h4", "The gentleman in the hood is Charon. Lovely man, dreadful conversationalist. One coin per crossing, and in all his very long life he has never once given credit. Your family was meant to put a coin under your tongue.", "charon");
-    await say("mikon", "v3_m3", "They were busy. It was a wedding. Somebody had to keep dancing.");
-    await say("hermes", "v3_h5", "And so here you are, with an empty mouth, which means a hundred years on this bank, watching the boat leave without you. It isn't torture, exactly. It's more like waiting for a friend who is always just about to arrive.");
-    await say("hermes", "v3_h6", "Of course, coins do turn up down here, if you know where to look. The only one I know of is in the cave past the old temple, and it's underneath a dog. Three heads, one temper, and a nose that can smell bronze through a wall.", "grotto");
-    await say("mikon", "v3_m4", "So the only coin in the whole Underworld is guarded by a dog that can smell coins.");
-    await say("hermes", "v3_h7", "I didn't design the place, I just give the tours. If he comes for you, get into the river, he hates wet paws even more than he hates you. Ask the sailor by the water, he knows everyone's business. Now, I have a general to collect. Fell off his own horse at his own victory parade. Happens more than you'd think.", "river");
+    await say("hermes", "v4_h1", "Easy. Easy, sit up slowly. You'll feel cold for a while. That passes.");
+    await say("mikon", "v4_m1", "Where... The wedding. I was at the wedding. Thea was about to dance.");
+    await say("hermes", "v4_h2", "You were. And then you laughed with an olive in your mouth. I'm sorry, Mikon. You died at your cousin's wedding.");
+    await say("mikon", "v4_m2", "I died. At a wedding. In front of everyone.");
+    await say("hermes", "v4_h3", "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb.");
+    await say("mikon", "v4_m3", "Who are you?");
+    await say("hermes", "v4_h4", "Hermes. I carry messages for the gods, and when someone dies, I walk them down here. You're my third today.");
+    await say("mikon", "v4_m4", "And where is here?");
+    await say("hermes", "v4_h5", "The bank of the River Styx. The dead cross on that ferry, at the end of the dock. The ferryman is Charon, and he takes one coin from every passenger. Your family should have put one under your tongue.", "ferry");
+    await say("mikon", "v4_m5", "And they didn't.");
+    await say("hermes", "v4_h6", "Nobody remembered. It happens more often than you'd think. Without a coin, you wait on this bank. A hundred years. That's the law, and Charon has never once broken it.", "charon");
+    await say("mikon", "v4_m6", "A hundred years.");
+    await say("hermes", "v4_h7", "Unless you find a coin. There is one, in the cave beyond the old temple, but a dog sleeps on it. Three heads, and a nose that can smell bronze through stone. If he wakes, get into the river. He won't follow you into the water.", "grotto");
+    await say("mikon", "v4_m7", "You're very calm about all of this.");
+    await say("hermes", "v4_h8", "I've had a lot of practice. Go and find the sailor down by the water. His name is Elpenor, and he's been here long enough to know where everything is. Good luck, Mikon. I mean that.", "river");
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
-    if (me.met.hermes) await say("elpenor", "v4_e0", "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.");
     await say("elpenor", "v2_e1", "Oh, hello. Sorry, I don't get many people stopping, most of them walk straight past. Which, honestly, fair. I'm Elpenor. I rowed for Odysseus. Well, I rowed near Odysseus. There were a lot of us.");
     await say("mikon", "v2_m4", "Mikon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here.");
     await say("elpenor", "v2_e2", "That's a good one. Mine's worse. We were staying at Circe's house, and I'd had too much wine, so I went up on the roof to sleep where it was cool. In the morning I heard everyone leaving, jumped up in a hurry, and forgot about the ladder.");
@@ -563,6 +575,7 @@ async function conversation(id) {
     if (k === 0) await say("mikon", "v2_m5", "I don't suppose you've seen a coin lying around anywhere?");
     if (k === 1) { await say("mikon", "v2_m6", "When I get across, I'll find a way to get you out of here too."); await say("elpenor", "v2_e5", "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person."); }
     if (k === 2) { await say("mikon", "v2_m7", "That might be the saddest thing I've ever heard."); await say("elpenor", "v2_e6", "Thank you. I tell it slightly differently at parties."); }
+    if (me.met.hermes) await say("elpenor", "v4_e0", "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.");
     await say("elpenor", "v2_e3", "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.", "grotto");
     await say("elpenor", "v2_e4", "You can't just walk in and pick it up. He'll smell it the second it moves. You'd have to put him to sleep first.");
     await say("elpenor", "v2_e7", "There's a honey cake on the altar in the temple. Somebody left it as an offering years ago, and it hasn't gone stale, because nothing does down here. No dog alive can say no to honey cake. Throw it close to him, and he'll be out like a lamp.", "altar");
@@ -877,7 +890,7 @@ function tick(now) {
   fpPos.set(me.pos.x, ride ? 1.95 : inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
   moveBody(dt);
   // in conversations and cutaways, a soft key light from beside the camera, the way films light a face
-  keyLight.intensity += ((camShot.active ? 2.6 : 0) - keyLight.intensity) * .15;
+  keyLight.intensity += ((camShot.active ? 4 : 0) - keyLight.intensity) * .15;
   if (camShot.active) keyLight.position.copy(camera.position).add(V(Math.cos(me.yaw) * .6, .45, -Math.sin(me.yaw) * .6));
   // looking down, your head tips forward and you can see yourself: chest, hem, sandals
   const lean = Math.max(0, -me.pitch - .35) * .32;
@@ -1004,8 +1017,8 @@ const INTROS = {
     {id: "v2_i6", text: "This is the story of one of them.", face: "pull"}]},
   2: {title: ["Chapter II", "The Lyre"], who: "orpheus", stand: [-16, 18.6, Math.PI], far: [], shots: [
     {id: "v2_j1", text: "They say I could make rivers stop to listen. I never tried. I only ever wanted one person to listen, and she always did.", face: "close"},
-    {id: "v2_j2", text: "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it.", art: ["styx/titian-orpheus.jpg"]},
-    {id: "v2_j3", text: "I sang at her funeral. Every bird in Thrace went quiet. It didn't help.", art: ["styx/prothesis-pinax.jpg", "styx/rubens-orpheus.jpg"]},
+    {id: "v2_j2", text: "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it.", face: "close"},
+    {id: "v2_j3", text: "I sang at her funeral. Every bird in Thrace went quiet. It didn't help.", face: "pull"},
     {id: "v2_j4", text: "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out.", path: [[-53, 2.2, 13, -36, 1.5, 13], [-44, 1.9, 13, -30, 1.5, 13]]},
     {id: "v2_j5", text: "Nobody comes back from the Underworld. Everybody says so. But as far as I know, nobody has ever asked properly.", path: [[-6, 3, 26, 0, 2, 60], [6, 4, 33, 0, 2, 70]]},
     {id: "v2_j6", text: "I'm going to ask.", face: "close"}]}
@@ -1045,7 +1058,7 @@ async function playIntro(n) {
       art = $("#artshot"); art.classList.add("on"); const per = est / sh.art.length;
       sh.art.forEach((src, i) => setTimeout(() => { if (!moving) return; const img = art.querySelector("img"); img.classList.remove("go"); img.src = LIB + src; void img.offsetWidth; img.classList.add("go"); }, i * per));
     }
-    await line(I.who, sh.id, sh.text, "voice");
+    await line(I.who, sh.id, sh.text, "vo");
     moving = false; PLAYER.speaking = false;
     if (art) art.classList.remove("on");
   }
@@ -1059,11 +1072,12 @@ async function playIntro(n) {
 addEventListener("keydown", e => { if (skipIntro && (e.key === "Escape" || e.key === "Enter")) skipIntro(); });
 
 /* ---------- Chapter I opens like a film: the wedding at Corinth, the olive, the funeral, the river ---------- */
-let wedding = null, guests = null;
+let wedding = null, guests = null, povDim = false;
 const wpos = (x, y, z) => V(W.x + x, W.y + y, W.z + z);
 function stage(p, [x, z, ry], y = 0) { p.root.position.copy(wpos(x, y, z)); p.root.rotation.set(0, ry, 0); p.root.visible = true; }
-function shot(from, look, to, lookTo, ms) { // a camera move, in courtyard coordinates
-  const A = wpos(...from), AL = wpos(...look), B = to ? wpos(...to) : A.clone(), BL = lookTo ? wpos(...lookTo) : AL.clone(), t0 = performance.now(), id = {};
+function shot(from, look, to, lookTo, ms, world = false) { // a camera move, in courtyard coordinates (or world ones)
+  const P = a => world ? V(...a) : wpos(...a);
+  const A = P(from), AL = P(look), B = to ? P(to) : A.clone(), BL = lookTo ? P(lookTo) : AL.clone(), t0 = performance.now(), id = {};
   camShot.active = true; camShot.snap = true; camShot.pos.copy(A); camShot.look.copy(AL); shot.cur = id;
   (function go() { if (shot.cur !== id) return; const u = Math.min(1, (performance.now() - t0) / ms), e = u * u * (3 - 2 * u); camShot.pos.lerpVectors(A, B, e); camShot.look.lerpVectors(AL, BL, e); if (u < 1) requestAnimationFrame(go); })();
 }
@@ -1101,13 +1115,13 @@ function buildCrowd() {
   const take = kind => { const list = base[kind]; const b = list[(kind === "seated" ? si++ : ti++) % list.length]; if (!b.used) { b.used = true; return b; } return cloneExtra(b, ASSETS, scene, (Math.random() - .5) * .12); };
   const placeAt = (p, x, z, ry, clip) => { p.root.position.copy(wpos(x, 0, z)); p.root.rotation.set(0, ry, 0); p.root.visible = true; p.play(clip, 0); people.push(p); return p; };
   // the tables
-  const seats = CROWD.tables.slice().sort(() => Math.random() - .5).slice(0, LITE ? 6 : 18);
+  const seats = CROWD.tables.slice().sort(() => Math.random() - .5).slice(0, LITE ? 8 : 28);
   for (const [x, z, ry] of seats) placeAt(take("seated"), x, z, ry, ["sittable", "sittabletalk", "sittablethink"][Math.random() * 3 | 0]);
   // the ring dance, turning slowly around the dance floor
   const ring = [];
-  for (let i = 0; i < (LITE ? 5 : CROWD.ring.n); i++) { const p = placeAt(take("standing"), 0, 0, 0, "walk"); p.ring = i; ring.push(p); }
+  for (let i = 0; i < (LITE ? 6 : CROWD.ring.n); i++) { const p = placeAt(take("standing"), 0, 0, 0, "walk"); p.ring = i; ring.push(p); }
   // people standing about, talking, laughing, drinking
-  for (const [gx, gz] of CROWD.groups.slice(0, LITE ? 2 : 6)) for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.random(); placeAt(take("standing"), gx + Math.cos(a) * .8, gz + Math.sin(a) * .8, Math.atan2(-Math.cos(a), -Math.sin(a)), ["Idle_Talking_Loop", "laugh", "drink", "listen", "cheer"][Math.random() * 5 | 0]); }
+  for (const [gx, gz] of CROWD.groups.slice(0, LITE ? 2 : 9)) for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.random(); placeAt(take("standing"), gx + Math.cos(a) * .8, gz + Math.sin(a) * .8, Math.atan2(-Math.cos(a), -Math.sin(a)), ["Idle_Talking_Loop", "laugh", "drink", "listen", "cheer"][Math.random() * 5 | 0]); }
   // the band: two more players beside the piper
   for (const [bx, bz, ry] of CROWD.band) placeAt(take("standing"), bx, bz, ry, "clap");
   // servers walking between the tables with trays
@@ -1119,7 +1133,9 @@ function buildCrowd() {
     tray.position.set(.2, 1.15, .32); p.root.add(tray); servers.push(p);
   }
   return {people, ring, servers, update(dt, now) {
+    if (this.freeze) { if (!this.frozen) { this.frozen = true; for (const p of [...ring, ...servers]) p.play("Idle_Loop"); } }
     for (const p of people) p.mixer.update(dt);
+    if (this.freeze) return;
     const R = CROWD.ring;
     ring.forEach((p, i) => { const a = now / 6000 + i / ring.length * Math.PI * 2; p.root.position.copy(wpos(R.x + Math.cos(a) * R.r, 0, R.z + Math.sin(a) * R.r)); p.root.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a)); if (p.action) p.action.timeScale = .75; });
     servers.forEach((p, i) => { const a = now / 9000 * (i % 2 ? 1 : -1) + i * 1.7, rx = 7.5, rz = 8; p.root.position.copy(wpos(3 + Math.cos(a) * rx, 0, Math.sin(a) * rz)); p.root.rotation.y = Math.atan2(-Math.sin(a) * rx * (i % 2 ? 1 : -1), Math.cos(a) * rz * (i % 2 ? 1 : -1)); });
@@ -1138,12 +1154,15 @@ async function weddingFilm() {
     const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
     $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
     await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
-  } else crowd.show();
+  } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
   const cast = {...guests, mikon: PLAYER};
   for (const [k, p] of Object.entries(guests)) NPC[k] = p;
   NPC.mikon = PLAYER; PLAYER.name = "Mikon";
   let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
-  const say = (who, id, text) => skipped ? null : line(who, id, text, "voice");
+  // for testing only: ?debug&from=<words> jumps the film to the first line containing them
+  let fast = new URLSearchParams(location.search).has("debug") && new URLSearchParams(location.search).get("from");
+  const say = (who, id, text, how = "voice") => { if (skipped) return null; if (fast) { if (!text.includes(fast)) return pause(20); fast = null; } return line(who, id, text, how); };
+  const vo = (who, id, text) => say(who, id, text, "vo");
   talking = true; staging = true; document.body.classList.add("talking", "cinema"); $(".cine").classList.add("on");
   PLAYER.setHead(true);
   await fade("black", 10);
@@ -1163,13 +1182,19 @@ async function weddingFilm() {
     mount(PLAYER, "hand_r", basket, V(-.9, 1.32, .02));
     const g0 = performance.now(), from = wpos(CROWD.gate[0], 0, CROWD.gate[1]), to = wpos(-.7, 0, -1.9);
     PLAYER.root.rotation.set(0, -Math.PI / 2, 0); PLAYER.play("walk", .1);
-    let walking = true;
-    (function walk() { if (!walking) return; const u = Math.min(1, (performance.now() - g0) / 11000); PLAYER.root.position.lerpVectors(from, to, u); if (u < 1) requestAnimationFrame(walk); else { PLAYER.play("Idle_Loop"); walking = false; } })();
-    (function follow() { if (!walking) return; const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); camShot.active = true; shot.cur = null; camShot.pos.copy(h).add(V(-1.3, .05, .45)); camShot.look.copy(h).add(V(0, -.05, 0)); requestAnimationFrame(follow); })();
-    await say("mikon", "w_i1", "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.");
+    let walking = true, following = true;
+    (function walk() { if (!walking) return; const u = Math.min(1, (performance.now() - g0) / 10000); PLAYER.root.position.lerpVectors(from, to, u); if (u < 1) requestAnimationFrame(walk); else { PLAYER.play("Idle_Loop"); walking = false; } })();
+    // first over his shoulder as he walks into the party, then round to his face once the crowd is behind him
+    (function follow() { if (!following) return; const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); camShot.active = true; shot.cur = null;
+      const u = (performance.now() - g0) / 10000;
+      if (u < .45) { camShot.pos.copy(h).add(V(1.4, .25, .55)); camShot.look.copy(h).add(V(-6, -.6, -.4)); }
+      else { camShot.pos.copy(h).add(V(-1.25, .05, .6)); camShot.look.copy(h).add(V(0, -.05, 0)); }
+      requestAnimationFrame(follow); })();
+    await vo("mikon", "w_i1", "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.");
+    following = false; walking = false; PLAYER.root.position.copy(to); PLAYER.root.rotation.set(0, .5, 0); PLAYER.play("Idle_Loop");
     if (skipped) return;
     faceShot(cast.lykon, {side: .2}); cast.lykon.play("sittabletalk"); await say("lykon", "w_l0", "Mikon! Over here, I saved you a seat. Wait. Is that fish? You brought fish to a wedding?");
-    walking = false; PLAYER.root.position.copy(to); PLAYER.root.rotation.set(0, -Math.PI / 2, 0); PLAYER.play("Idle_Talking_Loop");
+    PLAYER.play("Idle_Talking_Loop");
     faceShot(PLAYER, {dist: 1, side: .25}); await say("mikon", "w_m0", "Salt fish from Lechaion. The good kind. It's a present.");
     faceShot(cast.kleio, {side: -.2}); cast.kleio.play("sittabletalk"); await say("kleio", "w_a0", "Give that to me before the bride smells it. Sit down, Mikon, have some wine, and try to enjoy yourself for once.");
     basket.parent?.remove(basket);
@@ -1186,7 +1211,7 @@ async function weddingFilm() {
     if (skipped) return;
     for (const k of ["lykon", "kleio", "thea", "nikias"]) cast[k].play("sittable");
     // the goat
-    shot([-.25, 1.3, .5], [-.3, 1.05, -1.02], [-.3, 1.25, .35], [-.3, 1.05, -1.02], 7000); cast.mikon.play("sittabletalk");
+    faceShot(cast.mikon, {side: .35, dist: 1.05, ms: 7000}); cast.mikon.play("sittabletalk");
     await say("mikon", "w_m1", "Lykon. Lykon. Have you heard the one about the goat who wandered into the temple of Zeus?");
     faceShot(cast.lykon, {side: .2}); cast.lykon.play("sittablethink"); await say("lykon", "w_l1", "Mikon, it's your cousin's wedding. Not the goat one. Anything but the goat one.");
     faceShot(cast.mikon, {side: -.18, ms: 9000}); await say("mikon", "w_m2", "So the goat walks right up to the altar, and the priest looks at the goat, and the goat looks at the priest, and the priest says...");
@@ -1194,9 +1219,12 @@ async function weddingFilm() {
     // the olive
     const olive = wedding.olives.children[3]; if (olive) { const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); const from = new THREE.Vector3(); olive.getWorldPosition(from); const t0 = performance.now(); scene.attach(olive);
       (function fly() { const u = Math.min(1, (performance.now() - t0) / 450); olive.position.lerpVectors(from, h.clone().add(V(0, -.06, .07)), u); olive.position.y += Math.sin(u * Math.PI) * .25; if (u < 1) requestAnimationFrame(fly); else olive.visible = false; })(); }
+    PLAYER.expr.hold = {AK_44_MouthSmileLeft: .7, AK_45_MouthSmileRight: .7};
     await say("mikon", "w_m3", "Ha! No, wait, wait, this is the good part, this is the...");
-    cast.mikon.play("choke", .2); sound.cough(); shot([-.6, 1.25, .45], [-.7, 1.1, -1.02], [-.65, 1.2, .2], [-.7, 1.05, -1.02], 4000); await pause(1600);
-    faceShot(cast.lykon, {side: .25, dist: .7}); cast.lykon.play("sittablethink"); await say("lykon", "w_l2", "Mikon? Mikon, are you all right? You've gone a very strange colour.");
+    PLAYER.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .35};
+    cast.mikon.play("choke", .2); sound.cough(); sound.party(false); crowd.freeze = true; shot([-.6, 1.25, .45], [-.7, 1.1, -1.02], [-.65, 1.2, .2], [-.7, 1.05, -1.02], 4000); await pause(1600);
+    stage(cast.lykon, [.15, -1.75, -.6]); cast.lykon.play("Idle_Talking_Loop"); cast.lykon.expr.hold = {AK_03_BrowInnerUp: .9};
+    faceShot(cast.lykon, {side: .25, dist: .8}); await say("lykon", "w_l2", "Mikon? Mikon, are you all right? You've gone a very strange colour.");
     // everyone up
     stage(cast.demeas, [-1.2, -1.75, .3]); cast.demeas.play("Idle_Talking_Loop"); stage(cast.nikias, [-.2, -1.75, -.3]); cast.nikias.play("Idle_Talking_Loop");
     faceShot(cast.kleio, {side: -.25, dist: .75}); cast.kleio.play("sittabletalk"); sound.cough(); await say("kleio", "w_a2", "He's choking! Somebody hit him on the back! Not like that, Demeas, harder!");
@@ -1205,15 +1233,21 @@ async function weddingFilm() {
     if (skipped) return;
     // through his eyes: the faces leaning in, the sound going, the light going
     const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h);
-    camShot.active = true; camShot.snap = true; shot.cur = {}; camShot.pos.copy(h).add(V(0, .02, .08)); camShot.look.copy(wpos(-.6, 1.55, 1.2));
+    // the people he loves, gathered round, looking down at him
+    const eye = h.clone().add(V(0, -.3, .1)), ring = [["kleio", -.45], ["thea", .15], ["lykon", .7], ["nikias", -1.1]];
+    for (const [k, a] of ring) { const p = cast[k], at = eye.clone().add(V(Math.sin(a) * .85, 0, Math.cos(a) * .85)); p.root.position.set(at.x, 0, at.z); p.root.rotation.set(0, Math.atan2(eye.x - at.x, eye.z - at.z), 0); p.root.rotateX(.42); p.play("listen"); p.expr.hold = {AK_03_BrowInnerUp: 1}; }
+    camShot.active = true; camShot.snap = true; shot.cur = {}; camShot.pos.copy(eye); camShot.look.copy(eye).add(V(.2, .62, .85));
+    { const t0 = performance.now(), id = shot.cur; (function sway() { if (shot.cur !== id) return; const u = (performance.now() - t0) / 1000; camShot.look.copy(eye).add(V(.2 + Math.sin(u * .7) * .18, .62 - u * .03, .85)); requestAnimationFrame(sway); })(); }
     PLAYER.setHead(false); sound.setMuffle(500, 3); sound.heart(); sound.party(false);
-    $("#view").style.transition = "filter 6s"; $("#view").style.filter = "blur(6px) saturate(.5) brightness(.7)"; $("#pov").classList.add("on");
-    await say("mikon", "w_vo1", "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.");
+    povDim = true; { const t0 = performance.now(); (function dimming() { if (!povDim) return; const u = Math.min(1, (performance.now() - t0) / 9000); paint.uniforms.blur.value = u; paint.uniforms.dim.value = u * .9; if (u < 1) requestAnimationFrame(dimming); })(); }
+    await say("kleio", "w_a5", "Mikon? Mikon, look at me. Stay with us. Somebody get water!");
+    await say("thea", "w_t3", "Mikon, please. Please.");
+    await vo("mikon", "w_vo1", "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.");
     await fade("black", 2200);
-    $("#view").style.transition = ""; $("#view").style.filter = ""; $("#pov").classList.remove("on"); sound.setMuffle(20000, .5);
+    povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0; sound.setMuffle(20000, .5);
     if (skipped) return;
     // the next night: the same courtyard, cleared, and Mikon laid out on the table
-    wedding.mood("funeral"); PLAYER.setHead(true); crowd.hide();
+    wedding.mood("funeral"); PLAYER.setHead(true); crowd.hide(); for (const k of ["kleio", "thea", "lykon", "nikias"]) cast[k].expr.hold = {};
     PLAYER.root.position.copy(wpos(.55, .86, 0)); PLAYER.root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(V(0, 0, -1), V(-1, 0, 0), V(0, 1, 0)));
     PLAYER.play("Idle_Loop", 0); PLAYER.action && (PLAYER.action.timeScale = 0); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: 1, AK_10_EyeBlinkRight: 1};
     for (const k of ["lykon", "nikias", "piper", "dancer"]) cast[k].root.visible = false;
@@ -1226,13 +1260,13 @@ async function weddingFilm() {
     faceShot(cast.demeas, {side: .25, dist: 1.1}); cast.demeas.play("Idle_Talking_Loop"); await say("demeas", "w_d4", "Well, the lamb's going cold now. He'd want us to eat. He loved lamb, the poor man.");
     cast.kleio.play("walk"); cast.demeas.play("walk");
     faceShot(cast.thea, {side: .15, dist: .9, ms: 7000}); await say("thea", "w_t2", "He never even finished the joke. I wanted to know what the priest said.");
-    shot([-1.05, 1.5, .1], [-1.05, .86, 0], [-1.05, 3.2, .2], [-1.05, .86, 0], 9000); await say("mikon", "w_vo2", "Nobody put a coin under my tongue for the ferryman. They were grieving, and they were busy, and nobody thought of it.");
+    shot([-1.05, 1.5, .1], [-1.05, .86, 0], [-1.05, 3.2, .2], [-1.05, .86, 0], 9000); await vo("mikon", "w_vo2", "Nobody put a coin under my tongue for the ferryman. They were grieving, and they were busy, and nobody thought of it.");
     await fade("black", 2000);
   };
   await reel();
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);
-  sound.party(false); sound.setMuffle(20000, .2); $("#view").style.filter = ""; $("#pov").classList.remove("on");
+  sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
   setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false; crowd?.hide();
   for (const k of Object.keys(guests)) delete NPC[k];
   PLAYER.root.quaternion.identity(); PLAYER.root.position.set(-20.4, 0, 16.05); PLAYER.root.rotation.set(0, Math.PI, 0);
@@ -1255,15 +1289,15 @@ async function weddingFilm() {
   }
   H.face = true; me.met.hermes = true; me.stage = 1; greeted = true; hermesLeaves();
   if (!skipped) {
-    shot([-20, 2, 13.8], [-20.4, 1, 16.05], [-24, 9, 9], [-14, 1, 22], 14000);
-    await say("mikon", "v2_i5", "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting.");
-    await say("mikon", "v2_i6", "This is the story of one of them.");
+    shot([-20, 2, 13.8], [-20.4, 1, 16.05], [-24, 9, 9], [-14, 1, 22], 14000, true);
+    await vo("mikon", "v2_i5", "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting.");
+    await vo("mikon", "v2_i6", "This is the story of one of them.");
   }
   delete NPC.mikon; PLAYER.expr.hold = {};
   const card = $("#titlecard"); card.querySelector("small").textContent = "Chapter I"; card.querySelector("b").textContent = "The Coin";
   card.classList.add("on"); await pause(skipped ? 900 : 2800); card.classList.remove("on");
   await fade("clear", 600);
-  me.pos.set(-20.4, 0, 17.4); me.yaw = Math.PI; me.pitch = -.05;
+  me.pos.set(-20.4, 0, 17.4); me.yaw = -Math.PI / 2; me.pitch = -.05;
   $(".cine").classList.remove("on"); staging = false; PLAYER.setHead(false); PLAYER.play("Idle_Loop", 0);
   document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
   paintGoal();
