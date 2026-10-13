@@ -1,3 +1,7 @@
 Rain and Snow character rigs by Blender Studio (studio.blender.org), licensed CC-BY 4.0
 (https://creativecommons.org/licenses/by/4.0/). Modified: exported for the web, modern clothes removed,
 facial expressions baked to shape keys, colours baked to textures.
+
+Cerberus (cerberus.glb) is based on "Doberman Walk Cycle" (https://sketchfab.com/3d-models/doberman-walk-cycle-aeb5a68a63eb4033847f0c9ecd6704cb)
+by joshpurple (https://sketchfab.com/joshpurple), licensed CC-BY 4.0. Modified: posed from one frame of the walk, given two
+more heads and a skeleton (tools/blender/cerberus.py), compressed for the web.

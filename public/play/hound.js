@@ -102,7 +102,58 @@ export function makeHound(scene) {
   const smoke = new THREE.Points(sg, new THREE.PointsMaterial({map: smokeTex, size: 1.1, transparent: true, depthWrite: false, opacity: .6}));
   scene.add(smoke);
   scene.add(g);
-  return {g, body, legs, heads, tailBits, smoke, life, N, inner, phase: 0};
+  const h = {g, body, legs, heads, tailBits, smoke, life, N, inner, phase: 0};
+  h.rest = new Map(); g.traverse(o => { if (o.isGroup || o === g) h.rest.set(o, o.quaternion.clone()); }); // (its pose as built, for the rigged dog to measure against)
+  return h;
+}
+
+/* ---------- the real dog ----------
+   Cerberus proper: a sculpted Doberman ("Doberman Walk Cycle" by joshpurple, CC-BY 4.0) given three heads and a
+   skeleton in Blender (tools/blender/cerberus.py). The shapes above stay as an invisible puppet that the animation
+   moves; every frame each bone of the real dog turns the way its puppet part has turned from its rest pose. */
+const PAIRS = [["body", "hips"], ...[0, 1, 2].flatMap(i => [[`neck${i}`, `neck${"LCR"[i]}`], [`head${i}`, `head${"LCR"[i]}`]]),
+  ...["F", "B"].flatMap(f => [1, -1].flatMap(s => ["upper", "mid", "low"].map(n => [`leg${f}${s}${n}`, `${f}${s > 0 ? "R" : "L"}_${n}`]))),
+  ["tail0", "tail1"], ["tail1", "tail2"]];
+export function rigHound(h, gltf, {scale = 2} = {}) {
+  const rig = gltf.scene; rig.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; } });
+  const wrap = new THREE.Group(); wrap.rotation.y = Math.PI / 2; wrap.scale.setScalar(scale); wrap.add(rig); // (the model faces +z; the puppet, +x)
+  // the puppet parts by name
+  const P = {body: h.body, tail0: h.tailBits[0], tail1: h.tailBits[1]};
+  h.heads.forEach((hd, i) => { P["neck" + i] = hd.neck; P["head" + i] = hd.head; });
+  h.legs.forEach(l => { const k = `leg${l.front ? "F" : "B"}${l.side}`; P[k + "upper"] = l.upper; P[k + "mid"] = l.mid; P[k + "low"] = l.low; });
+  // measure both standing still: the puppet in its idle stance (its legs carry their own bends), the dog as modelled
+  const now = new Map(); h.rest.forEach((q, o) => now.set(o, o.quaternion.clone()));
+  const seeds = h.heads.map(hd => hd.seed); h.heads.forEach(hd => hd.seed = 0);
+  const gp = h.g.position.clone(), gr = h.g.rotation.clone();
+  animateHound(h, {mode: "idle", speed: 0, x: 0, z: 0, yaw: Math.PI / 2, hunting: false}, 0, 0);
+  h.heads.forEach((hd, i) => { hd.seed = seeds[i]; hd.neck.rotation.y = hd.yaw; });
+  h.g.position.copy(gp); h.g.rotation.copy(gr);
+  h.g.add(wrap); h.g.updateMatrixWorld(true);
+  const wq = o => o.getWorldQuaternion(new THREE.Quaternion()), bone = n => rig.getObjectByName(n);
+  h.rigPairs = PAIRS.map(([p, b]) => P[p] && bone(b) ? {d: P[p], b: bone(b), d0i: wq(P[p]).invert(), b0: wq(bone(b))} : null).filter(Boolean);
+  now.forEach((q, o) => o.quaternion.copy(q));
+  // the puppet is no longer drawn; its lights and smoke stay
+  h.g.traverse(o => { if (o.isMesh && !rig.getObjectById(o.id)) o.visible = false; });
+  // a spiked bronze collar on each neck
+  const bronze = new THREE.MeshStandardMaterial({color: 0x8a5a2a, roughness: .35, metalness: .85});
+  for (const n of ["neckL", "neckC", "neckR"]) {
+    const b = bone(n); if (!b) continue;
+    const c = new THREE.Group(), ring = new THREE.Mesh(new THREE.TorusGeometry(.115, .014, 10, 32), bronze); ring.rotation.x = Math.PI / 2; c.add(ring);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2, sp = new THREE.Mesh(new THREE.ConeGeometry(.01, .045, 6), bronze); sp.position.set(Math.cos(a) * .127, 0, Math.sin(a) * .127); sp.lookAt(Math.cos(a) * 2, 0, Math.sin(a) * 2); sp.rotateX(Math.PI / 2); c.add(sp); }
+    c.position.set(0, (b.children[0]?.position.length() || .2) * .35, 0); c.rotation.x = Math.PI / 2 * 0; b.add(c);
+  }
+  h.wrap = wrap;
+}
+function followPuppet(h) {
+  if (!h.rigPairs) return;
+  h.g.updateMatrixWorld(true);
+  const want = new THREE.Quaternion(), pw = new THREE.Quaternion(), dq = new THREE.Quaternion();
+  for (const p of h.rigPairs) {
+    p.d.getWorldQuaternion(dq);
+    want.copy(dq).multiply(p.d0i).multiply(p.b0);
+    p.b.parent.getWorldQuaternion(pw); p.b.quaternion.copy(pw.invert().multiply(want)); p.b.updateMatrixWorld(true);
+  }
+  h.wrap.position.y = (h.body.position.y - 1.32) * .8; // the body's rise and fall
 }
 
 // mode: "sleep" | "idle" | "walk" | "run" ; speed in m/s ; x,z,yaw = where it is and which way it faces
@@ -136,7 +187,7 @@ export function animateHound(h, {mode, speed, x, z, yaw, hunting}, dt, now) {
     hd.neck.rotation.y = hd.yaw + Math.sin(t * 1.7 + i) * .2;
     hd.head.rotation.z = hunting ? .25 : 0;
     const open = hunting ? Math.max(0, Math.sin(t * 6)) * .55 : Math.max(0, Math.sin(t * 1.1)) * .12;
-    hd.jaw.rotation.z = -open; hd.mouthGlow.visible = open > .1;
+    hd.jaw.rotation.z = -open; hd.mouthGlow.visible = open > .1 && !h.rigPairs; // (the real dog has no puppet mouth to glow)
   }
   h.inner.intensity = sleeping ? .4 : 2.5 + Math.sin(now / 90) * .6;
   const pos = h.smoke.geometry.attributes.position;
@@ -147,4 +198,5 @@ export function animateHound(h, {mode, speed, x, z, yaw, hunting}, dt, now) {
   }
   pos.needsUpdate = true;
   h.smoke.material.opacity = sleeping ? .35 : .65;
+  followPuppet(h);
 }
