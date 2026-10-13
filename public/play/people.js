@@ -755,11 +755,13 @@ function sleeveless(p, B, body, mat) {
 }
 function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gilt = true, wreath} = {}) {
   p.noNeckband = true; if (style !== "bare") p.mantle = drapeCloth(accent ?? (style === "plain" ? 0x6b5a44 : color), "jersey");
+  // a tunic sewn and settled in Blender (tools/blender/garments.py), when there is one: real linen, real folds
+  if (p.clothAsset && style !== "bare") p.cloth = {asset: p.clothAsset, color};
   const cl = drapeCloth(color, "jersey"), ac = drapeCloth(accent ?? color, "jersey"), low = style === "bare";
   // below: long and loose to the ankle
-  if (p.cover) p.cover.value.set(.66, low ? .92 : .99); // the robe covers the thighs: they're not drawn, so they can't push through it
-  const skirt = drape(body, {from: low ? .95 : 1.07, to: .6, mat: low ? ac : cl, off: .03, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
-  put(p, skirt); if (SEATED) seatedFall(p, B, body, low ? ac : cl);
+  if (p.cover) p.cover.value.set(p.cloth ? .58 : .66, p.cloth ? 1.33 : low ? .92 : .99); // the robe covers the thighs (the tunic, the torso too): not drawn, they can't push through it
+  if (!p.cloth) { const skirt = drape(body, {from: low ? .95 : 1.07, to: .6, mat: low ? ac : cl, off: .03, flare: .1, folds: .035, weightsAt: skirtWeights(B, .6), hem: a => Math.max(0, -Math.sin(a)) * .03});
+    put(p, skirt); if (SEATED) seatedFall(p, B, body, low ? ac : cl); }
   if (low) {
     put(p, drape(body, {from: .99, to: .92, mat: ac, off: .045, flare: 0, folds: .03, weightsAt: boneWeights(B, [["pelvis", 1]])})); // rolled at the waist
     if (gilt) {
@@ -773,7 +775,7 @@ function mensDrape(p, B, body, {color = 0xefe7d6, accent, style = "himation", gi
         {mat: ac, exact: true, off: .012, smooth: 8, clip: `b.y > 1.38 + .25 * b.x * b.x * 6. && b.y < 1.5`})); // a rag knotted round the neck
   } else {
     // above: sleeveless with a boat neck, drawn in rings around the torso (so it never copies the body's holes)
-    put(p, sleeveless(p, B, body, cl));
+    if (!p.cloth) put(p, sleeveless(p, B, body, cl));
     if (style === "himation") {
       const line = "(1.47 + 1.7 * (b.x - .13))"; // the sash: from the left shoulder down across to the right hip
       put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || (ARMS.test(d) && x > 0 && x < .3)) && y > .95 && y < 1.56,
@@ -1032,7 +1034,9 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   const neck = toon && !female ? "b.y < 1.5 && !(b.z > .0 && pow(b.x / .075, 2.) + pow((b.y - 1.5) / .05, 2.) < 1.)" : NECKLINE_HIGH;
   LONG = true; WRIST = wrist + .055; SEATED = seated; NECKLINE = neck; const keepF = [FNECK, FUPPER]; FNECK = neck; FUPPER = UPPER;
   TOONDRESS = toon;
+  person.clothAsset = toon && !female && !seated ? ASSETS.toon_chiton_short : null; // (seated, the knees came through its skirt: a seated settling is still to come)
   try { look.dress(person, study(tailor), tailor); } finally { TOONDRESS = false; LONG = false; WRIST = .675; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
+  if (person.cloth) clothOn(person, person.cloth.asset, person.cloth.color);
   if (toon && !female && !person.noNeckband) { // the animated man's body ends in a ragged edge where his modern collar was: a neckband in the tunic's colour covers it
     let tunic = null; root.traverse(o => { if (!tunic && o.userData.garment && o.userData.own && o.userData.top > 1.3) tunic = o; });
     if (tunic) put(person, drape(tailor, {from: 1.495, to: 1.39, mat: cloth(tunic.material.color.getHex()), off: .011, flare: .004, folds: 0, step: .02,
@@ -1082,6 +1086,20 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   if (toon && SHAPE[id]) shapeBody(root, bones, SHAPE[id], seated);
   scene.add(root);
   return person;
+}
+
+// A garment sewn and settled in Blender, put on: its skin bound to this person's own bones (found by name), with the
+// bind it was settled in, which is this body's rest pose, so it follows every animation, every body shape, every fix.
+function clothOn(p, asset, color) {
+  let sm = null; asset.scene.traverse(o => { if (o.isSkinnedMesh && !sm) sm = o; }); if (!sm) return;
+  const byName = {}; p.root.traverse(o => { if (o.isBone || !byName[o.name]) byName[o.name] = o; }); /* (bones first; the rig's own root node can be a joint too) */
+  const bones = sm.skeleton.bones.map(b => byName[b.name]); if (bones.some(b => !b)) { console.warn("cloth: bones missing"); return; }
+  const mat = drapeCloth(color, "jersey").clone(); mat.side = THREE.DoubleSide; mat.normalMap = null; /* (the folds are real now: the painted ones only striped it) */
+  const mesh = new THREE.SkinnedMesh(sm.geometry, mat); p.bones.pelvis.parent.add(mesh);
+  mesh.position.copy(sm.position); mesh.quaternion.copy(sm.quaternion); mesh.scale.copy(sm.scale); mesh.updateMatrixWorld(true);
+  mesh.bind(new THREE.Skeleton(bones, sm.skeleton.boneInverses.map(m => m.clone())), sm.bindMatrix.clone());
+  mesh.castShadow = mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.userData.garment = mesh.userData.own = true; mesh.userData.top = 1.45;
+  return mesh;
 }
 
 // Body shapes from the character sheets: everyone is built on one of two animated bodies, so each is resized by

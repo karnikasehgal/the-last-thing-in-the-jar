@@ -542,10 +542,10 @@ async function loadAssets(progress) {
   // the animated-film cast: one character model each for the women and the men, dressed and coloured per person
   for (const n of REAL) list.splice(list.indexOf("rb/" + n), 1);
   for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
-  list.push("toon/rain", "toon/snow", "toon/cerberus", ...PROPS.map(n => "props/" + n));
+  list.push("toon/rain", "toon/snow", "toon/cerberus", "toon/chiton_short", ...PROPS.map(n => "props/" + n));
   let done = 0;
   await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
-  prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow);
+  prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow); prepareToon(ASSETS.toon_chiton_short); // (the tunic's bones renamed as the body's are)
   for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
   for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
   for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
