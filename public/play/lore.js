@@ -6,41 +6,41 @@ const $ = s => document.querySelector(s);
 
 export const TRINKETS = [
   // the near bank
-  {id: "obol", at: [-24, 12.5], kind: "coin", name: "An obol of Athens",
+  {id: "obol", hide: "water", trial: {"kind": "timing", "title": "A coin in the shallows", "hint": "The current keeps carrying it past your fingers. Press Space, E or tap when your hand is over it.", "hits": 3, "speed": 1.1}, at: [-24, 23.4], kind: "coin", name: "An obol of Athens",
     text: "A small silver coin with Athena's owl on it. Families put one in the mouth of the dead to pay the ferryman. Archaeologists find them in some graves, not most. This one wasn't enough for anyone.",
     src: "Aristophanes, Frogs; burials at Sicyon and Athens"},
-  {id: "lekythos", at: [-14, 7], kind: "jar", name: "A white oil flask",
+  {id: "lekythos", hide: "urn", trial: {"kind": "sequence", "title": "A sealed funeral urn", "hint": "The wax seal is stamped with signs. Watch the order they glow in, then press them back.", "length": 4}, at: [-14, 7], kind: "jar", name: "A white oil flask",
     text: "A lekythos: a slim jar of oil for the grave, painted on a white ground. Some show Charon waiting in his boat, or Hermes leading a woman down to him. Whoever left this one painted the ferryman smiling. Nobody has seen him smile.",
     src: "Athenian white-ground lekythoi, 5th century BC (e.g. the Sabouroff Painter)"},
-  {id: "knucklebones", at: [21, 15], kind: "bones", name: "Five knucklebones",
+  {id: "knucklebones", hide: "pouch", trial: {"kind": "timing", "title": "Knucklebones", "hint": "Toss and catch, the way Greek children played. Catch them as they come down into the gold.", "hits": 4, "speed": 1.25, "width": 0.2}, at: [21, 15], kind: "bones", name: "Five knucklebones",
     text: "Astragaloi: sheep's ankle bones, used as dice and as a game like jacks. They turn up in children's graves. Somebody down here is still playing.",
     src: "Children's burials across Greece; the game is in Pausanias 10.30"},
-  {id: "curse", at: [40, 6.5], kind: "scroll", name: "A rolled lead curse",
+  {id: "curse", hide: "crack", trial: {"kind": "timing", "title": "Something rolled up in a crack", "hint": "It is soft old lead. Work it free a little at a time without tearing it.", "hits": 3, "speed": 0.8, "width": 0.12}, at: [40, 6.5], kind: "scroll", name: "A rolled lead curse",
     text: "A katadesmos: a thin sheet of lead with a curse scratched into it, rolled up, pierced with a nail and dropped into a grave so the dead would deliver it below. This one asks the gods of the Underworld to bind the tongue of a man named Kallias so he loses his court case. It's polite about it.",
     src: "Curse tablets from the Athenian Kerameikos, 5th to 4th century BC"},
-  {id: "string", at: [9, 20.5], kind: "string", name: "A broken lyre string",
+  {id: "string", hide: "stone", trial: {"kind": "sequence", "title": "A broken string, and a tune", "hint": "Someone left a melody here. Listen, then play it back on the five notes.", "signs": ["·", "··", "···", "····", "·····"], "length": 5}, at: [9, 20.5], kind: "string", name: "A broken lyre string",
     text: "Gut, twisted fine, snapped near the peg. Someone has played very hard here, and very recently.",
     src: "Foreshadowing. The lyre is in Virgil, Georgics 4, and Ovid, Metamorphoses 10"},
-  {id: "seikilos", at: [-33, 14], kind: "stone", name: "A stone with a song on it",
+  {id: "seikilos", hide: "open", trial: {"kind": "sequence", "title": "The song on the stone", "hint": "Musical signs are carved above the words. Play them back in order.", "signs": ["Ι", "Ζ", "Κ", "Ο", "Χ"], "length": 5}, at: [-33, 14], kind: "stone", name: "A stone with a song on it",
     text: "\"While you live, shine. Don't grieve at all. Life is short, and time takes what it's owed.\" The words are carved with musical notes above them: the oldest complete song that survives anywhere, from a grave in Asia Minor. A man named Seikilos had it cut for someone.",
     src: "The Seikilos epitaph, 1st century AD (National Museum of Denmark)"},
   // the far bank
-  {id: "tablet", at: [-6, 92], kind: "gold", name: "A gold leaf, folded small",
+  {id: "tablet", hide: "urn", trial: {"kind": "riddle", "title": "A voice from inside the jar", "hint": "The dead were buried with words to say to the guards.", "question": "\"Who are you?\"", "answers": ["I am a child of Earth and starry Heaven", "I am a king, and my father was a king", "I am nobody, and I came from nowhere"]}, at: [-6, 92], kind: "gold", name: "A gold leaf, folded small",
     text: "Instructions for the dead, buried with them. \"To the left of the House of Hades you will find a spring, with a white cypress beside it. Don't go near it. Further on is cold water flowing from the Lake of Memory. Tell the guards: I am a child of Earth and starry Heaven. Give me water.\"",
     src: "The Petelia gold tablet, 4th century BC (British Museum); also Hipponion and Thurii"},
-  {id: "asphodel", at: [10, 98], kind: "flower", name: "Asphodel",
+  {id: "asphodel", hide: "flower", trial: {"kind": "timing", "title": "Asphodel", "hint": "The stems are brittle. Pull it at exactly the right moment, or it snaps.", "hits": 2, "speed": 1.0, "width": 0.12}, at: [10, 98], kind: "flower", name: "Asphodel",
     text: "A tall grey-white flower with star-shaped petals. Homer's dead walk through a whole meadow of it. It grows on poor ground and looks like nothing much, which seems to be the point.",
     src: "Homer, Odyssey 11.539 and 24.13"},
-  {id: "narcissus", at: [-14, 112], kind: "flower", name: "A narcissus",
+  {id: "narcissus", hide: "flower", trial: {"kind": "sequence", "title": "Persephone's flower", "hint": "It closes when anyone comes near. Touch the petals in the order they open.", "signs": ["❀", "✿", "❁", "✾", "❃"], "length": 4}, at: [-14, 112], kind: "flower", name: "A narcissus",
     text: "The flower Earth grew to tempt a girl in a meadow. Persephone reached for it, the ground opened, and Hades came up in his chariot. She has kept one by her door ever since. Make of that what you will.",
     src: "Homeric Hymn to Demeter, 8 to 18"},
-  {id: "seeds", at: [8, 121], kind: "seeds", name: "Six pomegranate seeds",
+  {id: "seeds", hide: "chest", trial: {"kind": "riddle", "title": "A little box, carved with a pomegranate", "hint": "The lid has a question cut into it.", "question": "\"How many seeds did the queen eat, in the later stories?\"", "answers": ["Six", "Three", "Twelve"]}, at: [8, 121], kind: "seeds", name: "Six pomegranate seeds",
     text: "Eat anything in the Underworld and you belong to it. Persephone ate pomegranate seeds, so every year she has to come back for part of it. The stories argue about how many. The hymn says one; later tellers say six.",
     src: "Homeric Hymn to Demeter 371 to 413; Ovid, Metamorphoses 5"},
-  {id: "fur", at: [14, 74.5], kind: "fur", name: "A tuft of lion's fur",
+  {id: "fur", hide: "crack", trial: {"kind": "timing", "title": "Fur caught on the rock", "hint": "The dog is close. Tease it free, quietly.", "hits": 3, "speed": 1.3, "width": 0.13}, at: [14, 74.5], kind: "fur", name: "A tuft of lion's fur",
     text: "Coarse, tawny, caught on the rock by the dog's cave. Only one visitor down here wears a lion. He'll be back for the dog.",
     src: "Foreshadowing: Heracles' twelfth labour, Apollodorus 2.5.12"},
-  {id: "bough", at: [-20, 86], kind: "leaf", name: "A golden leaf",
+  {id: "bough", hide: "falling", trial: {"kind": "timing", "title": "A golden leaf, falling", "hint": "It drifts down from the dark. Catch it.", "hits": 2, "speed": 1.5, "width": 0.12}, at: [-20, 86], kind: "leaf", name: "A golden leaf",
     text: "A single leaf of gold that grew on a tree. The Sibyl told Aeneas he couldn't come down here without the branch it broke from, and that if it was meant for him it would come away easily. This one fell off on its own.",
     src: "Foreshadowing: Virgil, Aeneid 6.136 to 148"}
 ];
@@ -91,18 +91,42 @@ function model(kind) {
   const halo = new THREE.Mesh(new THREE.SphereGeometry(.22, 12, 8), glint); halo.position.y = kind === "stone" ? .6 : .12; halo.userData.halo = true; g.add(halo);
   return g;
 }
+// Where a thing is hidden. You see the hiding place, not the thing.
+function hidingPlace(kind) {
+  const g = new THREE.Group(), M = (c, o = {}) => new THREE.MeshStandardMaterial({color: c, roughness: .8, ...o});
+  if (kind === "urn") { const pts = [[0, 0], [.14, 0], [.2, .12], [.24, .32], [.2, .5], [.1, .6], [.09, .68], [.13, .72], [0, .72]].map(([x, y]) => new THREE.Vector2(x, y)); g.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 20), M(0x9a5a34))); const band = new THREE.Mesh(new THREE.TorusGeometry(.235, .012, 6, 24), M(0x1a1410)); band.rotation.x = Math.PI / 2; band.position.y = .32; g.add(band); }
+  else if (kind === "chest") { const b = new THREE.Mesh(new THREE.BoxGeometry(.5, .28, .34), M(0x5a3c24)); b.position.y = .14; g.add(b); const lid = new THREE.Mesh(new THREE.BoxGeometry(.52, .06, .36), M(0x4a301c)); lid.position.y = .31; g.add(lid); }
+  else if (kind === "pouch") { const p = new THREE.Mesh(new THREE.SphereGeometry(.11, 10, 8), M(0x7a5a3a)); p.scale.y = .8; p.position.y = .1; g.add(p); }
+  else if (kind === "stone") { const st = new THREE.Mesh(new THREE.DodecahedronGeometry(.32, 0), M(0x5a524a)); st.position.y = .2; st.scale.y = .7; g.add(st); }
+  else if (kind === "crack") { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(.6, 0), M(0x3a322c)); r.position.y = .45; g.add(r); const c = new THREE.Mesh(new THREE.BoxGeometry(.04, .3, .3), M(0x0a0806)); c.position.set(.45, .55, 0); g.add(c); }
+  // a glint now and then, only when you're close enough to notice it
+  const glint = new THREE.Mesh(new THREE.SphereGeometry(.035, 6, 4), new THREE.MeshBasicMaterial({color: 0xfff1c0, transparent: true, opacity: 0}));
+  glint.position.y = kind === "urn" ? .74 : kind === "crack" ? .6 : kind === "water" ? .02 : .25; glint.userData.glint = true; g.add(glint);
+  return g;
+}
 export function placeTrinkets(scene, groundY = () => 0) {
   const list = [];
   for (const t of TRINKETS) {
     if (save.get().found.includes(t.id)) continue;
-    const g = model(t.kind); g.position.set(t.at[0], groundY(t.at[0], t.at[1]), t.at[1]); g.rotation.y = Math.random() * 6;
+    const g = new THREE.Group(); g.position.set(t.at[0], groundY(t.at[0], t.at[1]) + (t.hide === "water" ? -.28 : 0), t.at[1]); g.rotation.y = Math.random() * 6;
+    const thing = model(t.kind); thing.children.forEach(c => { if (c.userData.halo) c.visible = false; });
+    // things in the open (flowers, the stone, the falling leaf) stay visible; the rest are inside something
+    if (["urn", "chest", "pouch", "stone", "crack", "water"].includes(t.hide)) { thing.visible = false; g.add(hidingPlace(t.hide)); }
+    else g.add(hidingPlace("none"));
+    g.add(thing); g.userData.thing = thing;
     scene.add(g); list.push({t, g});
   }
   return {
     list,
-    near(x, z, r = 1.7) { return list.find(o => !o.taken && Math.hypot(o.g.position.x - x, o.g.position.z - z) < r); },
+    near(x, z, r = 1.8) { return list.find(o => !o.taken && Math.hypot(o.g.position.x - x, o.g.position.z - z) < r); },
     take(o) { o.taken = true; o.g.parent?.remove(o.g); save.find(o.t.id); },
-    animate(now) { for (const o of list) if (!o.taken) for (const c of o.g.children) if (c.userData.halo) { c.material.opacity = .25 + Math.sin(now / 400 + o.t.at[0]) * .15; c.scale.setScalar(1 + Math.sin(now / 500) * .08); } }
+    reveal(o) { o.g.userData.thing.visible = true; },
+    animate(now, px, pz) {
+      for (const o of list) if (!o.taken) {
+        const d = Math.hypot(o.g.position.x - px, o.g.position.z - pz), k = Math.max(0, 1 - d / 7);
+        for (const c of o.g.children) c.traverse?.(m => { if (m.userData.glint) m.material.opacity = k * Math.max(0, Math.sin(now / 260 + o.t.at[0] * 3)) ** 8; });
+      }
+    }
   };
 }
 

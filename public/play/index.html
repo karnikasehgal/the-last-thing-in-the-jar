@@ -190,6 +190,29 @@ body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint
 .cine.on{display:block}
 .cine button{position:absolute;right:22px;bottom:calc(12.5vh + 14px);pointer-events:auto;font-family:var(--sc);letter-spacing:.16em;font-size:12px;color:rgba(242,232,213,.5);padding:6px 8px}
 .cine button:hover{color:#fff}
+#trial{position:fixed;left:0;right:0;bottom:0;z-index:15;display:none;flex-direction:column;align-items:center;padding:26px 20px calc(26px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.88) 30%);text-align:center}
+#trial.on{display:flex}
+#trial h3{font-family:var(--fell);font-weight:400;font-size:clamp(22px,2.6vw,30px)}
+#trial .thint{font-style:italic;color:var(--dim);font-size:15px;max-width:620px;margin:4px 0 14px}
+#trial .tbar{position:relative;width:min(560px,86vw);height:14px;background:rgba(242,232,213,.12)}
+#trial .tbar .win{position:absolute;top:0;bottom:0;background:rgba(214,178,94,.55);box-shadow:0 0 14px rgba(214,178,94,.5)}
+#trial .tbar .needle{position:absolute;top:-6px;bottom:-6px;width:2px;margin-left:-1px;background:#fff}
+#trial .tcount{margin-top:10px;font-family:var(--sc);letter-spacing:.14em;font-size:12px;color:var(--dim)}
+#trial .tsigns{display:flex;gap:clamp(4px,1.6vw,12px);flex-wrap:wrap;justify-content:center}
+#trial .tsigns button{width:clamp(44px,12vw,54px);height:clamp(44px,12vw,54px);font-family:var(--fell);font-size:24px;color:rgba(242,232,213,.7);border-bottom:1px solid rgba(242,232,213,.25);transition:.15s}
+#trial .tsigns button.lit{color:#fff;text-shadow:0 0 16px var(--gold);border-color:var(--gold)}
+#trial .tq{font-size:20px;font-style:italic;margin-bottom:10px}
+#trial .tans{display:flex;flex-direction:column;gap:6px}
+#trial .tans button{font-size:17px;color:rgba(242,232,213,.7);padding:4px}
+#trial .tans button:hover{color:#fff}
+#trialQuit{margin-top:14px;font-family:var(--sc);letter-spacing:.14em;font-size:11px;color:rgba(242,232,213,.4)}
+#trial.won h3{color:var(--gold)} #trial.lost h3{color:#c25a4a}
+#trial.shake .tbar{animation:miss .3s}
+#artshot{position:fixed;inset:0;z-index:7;background:#000;opacity:0;transition:opacity .8s;pointer-events:none;overflow:hidden}
+#artshot.on{opacity:1}
+#artshot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:sepia(.15) brightness(.85);transform:scale(1.04)}
+#artshot img.go{animation:kenburns 9s ease-out forwards}
+@keyframes kenburns{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.16) translate(-2%,-1.5%)}}
 #titlecard{position:fixed;inset:0;z-index:16;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 1.1s;background:radial-gradient(ellipse at center,rgba(0,0,0,.2),rgba(0,0,0,.7))}
 #titlecard.on{opacity:1}
 #titlecard small{font-family:var(--sc);letter-spacing:.32em;font-size:13px;color:rgba(242,232,213,.6)}
@@ -226,6 +249,8 @@ body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint
 <div class="skiphint">click to skip a line</div>
 <div class="cine"><button id="skipIntro">skip</button></div>
 <div id="titlecard"><small></small><b></b></div>
+<div id="artshot"><img alt=""></div>
+<div id="trial"><h3></h3><div class="thint"></div><div class="tbody"></div><button id="trialQuit">walk away</button></div>
 
 <div class="touch" id="touch"><div class="stick"><div class="knob"></div></div><div class="act"><button id="tF" hidden>lyre</button><button id="tE">use</button><button id="tQ">drop</button></div></div>
 

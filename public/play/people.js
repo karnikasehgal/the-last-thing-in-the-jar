@@ -125,10 +125,11 @@ function mixWeights(a, b, t) { // a*(1-t) + b*t, both Maps
   return m;
 }
 function skinned(geo, mat, body) {
+  geo.computeBoundingBox(); const top = geo.boundingBox.max.y;
   if (body.userData.fromNorm) { geo.applyMatrix4(body.userData.fromNorm); geo.computeVertexNormals(); }
   const m = new THREE.SkinnedMesh(geo, mat);
   if (body.userData.home) m.userData.home = body.userData.home;
-  m.userData.garment = true;
+  m.userData.garment = true; m.userData.top = top;
   m.bind(body.skeleton, body.bindMatrix);
   m.frustumCulled = false; m.castShadow = false;
   return m;
@@ -585,13 +586,16 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const person = {root, bones, body: ref, norm: {k, turn}, female};
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
-  const low = seated ? .58 : .1;
+  const low = seated ? .58 : .1, fp = {value: 0};
   for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
     const m = o.material.clone();
     m.onBeforeCompile = sh => {
+      sh.uniforms.uFP = fp;
+      sh.fragmentShader = "uniform float uFP;\n" + sh.fragmentShader;
       sh.vertexShader = "attribute vec3 aBind; varying vec3 vB;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind;");
       sh.fragmentShader = "varying vec3 vB;\n" + sh.fragmentShader.replace("void main() {", `void main() {
         if (vB.y > 1.46 && abs(vB.x) < .22) discard;
+        if (uFP > .5 && vB.y > 1.2) discard;
         if (abs(vB.x) < .6 && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`).replace("#include <map_fragment>", `#include <map_fragment>
         if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`);
     };
@@ -607,7 +611,13 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
   }
   const headParts = skins.filter(o => /head|opacity/i.test([].concat(o.material)[0].name));
   root.traverse(o => { if (o.isMesh && !o.isSkinnedMesh && o.parent?.isBone && /Head/.test(o.parent.name)) headParts.push(o); });
-  person.setHead = show => headParts.forEach(o => o.visible = show);
+  // First person: only your body from the waist down is drawn, so looking down you see your hem and your feet,
+  // never the inside of your own neck. Reflections and cutaways show all of you.
+  const upper = []; root.traverse(o => {
+    if (o.userData.garment && o.userData.top > 1.25) upper.push(o);
+    if (o.isMesh && !o.isSkinnedMesh && !o.userData.garment && o.parent?.isBone && !/Foot|Toe|Hand|Finger/.test(o.parent.name) && !headParts.includes(o)) upper.push(o);
+  });
+  person.setHead = show => { headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); fp.value = show ? 0 : 1; };
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
   const clips = rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);

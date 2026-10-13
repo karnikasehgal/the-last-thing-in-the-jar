@@ -14,6 +14,7 @@ import { makeCastMember, oar, mount } from "./people.js";
 import { buildFarBank, FAR } from "./farbank.js";
 import { placeTrinkets, showFound, openCodex, save } from "./lore.js";
 import { lyreInit } from "./music.js";
+import { trial } from "./trials.js";
 import { makeOrpheus } from "./orpheus.js";
 import { sandstoneTunnel, sunrise } from "./cave.js";
 
@@ -517,15 +518,17 @@ async function conversation(id) {
   beginTalk(NPC[id], id);
   const say = (who, lid, text, cut) => line(who, lid, text, cut);
   if (id === "hermes") {
-    await say("hermes", "v2_h1", "There you are. Don't panic, everybody does the thing with the hands at first. You're dead, I'm afraid. I'm Hermes. Half my job is walking people down here, and the other half is explaining the rules, which is the half nobody listens to.");
-    await say("mikon", "v2_m1", "An olive pit. I died of an olive pit. My cousin hadn't even cut the cake yet.");
-    await say("hermes", "v2_h2", "Most people go out in less interesting ways, if it helps. Look past the columns. That's the River Styx, and the dock at the end of it is the only way across.", "ferry");
-    await say("hermes", "v2_h3", "The ferryman's name is Charon. He's been rowing that boat since before there were cities, and he has exactly one rule. A coin for the crossing. Your family was meant to put one in your mouth. I'm told they were distracted.", "charon");
-    await say("mikon", "v2_m2", "So I'm stuck here because my cousin's wedding ran long.");
-    await say("hermes", "v2_h4", "For a hundred years, technically. That's what happens to anyone who can't pay. They wait on the bank and watch the boat leave without them. Unless, of course, they find a coin.");
-    await say("hermes", "v2_h5", "Which brings me to the dog. Three heads, one temper. He sleeps in the cave past the old temple, and he can smell a coin through solid rock. If he ever comes after you, get into the river. He hates water even more than he hates people.", "grotto");
-    await say("mikon", "v2_m3", "That's a lot of rules for one afternoon.");
-    await say("hermes", "v2_h6", "And it's a lot of afternoon for one man. Ask around. The sailor down by the water has been here long enough to know where everything is. I'm afraid I have to go and collect a general who fell off his horse.", "river");
+    await say("hermes", "v3_h1", "Ah, there you are. Take a deep breath. Well, don't, you don't actually need to anymore, but it calms people down. You're dead, Mikon. I'm so sorry. I'm Hermes. Messenger of the gods, guide of the dead, and on my days off, patron of thieves, so do keep an eye on your sandals.");
+    await say("mikon", "v3_m1", "I'm dead? At a wedding? I was halfway through a joke.");
+    await say("hermes", "v3_h2", "Was it a good joke?");
+    await say("mikon", "v3_m2", "It was about a goat. The olive got there before the punchline did.");
+    await say("hermes", "v3_h3", "Then the goat will live forever in mystery, which is more than most of us get. Come, look past the columns. That glowing thing is the River Styx, and the boat at the end of the dock is the only way across it.", "ferry");
+    await say("hermes", "v3_h4", "The gentleman in the hood is Charon. Lovely man, dreadful conversationalist. One coin per crossing, and in all his very long life he has never once given credit. Your family was meant to put a coin under your tongue.", "charon");
+    await say("mikon", "v3_m3", "They were busy. It was a wedding. Somebody had to keep dancing.");
+    await say("hermes", "v3_h5", "And so here you are, with an empty mouth, which means a hundred years on this bank, watching the boat leave without you. It isn't torture, exactly. It's more like waiting for a friend who is always just about to arrive.");
+    await say("hermes", "v3_h6", "Of course, coins do turn up down here, if you know where to look. The only one I know of is in the cave past the old temple, and it's underneath a dog. Three heads, one temper, and a nose that can smell bronze through a wall.", "grotto");
+    await say("mikon", "v3_m4", "So the only coin in the whole Underworld is guarded by a dog that can smell coins.");
+    await say("hermes", "v3_h7", "I didn't design the place, I just give the tours. If he comes for you, get into the river, he hates wet paws even more than he hates you. Ask the sailor by the water, he knows everyone's business. Now, I have a general to collect. Fell off his own horse at his own victory parade. Happens more than you'd think.", "river");
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
     await say("elpenor", "v2_e1", "Oh, hello. Sorry, I don't get many people stopping, most of them walk straight past. Which, honestly, fair. I'm Elpenor. I rowed for Odysseus. Well, I rowed near Odysseus. There were a lot of us.");
@@ -780,12 +783,12 @@ function nearbyOne() {
 function nearby() {
   if (ride) return null;
   const t = trinkets?.near(me.pos.x, me.pos.z);
-  if (t) return {kind: "trinket", obj: t, label: "pick it up"};
+  if (t) return {kind: "trinket", obj: t, label: {water: "reach into the water", urn: "open the urn", chest: "open the box", pouch: "look in the pouch", stone: "look under the stone", crack: "look in the crack", flower: "pick the flower", falling: "catch the leaf"}[t.t.hide] || "look closer"};
   return chap.nearby();
 }
 function interact() {
   const n = nearby(); if (!n) return;
-  if (n.kind === "trinket") { trinkets.take(n.obj); sound.chime(); showFound(n.obj.t); paintStats(); clearTimeout(foundT); foundT = setTimeout(() => $("#found").classList.remove("on"), 12000); return; }
+  if (n.kind === "trinket") return earnTrinket(n.obj);
   if (CH !== 1) return chap.interact(n);
   if (n.kind === "coin") { if (me.coin) return toast("One coin is plenty."); pickCoin(n.obj); }
   else if (n.kind === "cake") pickCake();
@@ -793,6 +796,16 @@ function interact() {
   else conversation(n.id);
 }
 let foundT;
+// Nothing is just lying around: each find is behind a small trial.
+async function earnTrinket(o) {
+  if (o.busy) return; o.busy = true;
+  talking = true; releaseMouse(); $("#prompt").classList.remove("on");
+  const ok = await trial(o.t.trial);
+  talking = false; o.busy = false;
+  if (ok) { trinkets.reveal(o); trinkets.take(o); sound.chime(); showFound(o.t); paintStats(); clearTimeout(foundT); foundT = setTimeout(() => $("#found").classList.remove("on"), 12000); }
+  else toast("Not this time. You can try again.", 2200);
+  if (playing && !ended) grabMouse();
+}
 $("#found").addEventListener("click", () => $("#found").classList.remove("on"));
 
 /* ---------- the loop ---------- */
@@ -824,7 +837,7 @@ function tick(now) {
     chap.update(dt, now);
   }
   chap.always?.(dt, now);
-  trinkets?.animate(now);
+  trinkets?.animate(now, me.pos.x, me.pos.z);
   const h = NPC.hermes;
   if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
   const voiceLevelNow = sound.voiceLevel ? sound.voiceLevel() : 0;
@@ -956,29 +969,66 @@ function rotateHint() { $("#rotate").classList.toggle("on", matchMedia("(pointer
 addEventListener("resize", rotateHint);
 $("#rotate").addEventListener("click", () => $("#rotate").classList.add("dismissed"));
 // Each chapter opens like a film: the camera moves through the place while the person you're about to play talks.
-const INTROS = {1: {title: ["Chapter I", "The Coin"], shots: [{"from": [25, 6, 44, 0, 1.2, 37.5], "to": [11, 4, 31, 0, 1.4, 37.5], "id": "v2_i1", "who": "mikon", "text": "My name is Mikon. I sold salt fish in the agora at Corinth for twenty-two years, and I was, by every account, fine at it."}, {"from": [-30, 2.4, 4, 30, 2.2, 4], "to": [-12, 2.2, 4, 30, 2.2, 4], "id": "v2_i2", "who": "mikon", "text": "Last spring, at my cousin's wedding, I laughed at the wrong moment with an olive in my mouth. That's the whole story. There isn't a better version of it."}, {"from": [50, 3.2, 15, 56, 1.6, 6], "to": [54.5, 2.3, 11, 56, 1.7, 8.6], "id": "v2_i3", "who": "mikon", "text": "Nobody put a coin under my tongue for the ferryman. They were busy. It was a wedding, and the lamb was getting cold."}, {"from": [62, 2.8, 21, 72, 0.8, 12], "to": [66.5, 1.8, 17, 72, 0.6, 12], "id": "v2_i4", "who": "mikon", "text": "So this is where I am now. The bank of the River Styx, a ferry I can't afford, a dog that can smell money, and a hundred years to think about olives."}, {"from": [-1, 1.9, 23, -6, 1.2, 16], "to": [-3.5, 1.6, 19.5, -6, 1.1, 16], "id": "v2_i5", "who": "mikon", "text": "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting."}, {"from": [-36, 1.75, 7, -20, 1.6, 4], "to": [-34, 1.7, 5.5, -20, 1.6, 4], "id": "v2_i6", "who": "mikon", "text": "This is the story of one of them."}]},
-  2: {title: ["Chapter II", "The Lyre"], far: [2, 3, 4], shots: [{"from": [-53, 2.2, 13, -36, 1.5, 13], "to": [-44, 1.9, 13, -30, 1.5, 13], "id": "v2_j1", "who": "orpheus", "text": "They say I could make rivers stop to listen. I never tried. I only ever wanted one person to listen, and she always did."}, {"from": [-20, 1.8, 18, -6, 1.1, 16], "to": [-12, 1.7, 17, -6, 1.2, 16], "id": "v2_j2", "who": "orpheus", "text": "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it."}, {"from": [0, 5, 30, 0, 3, 80], "to": [0, 4, 42, 0, 3, 80], "id": "v2_j3", "who": "orpheus", "text": "I sang at her funeral. Every bird in Thrace went quiet. It didn't help."}, {"from": [-6, 2.4, 96, 6, 1, 108], "to": [-2, 2.2, 101, 6, 1, 110], "id": "v2_j4", "who": "orpheus", "text": "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out."}, {"from": [0, 3.2, 119, 0, 2, 137.4], "to": [0, 2.4, 128, 0, 2, 137.4], "id": "v2_j5", "who": "orpheus", "text": "Nobody comes back from the Underworld. Everybody says so. But as far as I know, nobody has ever asked properly."}, {"from": [-36, 1.75, 7, -20, 1.6, 4], "to": [-34, 1.7, 5.5, -20, 1.6, 4], "id": "v2_j6", "who": "orpheus", "text": "I'm going to ask."}]}};
+const INTROS = {
+  1: {title: ["Chapter I", "The Coin"], who: "mikon", stand: [-16, 18.6, Math.PI], shots: [
+    {id: "v2_i1", text: "My name is Mikon. I sold salt fish in the agora at Corinth for twenty-two years, and I was, by every account, fine at it.", face: "close"},
+    {id: "v2_i2", text: "Last spring, at my cousin's wedding, I laughed at the wrong moment with an olive in my mouth. That's the whole story. There isn't a better version of it.", art: ["styx/diver-symposium.jpg", "styx/raphael-wedding-banquet.jpg"]},
+    {id: "v2_i3", text: "Nobody put a coin under my tongue for the ferryman. They were busy. It was a wedding, and the lamb was getting cold.", art: ["styx/prothesis-pinax.jpg", "styx/obol-athens.jpg"]},
+    {id: "v2_i4", text: "So this is where I am now. The bank of the River Styx, a ferry I can't afford, a dog that can smell money, and a hundred years to think about olives.", path: [[-10, 3, 14, 0, 1, 37.5], [10, 3.5, 30, 0, 1.5, 37.5], [62, 3, 21, 72, .8, 12], [66.5, 1.8, 17, 72, .6, 12]]},
+    {id: "v2_i5", text: "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting.", art: ["styx/theseus-peirithoos-relief.jpg", "styx/rubens-orpheus.jpg", "styx/testa-aeneas-styx.jpg"]},
+    {id: "v2_i6", text: "This is the story of one of them.", face: "pull"}]},
+  2: {title: ["Chapter II", "The Lyre"], who: "orpheus", stand: [-16, 18.6, Math.PI], far: [], shots: [
+    {id: "v2_j1", text: "They say I could make rivers stop to listen. I never tried. I only ever wanted one person to listen, and she always did.", face: "close"},
+    {id: "v2_j2", text: "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it.", art: ["styx/titian-orpheus.jpg"]},
+    {id: "v2_j3", text: "I sang at her funeral. Every bird in Thrace went quiet. It didn't help.", art: ["styx/prothesis-pinax.jpg", "styx/rubens-orpheus.jpg"]},
+    {id: "v2_j4", text: "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out.", path: [[-53, 2.2, 13, -36, 1.5, 13], [-44, 1.9, 13, -30, 1.5, 13]]},
+    {id: "v2_j5", text: "Nobody comes back from the Underworld. Everybody says so. But as far as I know, nobody has ever asked properly.", path: [[-6, 3, 26, 0, 2, 60], [6, 4, 33, 0, 2, 70]]},
+    {id: "v2_j6", text: "I'm going to ask.", face: "close"}]}
+};
 let skipIntro = null;
 async function playIntro(n) {
   const I = INTROS[n]; if (!I) return;
   talking = true; document.body.classList.add("talking", "cinema");
   let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
-  for (const [k, sh] of I.shots.entries()) {
+  // the person you're about to play stands on the bank and tells you who they are
+  staging = true;
+  const [sx, sz, sy] = I.stand;
+  PLAYER.root.position.set(sx, 0, sz); PLAYER.root.rotation.y = sy; PLAYER.setHead(true);
+  const head = () => { const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); return h; };
+  const fwd = V(Math.sin(sy), 0, Math.cos(sy));
+  $(".cine").classList.add("on");
+  for (const sh of I.shots) {
     if (skipped) break;
-    setLightsFar(!!I.far?.includes(k));
-    const t0 = performance.now(), est = 2200 + sh.text.split(" ").length * 360, A = V(...sh.from.slice(0, 3)), AL = V(...sh.from.slice(3)), B = V(...sh.to.slice(0, 3)), BL = V(...sh.to.slice(3));
-    camShot.active = true; camShot.snap = true; camShot.pos.copy(A); camShot.look.copy(AL);
-    let moving = true;
-    (function drift() { if (!moving) return; const u = Math.min(1, (performance.now() - t0) / est), e = u * u * (3 - 2 * u); camShot.pos.lerpVectors(A, B, e); camShot.look.lerpVectors(AL, BL, e); requestAnimationFrame(drift); })();
-    $(".cine").classList.add("on");
-    await line(sh.who, sh.id, sh.text, "voice");
-    moving = false;
+    const t0 = performance.now(), est = 1800 + sh.text.split(" ").length * 380;
+    let moving = true, art = null;
+    if (sh.face) {
+      setLightsFar(false); camShot.active = true; camShot.snap = true;
+      PLAYER.play("Idle_Talking_Loop"); PLAYER.speaking = true;
+      (function frame() { if (!moving) return; const u = Math.min(1, (performance.now() - t0) / est), h = head();
+        const d = sh.face === "pull" ? .7 + u * 2.6 : .95 - u * .25, side = V(fwd.z, 0, -fwd.x).multiplyScalar(.18);
+        camShot.pos.copy(h).addScaledVector(fwd, d).add(side).setY(h.y + .03 + (sh.face === "pull" ? u * .5 : 0)); camShot.look.copy(h).setY(h.y - .03);
+        PLAYER.expr?.update(performance.now(), true, sound.voiceLevel ? sound.voiceLevel() : 0);
+        requestAnimationFrame(frame); })();
+    } else if (sh.path) {
+      PLAYER.speaking = false; camShot.active = true; camShot.snap = true;
+      const P = sh.path.map(k => [V(...k.slice(0, 3)), V(...k.slice(3))]);
+      setLightsFar(P.some(([p]) => p.z > 50));
+      (function drift() { if (!moving) return; const u = Math.min(.999, (performance.now() - t0) / est) * (P.length - 1), i = Math.floor(u), f = u - i, e = f * f * (3 - 2 * f);
+        camShot.pos.lerpVectors(P[i][0], P[i + 1][0], e); camShot.look.lerpVectors(P[i][1], P[i + 1][1], e); requestAnimationFrame(drift); })();
+    } else if (sh.art) {
+      // the paintings, one after another, drifting slowly like a documentary
+      art = $("#artshot"); art.classList.add("on"); const per = est / sh.art.length;
+      sh.art.forEach((src, i) => setTimeout(() => { if (!moving) return; const img = art.querySelector("img"); img.classList.remove("go"); img.src = LIB + src; void img.offsetWidth; img.classList.add("go"); }, i * per));
+    }
+    await line(I.who, sh.id, sh.text, "voice");
+    moving = false; PLAYER.speaking = false;
+    if (art) art.classList.remove("on");
   }
   setLightsFar(false);
-  // the title card
   const card = $("#titlecard"); card.querySelector("small").textContent = I.title[0]; card.querySelector("b").textContent = I.title[1];
   card.classList.add("on"); await new Promise(r => setTimeout(r, skipped ? 900 : 2600)); card.classList.remove("on");
-  $(".cine").classList.remove("on");
+  $(".cine").classList.remove("on"); $("#artshot").classList.remove("on");
+  staging = false; PLAYER.setHead(false);
   document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null;
 }
 addEventListener("keydown", e => { if (skipIntro && (e.key === "Escape" || e.key === "Enter")) skipIntro(); });
@@ -1007,8 +1057,10 @@ let chap = chapterOne, speedK = 1, ride = null, trinkets = null, PLAYER = null;
 }
 const bodyPrev = new THREE.Vector3();
 let bob = 0;
+let staging = false;
 function moveBody(dt) {
   if (!PLAYER) return;
+  if (staging) { PLAYER.mixer.update(dt); return; }
   const moved = flat(me.pos).distanceTo(flat(bodyPrev)) / Math.max(dt, 1e-3); bodyPrev.copy(me.pos);
   const f = V(-Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   PLAYER.root.position.set(me.pos.x - f.x * .02, fpPos.y - 1.66, me.pos.z - f.z * .02);
