@@ -158,12 +158,22 @@ function wrap(body, keep, {off = .016, mat, bulge = () => 0, clip}) {
     }
     I.push(map.get(i));
   }
+  // cloth doesn't follow every bump of the body: relax the surface a little (seams welded by position first)
+  const nV = P.length / 3, weld = new Map(), rep = new Int32Array(nV);
+  for (let i = 0; i < nV; i++) { const k = `${P[i * 3].toFixed(3)},${P[i * 3 + 1].toFixed(3)},${P[i * 3 + 2].toFixed(3)}`; if (!weld.has(k)) weld.set(k, i); rep[i] = weld.get(k); }
+  const nb = Array.from({length: nV}, () => new Set());
+  for (let t = 0; t < I.length; t += 3) for (let a = 0; a < 3; a++) { const u = rep[I[t + a]], w = rep[I[t + (a + 1) % 3]]; nb[u].add(w); nb[w].add(u); }
+  for (let it = 0; it < 3; it++) {
+    const Q = P.slice();
+    for (let i = 0; i < nV; i++) { if (rep[i] !== i || nb[i].size < 3) continue; let x = 0, y = 0, z = 0; for (const j of nb[i]) { x += P[j * 3]; y += P[j * 3 + 1]; z += P[j * 3 + 2]; } const n = nb[i].size; Q[i * 3] = P[i * 3] * .5 + x / n * .5; Q[i * 3 + 1] = P[i * 3 + 1] * .5 + y / n * .5; Q[i * 3 + 2] = P[i * 3 + 2] * .5 + z / n * .5; }
+    for (let i = 0; i < nV; i++) { const r = rep[i]; P[i * 3] = Q[r * 3]; P[i * 3 + 1] = Q[r * 3 + 1]; P[i * 3 + 2] = Q[r * 3 + 2]; }
+  }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   geo.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2));
   geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(SI, 4));
   geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(SW, 4));
-  geo.setIndex(I); geo.computeVertexNormals();
+  geo.setIndex(I.map(i => rep[i])); geo.computeVertexNormals();
   return skinned(geo, mat, body);
 }
 
@@ -368,7 +378,7 @@ const LOOKS = {
     put(p, drape(body, {from: 1.5, to: .72, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8c2f24, {folds: true}), off: .04, flare: .1, folds: .02,
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
-    mount(p, "Head", petasos(), new THREE.Vector3(0, 1.755, -.012));
+    mount(p, "Head", petasos(), new THREE.Vector3(0, p.norm ? 1.805 : 1.755, -.02));
     mount(p, "spine_03", caduceus(), new THREE.Vector3(.05, 1.25, -.17), [0, 0, -.5]);
     for (const s of ["l", "r"]) { const g = new THREE.Group(), x = s === "l" ? .114 : -.114; g.add(wing(Math.sign(x), Math.abs(x) + .05, .1, -.07, .7)); mount(p, `foot_${s}`, g, new THREE.Vector3()); }
   }},
@@ -431,6 +441,19 @@ const LOOKS = {
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
   }},
+  // The wedding at Corinth. Demeas, the uncle who gives the toast.
+  demeas: {dress(p, B, body) { greek(p, B, body, 0xd9cdb0, 0x6b2a5a); }},
+  // Kleio, the aunt who runs everything.
+  aunt: {body: "female", dress(p, B, body) { greek(p, B, body, 0x2f4a6b, 0x2f4a6b, {veil: 0x26384f}); }},
+  // Lykon, Mikon's friend, who has heard the goat joke before.
+  lykon: {dress(p, B, body) { greek(p, B, body, 0x6b7a4a, 0x4a3a2a); }},
+  // Nikias, the groom, in white with a myrtle wreath.
+  nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
+  // Thea, the bride: saffron, a veil, a wreath.
+  thea: {body: "female", dress(p, B, body) { greek(p, B, body, 0xd89a2a, 0xe8b850, {veil: 0xf6eadb, wreath: true}); }},
+  // the piper, who does not stop playing for anything
+  piper: {dress(p, B, body) { greek(p, B, body, 0x8a2a20, 0x5a1a14); mount(p, "Head", aulos(), new THREE.Vector3(0, 1.6, .2), [1.15, 0, 0]); }},
+  dancer: {body: "female", dress(p, B, body) { greek(p, B, body, 0xc8d4c0, 0x8aa070); }},
   // A shade on the meadow: anyone at all, faded.
   shade: {tone: 0xffffff, hair: ["hair_simpleparted"], hairColor: 0x3a3028, sandals: false, ghost: true, dress(p, B, body) {
     put(p, wrap(body, UPPER, {mat: cloth(0xd8d4ca), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
@@ -469,6 +492,22 @@ const LOOKS = {
     put(p, drape(body, {from: 1.3, to: .9, mat: cloth(0xf4f0e6, {folds: true}), off: .035, flare: .04, folds: .015, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_02", 1]])}));
   }}
 };
+// Plain Greek dress for anyone: a chiton, a belt, a cloak behind; a veil or a myrtle wreath if they want one.
+function greek(p, B, body, color, cloak, {veil, wreath} = {}) {
+  put(p, wrap(body, UPPER, {mat: cloth(color), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`}));
+  put(p, drape(body, {from: 1.0, to: .6, mat: cloth(color, {folds: true}), flare: .06, weightsAt: skirtWeights(B, .8)}));
+  put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
+  put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+  if (veil) put(p, wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.01 && pow(b.x / .085, 2.) + pow((b.y - 1.65) / .13, 2.) < 1.)", mat: cloth(veil), off: .03, bulge: (x, y, z) => Math.max(0, -z) * .3 + Math.max(0, y - 1.7) * .15}));
+  if (wreath) { const w = new THREE.Group(), leaf = new THREE.MeshStandardMaterial({color: 0x3d5a2a, roughness: .7, side: THREE.DoubleSide});
+    for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, l = new THREE.Mesh(new THREE.SphereGeometry(.02, 6, 4), leaf); l.scale.set(1.6, .5, .8); l.position.set(Math.cos(a) * .115, Math.sin(i * 1.7) * .01, Math.sin(a) * .115); l.rotation.y = -a; w.add(l); }
+    mount(p, "Head", w, new THREE.Vector3(0, 1.74, -.01), [.12, 0, 0]); }
+}
+function aulos() { // the double pipes
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x6a4a2a, roughness: .5});
+  for (const s of [-1, 1]) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.007, .011, .45, 8), m); t.position.set(s * .05, -.2, 0); t.rotation.z = s * .18; g.add(t); }
+  return g;
+}
 // The female body sits a little lower: its own neckline and garment region.
 let FNECK = "b.y < 1.47 && !(b.z > -.02 && pow(b.x / .11, 2.) + pow((b.y - 1.47) / .07, 2.) < 1.)";
 let FUPPER = (x, y, z, d) => y > .92 && y < 1.55 && (TORSO.test(d) || ARMS.test(d) || d === "neck_01");
@@ -509,7 +548,7 @@ function ghostly(mat, opacity = .62) {
    Each person is a scanned-quality human with a facial rig. They keep their own face, hair and hands;
    everything else is covered by the Greek clothes, cut in the tailor's space (the body stood upright,
    facing +z, scaled to the height the tailor works at) and mapped back onto the real body. */
-const FEMALE = new Set(["persephone", "eurydice"]);
+const FEMALE = new Set(["persephone", "eurydice", "aunt", "thea", "dancer"]);
 const CLIPMAP = {Idle_Loop: "idle", Idle_Talking_Loop: "talk", Sitting_Idle_Loop: "sit", Sitting_Talking_Loop: "sittalk", Walk_Loop: "walk", Walk_Formal_Loop: "walk",
   Jog_Fwd_Loop: "run", Sprint_Loop: "run", Crouch_Idle_Loop: "crouch", Push_Loop: "walk", Idle_Torch_Loop: "idle", listen: "listen"};
 const RBCLIPS = {};
@@ -517,7 +556,7 @@ function rbClips(ASSETS, female) {
   const key = female ? "f" : "m";
   if (RBCLIPS[key]) return RBCLIPS[key];
   const out = {};
-  for (const c of ASSETS["rb_anims_" + key].animations) {
+  for (const c of [...ASSETS["rb_anims_" + key].animations, ...(ASSETS["rb_anims_" + key + "x"]?.animations || [])]) {
     const k = c.clone(); k.tracks = k.tracks.filter(t => !t.name.endsWith(".position") || t.name.startsWith("Bip01.")); out[c.name] = k;
   }
   return RBCLIPS[key] = out;
@@ -543,6 +582,7 @@ function makeFace(root) {
       set("AK_25_JawOpen", (w.AK_25_JawOpen || 0) + (target * .25 - (w.AK_25_JawOpen || 0)) * .4);
       // a small, steady expression of their own
       set("AK_03_BrowInnerUp", speaking ? .15 + Math.sin(now / 900) * .1 : .05);
+      for (const [n, v] of Object.entries(this.hold || {})) set(n, v);
     }
   };
 }
@@ -617,7 +657,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
     if (o.userData.garment && o.userData.top > 1.25) upper.push(o);
     if (o.isMesh && !o.isSkinnedMesh && !o.userData.garment && o.parent?.isBone && !/Foot|Toe|Hand|Finger/.test(o.parent.name) && !headParts.includes(o)) upper.push(o);
   });
-  person.setHead = show => { headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); fp.value = show ? 0 : 1; };
+  person.setHead = show => { person.headShown = show; headParts.forEach(o => o.visible = show); upper.forEach(o => o.visible = show); fp.value = show ? 0 : 1; };
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
   const clips = rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);

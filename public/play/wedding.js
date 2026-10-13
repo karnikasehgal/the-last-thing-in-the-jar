@@ -1,0 +1,101 @@
+// The wedding at Corinth, where Chapter I begins: a courtyard at dusk, a long table under a vine,
+// olives, bread, wine, a roast lamb, oil lamps, a piper, and a sunset beyond the colonnade.
+// The same courtyard, cleared and lamp-lit, is where they lay Mikon out the next night.
+// It is built far from the river (around x = 300) and only ever seen in the opening film.
+import * as THREE from "three";
+
+export const W = new THREE.Vector3(300, 0, 0);
+// where everyone sits and stands (relative to W). Mikon and Lykon on the near bench, facing the table;
+// Kleio, Thea and Nikias across from them; Demeas standing at the end for the toast.
+export const SEATS = {
+  mikon: [-.7, -1.02, 0], lykon: [.1, -1.02, 0], kleio: [-.9, 1.02, Math.PI], thea: [.3, 1.02, Math.PI], nikias: [1.1, 1.02, Math.PI],
+  demeas: [3.35, 0, -Math.PI / 2], piper: [-3.6, 2.6, Math.PI * .8], dancer: [-2.2, 3.4, Math.PI]
+};
+
+export function buildWedding(scene, {noise}) {
+  const g = new THREE.Group(); g.position.copy(W); scene.add(g);
+  const add = (m, x, y, z) => { m.position.set(x, y, z); g.add(m); return m; };
+  const S = (c, o = {}) => new THREE.MeshStandardMaterial({color: c, roughness: .8, ...o});
+  const lights = [];
+  const L = (c, p, d, x, y, z) => { const l = new THREE.PointLight(c, p, d, 1.6); l.position.set(x, y, z); l.visible = false; g.add(l); lights.push(l); return l; };
+
+  // floor, whitewashed walls, a colonnade open to the west
+  const pav = noise("#b9a487", "#6b5a44", 512, 40, .14); pav.repeat.set(5, 4);
+  add(new THREE.Mesh(new THREE.BoxGeometry(18, .2, 14), new THREE.MeshStandardMaterial({map: pav, roughness: .9})), 0, -.1, 0);
+  const lime = noise("#e6dccb", "#9a8a72", 256, 6, .1);
+  const wallM = new THREE.MeshStandardMaterial({map: lime, roughness: .95});
+  add(new THREE.Mesh(new THREE.BoxGeometry(18, 3.6, .4), wallM), 0, 1.8, 7);
+  add(new THREE.Mesh(new THREE.BoxGeometry(.4, 3.6, 14), wallM), 9, 1.8, 0);
+  add(new THREE.Mesh(new THREE.BoxGeometry(18, 3.6, .4), wallM), 0, 1.8, -7);
+  for (let z = -6; z <= 6; z += 3) { const c = add(new THREE.Mesh(new THREE.CylinderGeometry(.22, .26, 3.4, 14), S(0xe8dfcf)), -9, 1.7, z); }
+  add(new THREE.Mesh(new THREE.BoxGeometry(.6, .4, 14), S(0xe0d6c4)), -9, 3.5, 0);
+  // a doorway with a dark room behind, and a painted band along the walls
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.4, .1), S(0x1a120c)), 4, 1.2, 6.79);
+  add(new THREE.Mesh(new THREE.BoxGeometry(18, .25, .05), S(0x8a3a24)), 0, 2.6, 6.78);
+  add(new THREE.Mesh(new THREE.BoxGeometry(18, .25, .05), S(0x8a3a24)), 0, 2.6, -6.78);
+
+  // the vine over the table
+  for (const [x, z] of [[-3, -2], [-3, 2], [3, -2], [3, 2]]) add(new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, 3, 8), S(0x5a3c24)), x, 1.5, z);
+  for (let i = 0; i < 7; i++) add(new THREE.Mesh(new THREE.BoxGeometry(.1, .1, 4.4), S(0x5a3c24)), -3 + i, 3, 0);
+  const leafGeo = new THREE.PlaneGeometry(.22, .22), leafMat = new THREE.MeshStandardMaterial({color: 0x4a6a2e, side: THREE.DoubleSide, roughness: .8});
+  const leaves = new THREE.InstancedMesh(leafGeo, leafMat, 900), m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+  for (let i = 0; i < 900; i++) { q.setFromEuler(new THREE.Euler(Math.random() * 3, Math.random() * 3, Math.random() * 3)); m4.compose(new THREE.Vector3(-3.3 + Math.random() * 6.6, 2.95 + Math.random() * .3 - (Math.random() < .15 ? Math.random() * .6 : 0), -2.3 + Math.random() * 4.6), q, new THREE.Vector3(1, 1, 1)); leaves.setMatrixAt(i, m4); }
+  g.add(leaves);
+  for (let i = 0; i < 14; i++) { const bunch = new THREE.Group(); for (let k = 0; k < 9; k++) { const gr = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 4), S(0x4a1a3a, {roughness: .35})); gr.position.set((Math.random() - .5) * .08, -k * .025, (Math.random() - .5) * .08); bunch.add(gr); } add(bunch, -3 + Math.random() * 6, 2.8, -2 + Math.random() * 4); }
+
+  // the table and benches
+  const wood = S(0x6a4a2e);
+  add(new THREE.Mesh(new THREE.BoxGeometry(5.6, .08, 1.1), wood), 0, .74, 0);
+  for (const [x, z] of [[-2.6, -.45], [-2.6, .45], [2.6, -.45], [2.6, .45]]) add(new THREE.Mesh(new THREE.BoxGeometry(.08, .74, .08), wood), x, .37, z);
+  for (const z of [-1.02, 1.02]) add(new THREE.Mesh(new THREE.BoxGeometry(5.2, .07, .36), wood), 0, .45, z);
+  const cloth = add(new THREE.Mesh(new THREE.BoxGeometry(5.7, .01, 1.2), S(0xe9e0cf)), 0, .785, 0);
+
+  // the food: everything that will be cleared away for the funeral
+  const food = new THREE.Group(); g.add(food);
+  const put = (m, x, y, z) => { m.position.set(x, y, z); food.add(m); return m; };
+  const plate = c => new THREE.Mesh(new THREE.CylinderGeometry(.16, .12, .03, 18), S(c));
+  for (let i = 0; i < 6; i++) { const x = -2.2 + i * .9; put(plate(0xa85a34), x, .8, -.32); put(plate(0xa85a34), x, .8, .32); }
+  // olives in a bowl, in front of Mikon
+  const olives = new THREE.Group(); olives.add(new THREE.Mesh(new THREE.CylinderGeometry(.13, .08, .07, 16), S(0xb06a40)));
+  for (let i = 0; i < 22; i++) { const o = new THREE.Mesh(new THREE.SphereGeometry(.018, 8, 6), S(i % 3 ? 0x5a6a2a : 0x2a2418, {roughness: .3})); o.scale.set(1, .8, .8); o.position.set((Math.random() - .5) * .16, .035 + Math.random() * .03, (Math.random() - .5) * .16); olives.add(o); }
+  put(olives, -.55, .82, -.2);
+  // bread, figs, a krater of wine, cups
+  for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), S(0xc89050)); b.scale.y = .5; put(b, -2 + i * 1.1, .83, .02); }
+  const krater = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.08, 0], [.1, .05], [.16, .18], [.18, .3], [.17, .34], [0, .34]].map(([x, y]) => new THREE.Vector2(x, y)), 20), S(0x2a1a12));
+  put(krater, .9, .79, .1);
+  for (let i = 0; i < 6; i++) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(.07, .03, .05, 14), S(0x1a1410)); put(cup, -2.1 + i * .85, .83, i % 2 ? .3 : -.3); }
+  // the lamb
+  const lamb = new THREE.Group(); const lb = new THREE.Mesh(new THREE.SphereGeometry(.22, 14, 10), S(0x8a4a20, {roughness: .5})); lb.scale.set(1.8, .7, 1); lamb.add(lb);
+  const platter = new THREE.Mesh(new THREE.CylinderGeometry(.45, .4, .03, 24), S(0xb8b0a0, {metalness: .6, roughness: .3})); platter.position.y = -.14; lamb.add(platter);
+  put(lamb, 1.9, .95, 0);
+  for (let i = 0; i < 10; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), S(0x5a2a4a)); put(f, -1.4 + Math.random() * 2.6, .82, (Math.random() - .5) * .5); }
+  // oil lamps on the table, torches on the walls
+  const flame = new THREE.MeshBasicMaterial({color: 0xffc070});
+  for (const x of [-1.6, 1.2]) { const lamp = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 6), S(0x8a5a30)); lamp.scale.set(1.6, .6, 1); add(lamp, x, .81, .2); add(new THREE.Mesh(new THREE.SphereGeometry(.025, 6, 4), flame), x + .08, .86, .2); L(0xffb060, 3.2, 6, x, 1.1, .2); }
+  for (const [x, z] of [[-6, 6.6], [6, 6.6], [6, -6.6], [-6, -6.6]]) { add(new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), flame), x, 2.4, z); L(0xff9a4a, 9, 9, x, 2.4, z * .9); }
+
+  // the bier for the funeral, the same table with a pillow and a shroud
+  const bier = new THREE.Group(); bier.visible = false; g.add(bier);
+  const pillow = new THREE.Mesh(new THREE.BoxGeometry(.4, .12, .3), S(0xe9e0cf)); pillow.position.set(-1.25, .86, 0); bier.add(pillow);
+  const shroud = new THREE.Mesh(new THREE.BoxGeometry(1.5, .16, .62), S(0xefe8dc, {roughness: .95})); shroud.position.set(.35, .9, 0); bier.add(shroud);
+  for (let i = 0; i < 8; i++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 4), S(i % 2 ? 0xe8d040 : 0xf2f0e8)); fl.position.set(-.4 + Math.random() * 1.4, .99, (Math.random() - .5) * .4); bier.add(fl); }
+
+  // the sky beyond the colonnade: dusk
+  const c = document.createElement("canvas"); c.width = 16; c.height = 256; const x = c.getContext("2d");
+  const grad = x.createLinearGradient(0, 0, 0, 256); grad.addColorStop(0, "#1c2240"); grad.addColorStop(.45, "#6a4a6a"); grad.addColorStop(.7, "#e0864a"); grad.addColorStop(.85, "#f6c070"); grad.addColorStop(1, "#3a2a20");
+  x.fillStyle = grad; x.fillRect(0, 0, 16, 256);
+  const skyT = new THREE.CanvasTexture(c); skyT.colorSpace = THREE.SRGBColorSpace;
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(60, 24, 16), new THREE.MeshBasicMaterial({map: skyT, side: THREE.BackSide, fog: false})); sky.position.set(0, -8, 0); g.add(sky);
+  const sun = new THREE.DirectionalLight(0xffb070, 1.6); sun.position.set(-30, 8, 4); sun.target.position.set(0, 0, 0); sun.visible = false; g.add(sun, sun.target); lights.push(sun);
+
+  return {
+    g, lights, food, bier, olives, sky,
+    // "wedding": warm dusk; "funeral": the next night, lamps only
+    mood(kind) {
+      const fun = kind === "funeral";
+      food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
+      sun.intensity = fun ? .15 : 1.6; skyT.image && (sky.material.color.set(fun ? 0x2a2a44 : 0xffffff));
+      lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
+    }
+  };
+}
