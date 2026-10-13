@@ -9,6 +9,8 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { makeHound, animateHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
 import { prepareToon } from "./toon.js";
@@ -52,13 +54,19 @@ renderer.setPixelRatio(pixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
+// soft shadows from each scene's key light: what grounds an animated film's characters in their world
+renderer.shadowMap.enabled = !LITE; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
+// light from all around, faint and warm, so skin, silk and metal have something to reflect (a dim studio room)
+{ const room = new RoomEnvironment(); room.traverse(o => { if (o.material?.color) o.material.color.multiply(new THREE.Color(.22, .19, .16)); });
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(room, .04).texture; }
 scene.background = new THREE.Color(0x15110d);
 scene.fog = new THREE.FogExp2(0x1d1813, 0.021);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.05, 400);
 camera.rotation.order = "YXZ"; scene.add(camera); // so things held in your hands can ride on it
 
-// A painterly finish: soft brushy patches, warm old-pigment grade, vignette, grain.
+// The film finish: a warm grade with rich colour, a soft vignette, a whisper of grain (and the blur/dim/danger effects
+// the story uses). It used to smear the picture into brushy patches and drain the colour; animated films are crisp and saturated.
 const Painterly = {
   uniforms: {tDiffuse: {value: null}, time: {value: 0}, danger: {value: 0}, lite: {value: LITE ? 1 : 0}, blur: {value: 0}, dim: {value: 0}},
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
@@ -67,24 +75,23 @@ const Painterly = {
     void main(){
       vec2 px = 1.0 / vec2(1600.0, 900.0);
       vec3 c = texture2D(tDiffuse, vUv).rgb;
-      vec3 acc = c; float w = 1.0;
-      if (lite < .5) for (int i = 0; i < 6; i++) { float a = float(i) * 1.047; vec2 o = vec2(cos(a), sin(a)) * px * 2.2;
-        vec3 s = texture2D(tDiffuse, vUv + o).rgb; float k = 1.0 - smoothstep(0.0, 0.25, distance(s, c)); acc += s * k; w += k; }
-      c = acc / w;
+
       if (blur > .001) { vec3 b = c; for (int i = 0; i < 12; i++) { float a = float(i) * .5236; b += texture2D(tDiffuse, vUv + vec2(cos(a), sin(a)) * blur * .012).rgb; } c = b / 13.; }
       float l = dot(c, vec3(.299,.587,.114));
-      c = mix(vec3(l), c, .82);
-      c *= vec3(1.06, .98, .86);
+      c = mix(vec3(l), c, 1.12);
+      c *= vec3(1.03, 1.0, .95);
+      c = clamp(c, 0., 1.); c = c * c * (3. - 2. * c) * .35 + c * .65; // a gentle S-curve: deeper shadows, brighter highlights
       c = mix(c, c * vec3(1.25,.55,.45), danger * .35);
       float v = smoothstep(1.05, .35, distance(vUv, vec2(.5)));
-      c *= mix(.42, 1.0, v);
+      c *= mix(.62, 1.0, v);
       c *= 1. - dim * smoothstep(.15, .75, distance(vUv, vec2(.5)) + dim * .3);
-      c += (h(vUv * 900. + time) - .5) * .035;
+      c += (h(vUv * 900. + time) - .5) * .012;
       gl_FragColor = vec4(c, 1.);
     }`
 };
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
+if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .32, .55, .86)); // candles, torches and silk highlights glow
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
 composer.addPass(new OutputPass());
 function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
@@ -93,6 +100,25 @@ addEventListener("resize", resize); resize();
 /* ---------- light ---------- */
 const sky = new THREE.HemisphereLight(0x9fb3c8, 0x2a1d12, 0.55); scene.add(sky);
 const moon = new THREE.DirectionalLight(0xbfd3ff, 0.9); moon.position.set(-40, 60, 80); scene.add(moon);
+// Every sun or moon in a scene casts soft shadows in a box that follows the camera; anything new in the scene learns to
+// cast and catch them (looked over once a second: people and props come and go with the story).
+let keyLights = [], lastLook = 0;
+function shadows(now) {
+  if (now - lastLook > 1000) {
+    lastLook = now; keyLights = [];
+    scene.traverse(o => {
+      if (o.isDirectionalLight) { keyLights.push(o); if (!o.userData.dir) { o.userData.dir = o.position.clone().sub(o.target.position).normalize();
+        o.castShadow = true; const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0004; o.shadow.normalBias = .03; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
+      if (o.isMesh && !o.userData.shadowed) { o.userData.shadowed = true; o.receiveShadow = true;
+        const m = [].concat(o.material)[0]; o.geometry.computeBoundingSphere?.(); const big = (o.geometry.boundingSphere?.radius || 0) * o.scale.x > 25;
+        o.castShadow = !big && !m?.transparent && !o.isPoints && !(o.isInstancedMesh && o.count > 200); } // (a meadow of grass blades would cost more than it shows)
+    });
+  }
+  const at = new THREE.Vector3(0, 0, -6).applyQuaternion(camera.quaternion).add(camera.getWorldPosition(new THREE.Vector3()));
+  for (const l of keyLights) if (l.visible) { // (a light inside a set lives in the set's coordinates)
+    l.target.position.copy(at); l.target.parent?.worldToLocal(l.target.position);
+    l.position.copy(at).addScaledVector(l.userData.dir, 70); l.parent?.worldToLocal(l.position); l.updateMatrixWorld(); l.target.updateMatrixWorld(); }
+}
 const torches = [];
 const keyLight = new THREE.PointLight(0xffe2c4, 0, 6, 1.6); scene.add(keyLight);
 function torch(x, y, z, power = 22) {
@@ -348,6 +374,7 @@ const gltf = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const REAL = ["hermes", "charon", "mikon", "orpheus", "elpenor", "theseus", "pirithous", "hades", "sisyphus", "persephone", "eurydice", "demeas", "nikias", "lykon", "piper", "aunt", "thea", "dancer"];
 const ASSETS = {}, CLIPS = {};
 const TOON_F = ["persephone", "eurydice", "aunt", "thea", "dancer"];
+const TOON_V = 3; // bump when a character file changes, so no browser keeps an old one
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
@@ -357,7 +384,7 @@ async function loadAssets(progress) {
   for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
   list.push("toon/rain", "toon/snow");
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
   prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow);
   for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
   for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
@@ -940,6 +967,7 @@ function tick(now) {
   if (NPC.charon) NPC.charon.root.position.y = .25 + Math.sin(now / 1100) * .05;
   water.material.uniforms.time.value += dt * .45;
   paint.uniforms.time.value = now / 1000;
+  if (!LITE) shadows(now);
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
   PLAYER?.fpCut?.();
   for (const f of poses) f(now);
