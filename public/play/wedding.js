@@ -3,6 +3,7 @@
 // The same courtyard, cleared and lamp-lit, is where they lay Mikon out the next night.
 // It is built far from the river (around x = 300) and only ever seen in the opening film.
 import * as THREE from "three";
+import { buildMeadow } from "./meadow.js";
 
 export const W = new THREE.Vector3(300, 0, 0);
 // where everyone sits and stands (relative to W). Mikon and Lykon on the near bench, facing the table;
@@ -22,7 +23,7 @@ export const CROWD = {
   servers: 4,
   gate: [16.5, -1.7]
 };
-export function buildWedding(scene, {noise}) {
+export function buildWedding(scene, {noise, lite = false}) {
   const g = new THREE.Group(); g.position.copy(W); scene.add(g);
   const add = (m, x, y, z) => { m.position.set(x, y, z); g.add(m); return m; };
   const S = (c, o = {}) => new THREE.MeshStandardMaterial({color: c, roughness: .8, ...o});
@@ -131,33 +132,9 @@ export function buildWedding(scene, {noise}) {
   const skyT = new THREE.CanvasTexture(c); skyT.colorSpace = THREE.SRGBColorSpace;
   const c2 = document.createElement("canvas"); c2.width = 16; c2.height = 256; { const x2 = c2.getContext("2d"), g2 = x2.createLinearGradient(0, 0, 0, 256); g2.addColorStop(0, "#4a7ab8"); g2.addColorStop(.55, "#9cc4e0"); g2.addColorStop(.8, "#e8eef0"); g2.addColorStop(1, "#c8c0a8"); x2.fillStyle = g2; x2.fillRect(0, 0, 16, 256); }
   const skyDay = new THREE.CanvasTexture(c2); skyDay.colorSpace = THREE.SRGBColorSpace;
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(80, 24, 16), new THREE.MeshBasicMaterial({map: skyT, side: THREE.BackSide, fog: false})); sky.position.set(0, -8, 0); g.add(sky);
-  // outside the east gate: a spring meadow running down to a stream, for Orpheus and Eurydice
-  const meadow = new THREE.Group(); g.add(meadow);
-  const grassT = noise("#6a7a3a", "#3a4a20", 256, 30, .2); grassT.repeat.set(12, 12);
-  const mg = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({map: grassT, roughness: 1})); mg.rotation.x = -Math.PI / 2; mg.position.set(38, .005, 0); meadow.add(mg);
-  { // long grass: thousands of thin blades
-    // a flat blade that narrows to a point and bends over, dark at the root and light at the tip
-    const blade = new THREE.BufferGeometry(), bp = [], bc = [], bi = [];
-    for (let k = 0; k <= 3; k++) { const t = k / 3, w = .022 * (1 - t), bend = t * t * .16; bp.push(-w, t * .62, bend, w, t * .62, bend); const sh = .45 + t * .75; bc.push(sh, sh, sh, sh, sh, sh); }
-    for (let k = 0; k < 3; k++) bi.push(k * 2, k * 2 + 1, k * 2 + 2, k * 2 + 1, k * 2 + 3, k * 2 + 2);
-    blade.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3)); blade.setAttribute("color", new THREE.Float32BufferAttribute(bc, 3)); blade.setIndex(bi); blade.computeVertexNormals();
-    const n = 14000, bl = new THREE.InstancedMesh(blade, new THREE.MeshStandardMaterial({vertexColors: true, roughness: .85, side: THREE.DoubleSide}), n), m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color();
-    for (let i = 0; i < n; i++) { const x = 19.5 + Math.random() * 36, z = -18 + Math.random() * 36; q.setFromEuler(new THREE.Euler((Math.random() - .5) * .3, Math.random() * 6.3, (Math.random() - .5) * .3)); const near = Math.hypot(x - 29.6, z - 4.4) < 1.6; // short, trodden grass where she falls, so the camera can see her and the snake
-      m.compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(1, near ? .12 + Math.random() * .12 : .5 + Math.random() * .7, 1)); bl.setMatrixAt(i, m); bl.setColorAt(i, c.setHSL(.2 + Math.random() * .07, .5, .36 + Math.random() * .14)); }
-    meadow.add(bl);
-    // wildflowers: small open cups on the tops of the grass
-    const cup = new THREE.CylinderGeometry(.045, .012, .03, 6, 1, true);
-    const fl = new THREE.InstancedMesh(cup, new THREE.MeshStandardMaterial({color: 0xffffff, roughness: .6, side: THREE.DoubleSide}), 1400);
-    for (let i = 0; i < 1400; i++) { let fx, fz; do { fx = 19.5 + Math.random() * 36; fz = -18 + Math.random() * 36; } while (Math.hypot(fx - 29.6, fz - 4.4) < 1.6); m.compose(new THREE.Vector3(fx, .3 + Math.random() * .25, fz), q.identity(), new THREE.Vector3(1, 1, 1)); fl.setMatrixAt(i, m); fl.setColorAt(i, c.setHex([0xf2d84a, 0xf6f2ea, 0xe07aa0, 0x9a7ae0, 0xf6f2ea][i % 5])); }
-    meadow.add(fl);
-  }
-  const stream = new THREE.Mesh(new THREE.PlaneGeometry(40, 3.2), new THREE.MeshStandardMaterial({color: 0x4a7a8a, roughness: .08, metalness: .3})); stream.rotation.x = -Math.PI / 2; stream.position.set(38, .02, 11); meadow.add(stream);
-  for (const [x, z, h] of [[30, -10, 6], [44, -4, 7], [36, 15, 5.5], [50, 9, 6.5], [24, 13, 5]]) {
-    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.18, .3, h * .55, 7), S(0x5a4430)); tr.position.set(x, h * .27, z); meadow.add(tr);
-    const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(h * .32, 1), S(0x4a6a2e)); cr.position.set(x, h * .68, z); meadow.add(cr);
-  }
-  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(.5, 0), S(0x7a7068)); rock.scale.set(1.3, .7, 1); rock.position.set(33, .3, 9); meadow.add(rock);
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(230, 24, 16), new THREE.MeshBasicMaterial({map: skyT, side: THREE.BackSide, fog: false})); sky.position.set(0, -8, 0); g.add(sky);
+  // outside the east gate: a spring meadow running down to a stream, for Orpheus and Eurydice (meadow.js)
+  const meadow = buildMeadow(lite); g.add(meadow);
   // the snake, waiting in the grass
   const snake = new THREE.Group(); { // a grass snake: a tapering, banded body in loose curves, and a neck that can strike
     const pts = []; for (let i = 0; i <= 60; i++) { const t = i / 60; pts.push(new THREE.Vector3(Math.sin(t * 10) * .14 * (1 - t * .6), .03, -t * 1.1)); }

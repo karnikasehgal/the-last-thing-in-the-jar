@@ -1199,7 +1199,7 @@ function buildCrowd() {
 }
 async function weddingFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to the river bank
   if (!wedding && !skip) {
-    wedding = buildWedding(scene, {noise});
+    wedding = buildWedding(scene, {noise, lite: LITE});
     guests = {
       demeas: Object.assign(G.cast("demeas"), {name: "Demeas"}), kleio: Object.assign(G.cast("aunt", {seated: true}), {name: "Kleio"}),
       lykon: Object.assign(G.cast("lykon", {seated: true}), {name: "Lykon"}), nikias: Object.assign(G.cast("nikias", {seated: true}), {name: "Nikias"}),
@@ -1410,7 +1410,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     $(".cine").classList.remove("on"); document.body.classList.remove("talking", "cinema"); staging = false; camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
     return paintGoal();
   }
-  if (!wedding) wedding = buildWedding(scene, {noise});
+  if (!wedding) wedding = buildWedding(scene, {noise, lite: LITE});
   if (!crowd) {
     const card = $("#titlecard"); card.querySelector("small").textContent = "Thrace"; card.querySelector("b").textContent = "Spring";
     $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
@@ -1719,4 +1719,4 @@ $("#tF").addEventListener("touchstart", e => { e.preventDefault(); lyreHeld = tr
 $("#tF").addEventListener("touchend", () => { lyreHeld = false; }); $("#tF").addEventListener("touchcancel", () => { lyreHeld = false; });
 
 // For testing only: /play/?debug exposes the game state in the console.
-if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses, get trinkets() { return trinkets; }, earnTrinket};
+if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses, get trinkets() { return trinkets; }, earnTrinket, get wedding() { return wedding; }, scene};
