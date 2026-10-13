@@ -48,7 +48,16 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
     const z = side === 2 ? 146 + Math.random() * 6 : 66 + Math.random() * 80;
     m.position.set(x, r * .4 + Math.random() * 6, z); m.rotation.set(Math.random(), Math.random(), Math.random()); m.scale.y = 1.6 + Math.random(); scene.add(m);
   }
-  // (no roof of rock overhead any more: the river runs under an open night sky, thick with stars)
+  // a dark roof of rock over the far bank only: the river and the beach lie under the open, starry sky, and across the
+  // water the land of the dead goes in under the cliff, into a cavern
+  const vg = new THREE.SphereGeometry(1, 64, 20, 0, Math.PI * 2, 0, Math.PI / 2), vp = vg.attributes.position;
+  for (let i = 0; i < vp.count; i++) { // crags: the dome pushed in and out, most of all low down, so its outline against the stars is a broken cliff
+    const x = vp.getX(i), y = vp.getY(i), z = vp.getZ(i), a = Math.atan2(z, x);
+    const k = 1 + (Math.sin(a * 7 + 1) * .05 + Math.sin(a * 17 + y * 9) * .035 + Math.sin(a * 41 + y * 23) * .015) * (1.2 - y);
+    vp.setXYZ(i, x * k, y * (1 + Math.sin(a * 11 + 2) * .12 * (1 - y)), z * k);
+  }
+  const vault = new THREE.Mesh(vg, new THREE.MeshBasicMaterial({color: 0x0b0908, side: THREE.BackSide, fog: true}));
+  vault.scale.set(64, 30, 54); add(vault, 0, 0, 110);
 
   /* the landing */
   for (let z = FAR.dockFrom; z < FAR.shore + .2; z += .55) add(new THREE.Mesh(new THREE.BoxGeometry(2.8, .12, .5), M.wood), 0, .02, z);
