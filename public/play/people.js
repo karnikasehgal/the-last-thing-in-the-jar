@@ -408,12 +408,13 @@ const UPPER = (x, y, z, d) => y < 1.6 && (ARMS.test(d) || (LONG && /^hand_/.test
 const put = (p, m) => { const h = m.userData.home; delete m.userData.home; (h || p.root).add(m); };
 // A beard for an animated-film face, grown from the face itself: the jaw, chin and (optionally) upper lip, pushed out
 // into a soft shell, fuller toward the chin. In the tailor's space the head's pivot sits at 1.6, level with the mouth.
-function beard(p, body, color, {thick = .012, chin = .25, moustache = true} = {}) {
+function beard(p, body, color, {thick = .012, chin = .25, moustache = true, stubble = false} = {}) {
   if (!p.toon) return;
   const H = 1.6, lips = (x, y, z) => Math.abs(x) < .036 && y > H - .028 && y < H + .028 && z > .1;
   const keep = (x, y, z, d) => d === "Head" && z > -.005 && y > H - .09 && !lips(x, y, z) &&
     (y < H + .012 || (moustache && y < H + .042 && Math.abs(x) < .048 && z > .12));
   const mat = new THREE.MeshStandardMaterial({color: new THREE.Color(color), map: STRANDS, roughness: .9});
+  if (stubble) Object.assign(mat, {transparent: true, opacity: .42, depthWrite: false}); // (a few days of it: a shadow on the skin, not a beard)
   put(p, wrap(body, keep, {mat, off: thick, smooth: 5, bulge: (x, y) => Math.max(0, H - .01 - y) * chin}));
 }
 const LOOKS = {
@@ -483,7 +484,7 @@ const LOOKS = {
   }},
   // Mikon: nobody in particular. A plain undyed tunic, a few days of beard, an olive pit's worth of bad luck.
   mikon: {tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
-    if (p.toon) { beard(p, body, 0x3b2a1c, {thick: .004, chin: 0, moustache: false}); return mensDrape(p, B, body, {color: 0xb0a284, style: "plain"}); }
+    if (p.toon) { beard(p, body, 0x2a1d14, {thick: .003, chin: 0, moustache: false, stubble: true}); return mensDrape(p, B, body, {color: 0xb0a284, style: "plain"}); }
     beard(p, body, 0x3b2a1c, {thick: .004, chin: 0, moustache: false}); // a few days of it
     put(p, wrap(body, UPPER, {mat: cloth(0xa89a80), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xa89a80, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
@@ -745,8 +746,9 @@ function sleeveless(p, B, body, mat) {
   // a short mantle round the shoulders and down the upper back, as the references drape them (it also covers where the
   // body was cut away under a modern shirt collar)
   let mm = p.mantle || mat; if (mm.normalMap) { mm = mm.clone(); mm.normalMap = null; } // (the fold texture runs across it in stripes)
-  put(p, drape(body, {from: 1.47, to: 1.2, arc: [Math.PI * 1.17, Math.PI * 1.83], mat: mm, off: .03, flare: .03, folds: .03, free: true,
-    include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.3 ? [["spine_03", 1]] : [["spine_03", .7], ["spine_02", .3]])}));
+  // (laid on the body's own surface, like a shawl: hung off it as a curved sheet, it stood out from the back like a board)
+  put(p, wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01") && y > 1.12 && y < 1.6 && z < .05,
+    {mat: mm, exact: true, off: .03, smooth: 8, clip: `b.y > 1.19 + .025 * sin(b.x * 23.) && b.z < .03 && b.y < 1.56`}));
   // the front follows the body (cut from its own surface, to just past the shoulders)
   return wrap(body, (x, y, z, d) => (TORSO.test(d) || d === "neck_01" || ARMS.test(d)) && y > .95 && y < 1.5,
     {mat, exact: true, off: .02, smooth: 12, clip: `b.y < 1.45 && abs(b.x) < .25 && b.y > .97`});
@@ -1033,6 +1035,11 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     if (tunic) put(person, drape(tailor, {from: 1.495, to: 1.39, mat: cloth(tunic.material.color.getHex()), off: .011, flare: .004, folds: 0, step: .02,
       include: d => d === "neck_01" || d === "spine_03", weightsAt: boneWeights(study(tailor), (x, y) => y > 1.46 ? [["neck_01", .7], ["spine_03", .3]] : [["spine_03", 1]])}));
   }
+  if (toon && !female && person.noNeckband && person.mantle) { // the open necklines: the same ragged edge shows at the nape, under the shawl; a band of the shawl's cloth round the back only
+    let mm = person.mantle; if (mm.normalMap) { mm = mm.clone(); mm.normalMap = null; }
+    put(person, drape(tailor, {from: 1.56, to: 1.4, arc: [Math.PI * 1.2, Math.PI * 1.8], mat: mm, off: .014, flare: .004, folds: 0, step: .02,
+      include: d => d === "neck_01" || d === "spine_03", weightsAt: boneWeights(study(tailor), (x, y) => y > 1.46 ? [["neck_01", .7], ["spine_03", .3]] : [["spine_03", 1]])}));
+  }
   if (look.eyes) { // Charon's eyes of flame
     root.traverse(o => { if (o.isMesh && /head/i.test([].concat(o.material)[0].name)) { o.material = o.material.clone(); } });
     const l = new THREE.PointLight(look.eyes, .35, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
@@ -1095,7 +1102,8 @@ function shapeBody(root, bones, {size = 1, hips = 1, belly = 1, chest = 1, head 
   // what has to stay put: the feet on the ground, or for someone seated, the hips on the seat
   const anchor = () => { root.updateMatrixWorld(true); return seated ? bones.pelvis.getWorldPosition(v).y : Math.min(bones.foot_l.getWorldPosition(v).y, bones.foot_r.getWorldPosition(v).y); };
   const y0 = anchor();
-  sc(bones.spine_01, hips); sc(bones.spine_02, belly / hips); sc(bones.spine_03, chest / belly); sc(bones.neck_01, head / chest);
+  sc(bones.spine_01, hips); sc(bones.spine_02, belly / hips); sc(bones.spine_03, chest / belly);
+  sc(bones.neck_01, 1 / chest); sc(bones.Head, head); // (the head grows from the base of the skull: grown from the neck, the neck grew with it)
   for (const s of ["l", "r"]) sc(bones["thigh_" + s], legs);
   arm.scale.multiplyScalar(size); arm.position.multiplyScalar(size);
   arm.position.y += (y0 - anchor()) / root.scale.y;

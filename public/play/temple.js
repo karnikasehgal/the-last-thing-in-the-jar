@@ -143,6 +143,11 @@ export function buildTemple(scene, {M, STEP, circles}) {
   const outer = new THREE.Mesh(domeGeo, M.column), inner = new THREE.Mesh(domeGeo, new THREE.MeshStandardMaterial({map: coffers(), side: THREE.BackSide, roughness: .85}));
   for (const m of [outer, inner]) { m.scale.set(W / 2 - .3, 5.2, D / 2 - .3); m.position.set(C.x, domeY, C.z); g.add(m); }
   outer.castShadow = true; inner.scale.multiplyScalar(.985);
+  // a flat stone ceiling filling the corners between the square cornice and the round foot of the dome (open, the sky showed through)
+  { const sh = new THREE.Shape(); sh.moveTo(-W / 2, -D / 2); sh.lineTo(W / 2, -D / 2); sh.lineTo(W / 2, D / 2); sh.lineTo(-W / 2, D / 2); sh.lineTo(-W / 2, -D / 2);
+    const hole = new THREE.Path(); hole.absellipse(0, 0, W / 2 - .35, D / 2 - .35, 0, Math.PI * 2, true); sh.holes.push(hole);
+    const ceil = new THREE.Mesh(new THREE.ShapeGeometry(sh, 48), M.column); ceil.material = M.column; ceil.rotation.x = Math.PI / 2; ceil.position.set(C.x, domeY - .02, C.z);
+    const top = ceil.clone(); top.rotation.x = -Math.PI / 2; top.position.y = domeY + .02; g.add(ceil, top); }
   // the back wall, and its two windows between the columns, each over one of the stone chairs
   const wallMat = pbr("plastered_wall_02", {size: 3, tint: 0xcabca4});
   const wall = new THREE.Mesh(new THREE.BoxGeometry(W, TOP + ENT - STEP, .5), wallMat); wall.position.set(C.x, STEP + (TOP + ENT - STEP) / 2, -5.05); g.add(wall);
@@ -159,7 +164,7 @@ export function buildTemple(scene, {M, STEP, circles}) {
   floor.rotation.x = -Math.PI / 2; floor.position.set(C.x, STEP + .004, C.z); floor.receiveShadow = true; g.add(floor);
   // one brilliant light high in the dome, and its glare
   const hi = new THREE.Vector3(50.5, domeY + 1.6, -1.5);
-  const lamp = new THREE.PointLight(0xfff0dc, 40, 26, 1.4); lamp.position.copy(hi); g.add(lamp);
+  const lamp = new THREE.PointLight(0xfff0dc, 16, 22, 1.5); lamp.position.copy(hi); g.add(lamp);
   const star = new THREE.Sprite(new THREE.SpriteMaterial({map: starTex(), color: new THREE.Color(2.2, 2.1, 1.9), blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
   star.position.copy(hi); star.scale.setScalar(3.2); g.add(star);
   // a cold light from below on the figure, so the bronze reads against the dark dome

@@ -33,6 +33,12 @@ export function prepareToon(g) {
   const inTree = new Set(); g.scene.traverse(o => inTree.add(o));
   const headBone = g.scene.getObjectByName("Bip01_Head");
   g.scene.traverse(o => { if (o.isSkinnedMesh) for (const b of o.skeleton.bones) if (!inTree.has(b)) { headBone.attach(b); inTree.add(b); } });
+  // The rig's neck hangs from the root, not from the spine: left so, the head stays at standing height whatever the body
+  // does, and sitting down (or anyone shorter in the leg) stretched the neck into a long column. Hung on the top of the
+  // spine (keeping where it is), the head goes where the body goes. The animation bake turns each bone relative to its
+  // own parent, so every clip follows.
+  const neck = g.scene.getObjectByName("Bip01_Neck"), chest = g.scene.getObjectByName("Bip01_Spine2");
+  if (neck && chest && neck.parent !== chest) { g.scene.updateMatrixWorld(true); chest.attach(neck); }
   g.scene.userData.toon = true;
   return g;
 }

@@ -62,8 +62,9 @@ renderer.localClippingEnabled = true; // your own clothes are cut off just below
 const pixelRatio = () => Math.max(1, Math.min(devicePixelRatio || 1, LITE ? 1.25 : 1.75)); // never below 1, or the picture shrinks into a corner
 renderer.setPixelRatio(pixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+// AgX keeps a colour's hue as it brightens (ACES turned firelit sand red and blue night sky purple)
+renderer.toneMapping = THREE.AgXToneMapping;
+renderer.toneMappingExposure = 1.15;
 // soft shadows from each scene's key light: what grounds an animated film's characters in their world
 renderer.shadowMap.enabled = !LITE; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
@@ -116,12 +117,12 @@ const Painterly = {
 
       if (blur > .001) { vec3 b = c; for (int i = 0; i < 12; i++) { float a = float(i) * .5236; b += texture2D(tDiffuse, vUv + vec2(cos(a), sin(a)) * blur * .012).rgb; } c = b / 13.; }
       float l = dot(c, vec3(.299,.587,.114));
-      c = mix(vec3(l), c, 1.12);
+      c = mix(vec3(l), c, 1.24); // (AgX is restrained: a little more colour back)
       c *= vec3(1.03, 1.0, .95);
       c = clamp(c, 0., 1.); c = c * c * (3. - 2. * c) * .35 + c * .65; // a gentle S-curve: deeper shadows, brighter highlights
       c = mix(c, c * vec3(1.25,.55,.45), danger * .35);
       float v = smoothstep(1.05, .35, distance(vUv, vec2(.5)));
-      c *= mix(.62, 1.0, v);
+      c *= mix(.78, 1.0, v);
       c *= 1. - dim * smoothstep(.15, .75, distance(vUv, vec2(.5)) + dim * .3);
       c += (h(vUv * 900. + time) - .5) * .012;
       gl_FragColor = vec4(c, 1.);
@@ -138,8 +139,10 @@ if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, in
 // a real lens in the film shots: whoever is speaking in focus, the room behind them soft
 const lens = LITE ? null : new BokehPass(scene, camera, {focus: 2, aperture: .0009, maxblur: .006});
 if (lens) { lens.enabled = false; composer.addPass(lens); }
-const paint = new ShaderPass(Painterly); composer.addPass(paint);
+// The grade comes last, after the tone mapping, on the picture as it will be seen. (It used to run before it, on raw
+// light values: every lamp and candle was clipped flat and the mid-tones were crushed, which is what made the colours muddy.)
 composer.addPass(new OutputPass());
+const paint = new ShaderPass(Painterly); composer.addPass(paint);
 function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 addEventListener("resize", resize); resize();
 
@@ -446,6 +449,10 @@ for (let i = 0; i < 14; i++) {
   const a = Math.random() * Math.PI * 1.4 - .2, d = 3.5 + Math.random() * 2;
   r.position.set(PLACES.dogHome.x + Math.cos(a) * d, Math.random() * .8, PLACES.dogHome.z - Math.sin(a) * d * .8);
   r.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(r);
+  // solid, except where one would block the way from the temple to the coin (that path must stay open)
+  const rr = r.geometry.parameters.radius * 1.1, ax = 65.5, az = 12.5, bx = PLACES.coinSpot.x, bz = PLACES.coinSpot.z;
+  const t = Math.max(0, Math.min(1, ((r.position.x - ax) * (bx - ax) + (r.position.z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2)));
+  if (Math.hypot(r.position.x - (ax + (bx - ax) * t), r.position.z - (az + (bz - az) * t)) > rr + 1.1) circles.push([r.position.x, r.position.z, rr * .8]);
 }
 const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.set(PLACES.dogHome.x, 1.2, PLACES.dogHome.z - 1); scene.add(lairGlow);
 
@@ -1067,7 +1074,7 @@ function tick(now) {
   chap.always?.(dt, now);
   trinkets?.animate(now, me.pos.x, me.pos.z);
   const h = NPC.hermes;
-  if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
+  if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.position.y = sandY(h.root.position.z); h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
   const voiceLevelNow = sound.voiceLevel ? sound.voiceLevel() : 0;
   for (const p of Object.values(NPC)) {
     p.mixer.update(dt);
@@ -1357,6 +1364,11 @@ function buildCrowd() {
   }, hide() { people.forEach(p => p.root.visible = false); }, show() { people.forEach(p => p.root.visible = true); }};
 }
 async function weddingFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to the river bank
+  if (!skip && !crowd) { // the title card goes up before the wedding is built (which takes a few seconds), not after: the river must not show first
+    const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
+    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on"); document.body.classList.add("cinema");
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
   if (!wedding && !skip) {
     wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding();
     guests = {
@@ -1366,8 +1378,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     };
   }
   if (skip) {} else if (!crowd) {
-    const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
-    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
+    const card = $("#titlecard");
     await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
   } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
   guests ||= {};
@@ -1751,11 +1762,14 @@ async function videoFilm(ch) {
   return true;
 }
 $("#begin").onclick = async () => {
+  const intro = !new URLSearchParams(location.search).has("nointro");
+  if (intro) { $("#fader").style.transition = "none"; $("#fader").style.background = "#000"; $("#fader").style.opacity = 1; document.body.classList.add("cinema"); // black at once: the world behind is built and waiting, and mustn't flash up before the film
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
   if (CH !== 1 && !chap.ready) { chap.setup(); chap.ready = true; }
   if (!PLAYER) { PLAYER = G.cast(CH === 2 ? "orpheus" : "mikon", {seated: true}); PLAYER.play("Idle_Loop", 0); PLAYER.setHead(false); chap.onBody?.(PLAYER); }
   setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
-  if (!new URLSearchParams(location.search).has("nointro")) {
+  if (intro) {
     const film = CH === 1 ? weddingFilm : orpheusFilm;
     await film({skip: await videoFilm(CH)}); // the animated video when it's there, otherwise the 3D film
   }
