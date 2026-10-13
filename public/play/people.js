@@ -451,6 +451,8 @@ const LOOKS = {
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
   thea: {body: "female", dress(p, B, body) { greek(p, B, body, 0xd89a2a, 0xe8b850, {wreath: true}); }},
+  // Eurydice on her wedding day: alive, in saffron, with a myrtle wreath
+  eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { greek(p, B, body, 0xe8b850, null, {wreath: true}); }},
   // the piper, who does not stop playing for anything
   piper: {dress(p, B, body) { greek(p, B, body, 0x8a2a20, 0x5a1a14); mount(p, "Head", aulos(), new THREE.Vector3(0, 1.6, .2), [1.15, 0, 0]); }},
   dancer: {body: "female", dress(p, B, body) { greek(p, B, body, 0xc8d4c0, 0x8aa070); }},
@@ -494,15 +496,16 @@ const LOOKS = {
   }}
 };
 // Plain Greek dress for anyone: a chiton, a belt, a cloak behind; a veil or a myrtle wreath if they want one.
-function greek(p, B, body, color, cloak, {veil, wreath} = {}) {
+function greek(p, B, body, color, cloak, {veil, wreath} = {}) { // cloak: a colour, or null for none
   put(p, wrap(body, UPPER, {mat: cloth(color), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`}));
   put(p, drape(body, {from: 1.0, to: .6, mat: cloth(color, {folds: true}), flare: .06, weightsAt: skirtWeights(B, .8)}));
   put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-  put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+  if (cloak !== null) put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
   if (veil) put(p, wrap(body, (x, y, z, d) => (d === "Head" || d === "neck_01") && z < .02, {clip: "!(b.z > -.03 && pow(b.x / .09, 2.) + pow((b.y - 1.65) / .14, 2.) < 1.)", mat: cloth(veil), off: .018, bulge: (x, y, z) => Math.max(0, -z) * .1}));
   if (wreath) { const w = new THREE.Group(), leaf = new THREE.MeshStandardMaterial({color: 0x3d5a2a, roughness: .7, side: THREE.DoubleSide});
-    for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, l = new THREE.Mesh(new THREE.SphereGeometry(.012, 6, 4), leaf); l.scale.set(1.8, .45, .8); l.position.set(Math.cos(a) * .115, Math.sin(i * 1.7) * .01, Math.sin(a) * .115); l.rotation.y = -a; w.add(l); }
-    mount(p, "Head", w, new THREE.Vector3(0, p.norm ? 1.81 : 1.74, -.02), [.05, 0, 0]); }
+    const r = p.female ? .1 : .112, leafG = new THREE.SphereGeometry(.009, 6, 4);
+    for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, l = new THREE.Mesh(leafG, leaf); l.scale.set(1.8, .45, .8); l.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * .008, Math.sin(a) * r); l.rotation.y = -a; w.add(l); }
+    mount(p, "Head", w, new THREE.Vector3(0, (p.norm ? 1.8 : 1.74) - (p.female ? .03 : 0), -.02), [.05, 0, 0]); }
 }
 function aulos() { // the double pipes
   const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x6a4a2a, roughness: .5});
@@ -678,7 +681,8 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   Object.assign(person, {mixer, action: null, current: null, speaking: false, play(name, fade = .35) {
     const want = CLIPMAP[name] || name, clip = clips[want] || clips.idle;
     if (!clip || this.current === name) return;
-    const a = mixer.clipAction(clip); a.reset().fadeIn(fade).play();
+    const a = mixer.clipAction(clip); a.timeScale = 1; a.reset().fadeIn(fade).play();
+    if (want === "crouchin") { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; }
     if (want === "walk" && name === "Push_Loop") a.timeScale = .45;
     if (this.action && this.action !== a) this.action.fadeOut(fade);
     this.action = a; this.current = name;

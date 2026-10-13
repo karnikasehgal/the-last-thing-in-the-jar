@@ -13,7 +13,7 @@ import { makeHound, animateHound } from "./hound.js";
 import { makeCastMember, oar, mount, makeExtra, cloneExtra } from "./people.js";
 import { buildFarBank, FAR } from "./farbank.js";
 import { placeTrinkets, showFound, openCodex, save } from "./lore.js";
-import { lyreInit } from "./music.js";
+import { lyreInit, pluck } from "./music.js";
 import { trial } from "./trials.js";
 import { makeOrpheus } from "./orpheus.js";
 import { sandstoneTunnel, sunrise } from "./cave.js";
@@ -441,6 +441,11 @@ const sound = {
       k++; setTimeout(note, beat * 1000); };
     note();
     this.partyStop = () => { stop = true; out.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); setTimeout(() => { n.stop(); lfo.stop(); }, 1600); };
+  },
+  // birdsong in a spring meadow; birds() with no argument stops it
+  birds(on) {
+    if (!actx) return; clearInterval(this.birdT); if (!on) return;
+    this.birdT = setInterval(() => { if (Math.random() < .5) return; const at = actx.currentTime, o = actx.createOscillator(), f0 = 2400 + Math.random() * 1800; o.frequency.setValueAtTime(f0, at); for (let k = 1; k < 5; k++) o.frequency.linearRampToValueAtTime(f0 * (k % 2 ? 1.25 : .9), at + k * .05); this.env(o, .025, .01, .25, at); o.start(at); o.stop(at + .3); }, 260);
   },
   cheer() { if (!actx) return; for (let i = 0; i < 9; i++) { const at = actx.currentTime + i * .06, n = this.noise(.5), f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 600 + Math.random() * 900; n.connect(f); this.env(f, .14, .05, .5, at); n.start(at); } },
   cough() { if (!actx) return; [0, .32, .6, 1.1].forEach(d => { const at = actx.currentTime + d, n = this.noise(.25), f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 800; f.Q.value = 1.5; n.connect(f); this.env(f, .5, .01, .2, at); n.start(at); }); },
@@ -913,6 +918,7 @@ function tick(now) {
   }
   farWorld.animate(now);
   if (crowd && wedding?.lights[0]?.visible) { crowd.update(dt, now); wedding.animate(now); }
+  if (orph) for (const p of Object.values(orph)) if (p.mixer && p.root.visible && !NPC.eury) p.mixer.update(dt);
   for (const l of farWorld.flicker) l.intensity = 30 * (.82 + Math.sin(now / 90 + l.position.x) * .07 + Math.random() * .1);
   for (const t of torches) t.l.intensity = t.base * (.82 + Math.sin(now / 90 + t.seed) * .07 + Math.random() * .1);
   coins.forEach(c => c.rotation.z = now / 600);
@@ -1302,12 +1308,155 @@ async function weddingFilm() {
   document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
   paintGoal();
 }
+
+/* ---------- Chapter II opens with Orpheus and Eurydice's wedding, the snake, and the road down ---------- */
+let orph = null, caveLights = [];
+async function orpheusFilm() {
+  if (!wedding) wedding = buildWedding(scene, {noise});
+  if (!crowd) {
+    const card = $("#titlecard"); card.querySelector("small").textContent = "Thrace"; card.querySelector("b").textContent = "Spring";
+    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
+    await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
+  } else { crowd.show(); crowd.freeze = false; crowd.frozen = false; }
+  if (!orph) {
+    orph = {
+      eury: Object.assign(G.cast("eurydice_alive", {seated: true}), {name: "Eurydice"}),
+      hymen: Object.assign(makeExtra(ASSETS.crowd_m3, {ASSETS, scene, female: false, colors: [0xe8a830, 0xd86a2a]}), {name: "Hymen, god of weddings"}),
+      friend: Object.assign(makeExtra(ASSETS.crowd_f2, {ASSETS, scene, female: true, colors: [0xc8d8e8, 0x8aa8c8]}), {name: "her friend"})
+    };
+    // Hymen's torch, which will not catch
+    const torchG = new THREE.Group(), stick = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .7, 8), new THREE.MeshStandardMaterial({color: 0x4a3020})); torchG.add(stick);
+    const sn = 60, sg = new THREE.BufferGeometry(), sp = new Float32Array(sn * 3); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    const smoke = new THREE.Points(sg, new THREE.PointsMaterial({color: 0x9a948a, size: .12, transparent: true, opacity: .45, depthWrite: false})); smoke.frustumCulled = false; scene.add(smoke); orph.smoke = smoke;
+    // the torch stands in a bronze holder beside him, its head blackened, giving only smoke
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(.06, .04, .16, 10), new THREE.MeshStandardMaterial({color: 0x1a1410, roughness: 1})); head.position.y = .42; torchG.add(head);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(.12, .16, .06, 12), new THREE.MeshStandardMaterial({color: 0x8a6a30, roughness: .4, metalness: .7})); foot.position.y = -.35; torchG.add(foot);
+    stick.scale.y = 1; torchG.scale.setScalar(1.6); scene.add(torchG); orph.torch = torchG;
+  }
+  const {eury, hymen, friend} = orph;
+  NPC.eury = eury; NPC.hymen = hymen; NPC.friend = friend; NPC.orpheus = PLAYER;
+  let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
+  let fast = new URLSearchParams(location.search).has("debug") && new URLSearchParams(location.search).get("from");
+  const say = (who, id, text, how = "voice") => { if (skipped) return null; if (fast) { if (!text.includes(fast)) return pause(20); fast = null; } return line(who, id, text, how); };
+  const vo = (who, id, text) => say(who, id, text, "vo");
+  talking = true; staging = true; document.body.classList.add("talking", "cinema"); $(".cine").classList.add("on");
+  PLAYER.setHead(true); PLAYER.name = "Orpheus";
+  await fade("black", 10);
+  // the wedding, in daylight
+  stage(PLAYER, SEATS.mikon); PLAYER.play("sittable", 0); stage(eury, SEATS.lykon); eury.play("sittable", 0);
+  stage(hymen, [-3.35, 0, Math.PI / 2]); hymen.play("Idle_Loop", 0); friend.root.visible = false;
+  orph.torch.position.copy(wpos(-3.1, .56, -.6)); orph.torch.visible = true; orph.smoke.visible = true;
+  wedding.mood("day"); setWeddingLights(true); scene.fog.color.set(0xc8ccc4); scene.fog.density = .006; sky.intensity = 1.3; sound.party(true); sound.birds(true);
+  wedding.snake.visible = false;
+  let smoking = true;
+  (function puff() { if (!smoking) return; const a = orph.smoke.geometry.attributes.position, tip = new THREE.Vector3(); orph.torch.getWorldPosition(tip); tip.y += .72;
+    for (let i = 0; i < 60; i++) { let y = a.getY(i) + .006; if (y > tip.y + 1.6 || y < tip.y - .1 || Math.random() < .004) { a.setXYZ(i, tip.x + (Math.random() - .5) * .05, tip.y, tip.z + (Math.random() - .5) * .05); continue; } a.setY(i, y); a.setX(i, a.getX(i) + (Math.random() - .5) * .006 + .002); } a.needsUpdate = true; requestAnimationFrame(puff); })();
+  const reel = async () => {
+    shot([-8, 6, 9], [-1, 1, -1], [-3.5, 3, 4.5], [-.3, 1.1, -1], 9000);
+    await fade("clear", 1600);
+    const card = $("#namecard"); card.querySelector("b").textContent = "Thrace"; card.querySelector("span").textContent = "Spring. The day of the wedding."; card.classList.add("on"); setTimeout(() => card.classList.remove("on"), 5000);
+    await vo("", "v2_j1", "They say I could make rivers stop to listen. I never tried. I only ever wanted one person to listen, and she always did.");
+    if (skipped) return;
+    faceShot(eury, {side: .25}); eury.play("sittabletalk"); await say("eury", "x_e1", "Play the one about the swallows. The one you made up on the boat.");
+    faceShot(PLAYER, {side: -.25}); PLAYER.play("sittabletalk"); await say("orpheus", "x_o1", "That one isn't finished yet.");
+    faceShot(eury, {side: .2, dist: .95}); eury.expr.hold = {AK_44_MouthSmileLeft: .6, AK_45_MouthSmileRight: .6}; await say("eury", "x_e2", "Then finish it now. Look, everyone's waiting.");
+    if (skipped) return;
+    // he plays; the wedding goes quiet to listen
+    eury.expr.hold = {AK_44_MouthSmileLeft: .45, AK_45_MouthSmileRight: .45}; sound.party(false); crowd.freeze = true; PLAYER.play("sittable");
+    const tune = [4, 5, 7, 8, 7, 5, 4, 2, 4, 5, 7, 9, 8, 7, 5, 4];
+    tune.forEach((n, i) => setTimeout(() => { if (!skipped) pluck(n, .9); }, i * 420));
+    faceShot(PLAYER, {side: .3, dist: 1.1, ms: 7000}); await pause(3200);
+    shot([-6.5, 2.2, 4], [-.3, 1.1, -1], [-5, 1.9, 2.8], [-.3, 1.1, -1], 4000); await pause(3600);
+    if (skipped) return;
+    // the omen: Hymen's torch will not catch
+    shot([-1.4, 1.65, .5], [-3.2, 1.45, -.3], [-1.6, 1.6, .35], [-3.2, 1.5, -.3], 7000); hymen.play("Idle_Talking_Loop"); await say("hymen", "x_h1", "My torch won't catch. It's only smoke. I've stood at a thousand weddings, and that has never happened before.");
+    stage(friend, [-2.4, -2.6, 0]); friend.play("Idle_Talking_Loop"); faceShot(friend, {side: -.25}); await say("friend", "x_g1", "Hymen's torch is smoking. That's a bad sign, isn't it?");
+    if (skipped) return;
+    // the river
+    stage(friend, [15.5, -1.5, -Math.PI / 2]); friend.play("wave");
+    faceShot(friend, {side: .3, dist: 1.4}); await say("friend", "x_f1", "Eurydice! Come down to the river, it's full of flowers! Come and see!");
+    stage(eury, [.1, -1.7, Math.PI / 2]); eury.play("Idle_Talking_Loop"); faceShot(eury, {side: .3, dist: 1}); await say("eury", "x_e3", "Wait for me! Orpheus, I'll be right back, don't you dare stop playing!");
+    // she runs out laughing through the long grass
+    sound.birds(true); eury.play("walk"); eury.action && (eury.action.timeScale = 1.7);
+    const path = [wpos(.1, 0, -1.7), wpos(17, 0, -1), wpos(24, 0, 2), wpos(29.4, 0, 4)], t0 = performance.now(), dur = 9000; let running = true;
+    (function run() { if (!running) return; const u = Math.min(1, (performance.now() - t0) / dur) * (path.length - 1), i = Math.min(path.length - 2, Math.floor(u)), f = u - i;
+      eury.root.position.lerpVectors(path[i], path[i + 1], f); const d = path[i + 1].clone().sub(path[i]); eury.root.rotation.y = Math.atan2(d.x, d.z);
+      const h = new THREE.Vector3(); eury.bones.Head.getWorldPosition(h); camShot.active = true; shot.cur = null; camShot.pos.copy(h).add(V(-2.6, .4, -1.4)); camShot.look.copy(h).add(V(1, -.3, .4));
+      if (u < path.length - 1) requestAnimationFrame(run); else running = false; })();
+    friend.root.visible = false; wedding.snake.visible = true;
+    await vo("", "v2_j2", "Eurydice. We were married in the spring. That same afternoon she ran through the long grass by the river, laughing, and a snake was waiting in it.");
+    while (running && !skipped) await pause(100); running = false;
+    if (skipped) return;
+    // the snake
+    // the snake lives in the wedding set, so place it in the set's own coordinates; its head ends a step from her feet
+    const sn = wedding.snake, feet = eury.root.position.clone().setY(0), out = V(.6, 0, .8).normalize(), tail = feet.clone().addScaledVector(out, 1.35);
+    sn.position.copy(wedding.g.worldToLocal(tail.clone())); sn.lookAt(feet); sn.rotateY(Math.PI);
+    const mid = feet.clone().addScaledVector(out, .45);
+    shot.cur = null; camShot.active = true; camShot.snap = true; camShot.pos.copy(tail).addScaledVector(out, .7).add(V(0, .42, 0)); camShot.look.copy(feet).addScaledVector(out, .25).add(V(0, .12, 0));
+    await pause(1100); { const hd = sn.userData.head, base = hd.position.clone(), t1 = performance.now(); (function strike() { const u = Math.min(1, (performance.now() - t1) / 220); hd.position.copy(base).add(V(0, .1 * Math.sin(u * Math.PI), -.28 * u)); if (u < 1) requestAnimationFrame(strike); else setTimeout(() => hd.position.copy(base), 1500); })(); }
+    sound.hit(); sound.birds(false);
+    eury.play("crouchin", .15);
+    faceShot(eury, {side: .2, dist: .9, up: .1}); eury.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .4};
+    eury.play("crouchin", .15); await say("eury", "x_e4", "Orpheus!");
+    // he runs to her
+    stage(PLAYER, [24, 1.4, Math.PI / 2]); PLAYER.play("run"); { const a = PLAYER.root.position.clone(), b = eury.root.position.clone().add(V(Math.sin(eury.root.rotation.y) * .6 + Math.cos(eury.root.rotation.y) * .3, 0, Math.cos(eury.root.rotation.y) * .6 - Math.sin(eury.root.rotation.y) * .3)).setY(0), t2 = performance.now(); (function go() { const u = Math.min(1, (performance.now() - t2) / 1800); PLAYER.root.position.lerpVectors(a, b, u); if (u < 1) requestAnimationFrame(go); else { PLAYER.play("crouch"); PLAYER.root.lookAt(eury.root.position.clone().setY(0)); eury.root.lookAt(PLAYER.root.position.clone().setY(0)); } })(); }
+    shot([31.2, 1.3, 5.4], [26, 1, 2.6], [30.8, 1.1, 5.1], [28, .8, 3.4], 2600); await pause(2000);
+    { // a two-shot from the side: the two of them kneeling face to face in the grass
+      const a = new THREE.Vector3(), b = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(a); eury.bones.Head.getWorldPosition(b);
+      const m = a.clone().lerp(b, .5), d = b.clone().sub(a).setY(0).normalize(), side = V(-d.z, 0, d.x);
+      shot.cur = null; camShot.active = true; camShot.snap = true; camShot.pos.copy(m).addScaledVector(side, 1.35).add(V(0, .08, 0)); camShot.look.copy(m).add(V(0, -.08, 0)); }
+    await say("orpheus", "x_o2", "Eurydice! Eurydice, I'm here, I'm here. Look at me.");
+    faceShot(eury, {side: -.2, dist: .75, up: .08, ms: 9000}); eury.expr.hold = {AK_03_BrowInnerUp: .4, AK_44_MouthSmileLeft: .25, AK_45_MouthSmileRight: .25};
+    await say("eury", "x_e5", "It's all right. It doesn't hurt anymore. Play me the swallows. I want to hear how it ends.");
+    { const t3 = performance.now(); (function close() { const u = Math.min(1, (performance.now() - t3) / 2500); eury.expr.hold = {AK_09_EyeBlinkLeft: u, AK_10_EyeBlinkRight: u}; if (u < 1) requestAnimationFrame(close); })(); }
+    await pause(2800); await fade("black", 2000);
+    if (skipped) return;
+    // grief: alone by the stream at dusk; the birds stop singing
+    wedding.mood("wedding"); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; crowd.hide(); eury.root.visible = false; hymen.root.visible = false; wedding.snake.visible = false; smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
+    PLAYER.root.position.copy(wpos(33, .18, 9.15)); PLAYER.root.rotation.set(0, Math.PI, 0); PLAYER.play("Sitting_Idle_Loop", 0);
+    shot([30.5, 1.4, 6.2], [33, 1, 8.8], [29.8, 2, 5.4], [33, 1, 9], 12000);
+    await fade("clear", 2000);
+    [7, 5, 4, 2, 4, 5, 4].forEach((n, i) => setTimeout(() => { if (!skipped) pluck(n, .7); }, 600 + i * 900));
+    await vo("", "v2_j3", "I sang at her funeral. Every bird in Thrace went quiet. It didn't help.");
+    await pause(1500); await fade("black", 1800);
+  };
+  await reel();
+  // Taenarum: the cave by the sea, the road down; then the river
+  await fade("black", 300);
+  sound.party(false); sound.birds(false); smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
+  setWeddingLights(false); crowd?.hide(); for (const p of Object.values(orph)) if (p.root) p.root.visible = false;
+  delete NPC.eury; delete NPC.hymen; delete NPC.friend; delete NPC.orpheus; PLAYER.expr.hold = {}; wedding.snake.visible = false;
+  PLAYER.root.position.set(-53, 0, 13); PLAYER.root.rotation.set(0, Math.PI / 2, 0); PLAYER.play("walk", 0);
+  if (!skipped) {
+    // he carries a lamp down; ahead, the faint grey light of the dead
+    const lamp = new THREE.PointLight(0xffa860, 5, 12, 1.5), deep = new THREE.PointLight(0x8aa0c8, 3, 16, 1.4); deep.position.set(-37, 2.6, 13); scene.add(lamp, deep);
+    { const a = V(-53, 0, 13), b = V(-39, 0, 13), t0 = performance.now(); (function walk() { const u = Math.min(1, (performance.now() - t0) / 16000); PLAYER.root.position.lerpVectors(a, b, u); lamp.position.copy(PLAYER.root.position).add(V(.35, 1.3, .25)); lamp.intensity = 5 + Math.sin(performance.now() / 70) * .4 + Math.sin(performance.now() / 23) * .25; if (u < 1 && staging) requestAnimationFrame(walk); })(); }
+    caveLights = [lamp, deep];
+    shot([-37.6, 1.8, 13.4], [-50, 1.4, 13], [-38.2, 1.7, 13.2], [-46, 1.3, 13], 16000, true);
+    await fade("clear", 1800);
+    await vo("", "v2_j4", "So I took the old road down at Taenarum, where the cliffs go into the sea, and I kept walking until the light ran out.");
+    // follow behind him, into the dark
+    shot.cur = null; camShot.active = true; { const id = shot.cur = {}; (function follow() { if (shot.cur !== id || !staging) return; const p = PLAYER.root.position; camShot.pos.set(p.x - 2.6, 1.75, p.z + .7); camShot.look.set(p.x + 4, 1.3, p.z - .2); requestAnimationFrame(follow); })(); }
+    await vo("", "v2_j5", "Nobody comes back from the Underworld. Everybody says so. But as far as I know, nobody has ever asked properly.");
+    PLAYER.play("Idle_Loop"); faceShot(PLAYER, {side: .3, dist: 1.1, ms: 6000});
+    await vo("", "v2_j6", "I'm going to ask.");
+  }
+  const card = $("#titlecard"); card.querySelector("small").textContent = "Chapter II"; card.querySelector("b").textContent = "The Lyre";
+  await fade("black", 900);
+  for (const l of caveLights) { scene.remove(l); l.dispose(); } caveLights = [];
+  card.classList.add("on"); await pause(skipped ? 900 : 2800); card.classList.remove("on");
+  await fade("clear", 600);
+  me.pos.set(-36.5, 0, 13); me.yaw = -Math.PI / 2; me.pitch = -.03;
+  $(".cine").classList.remove("on"); staging = false; PLAYER.setHead(false); PLAYER.play("Idle_Loop", 0);
+  document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
+  paintGoal();
+}
 $("#begin").onclick = async () => {
   if (CH !== 1 && !chap.ready) { chap.setup(); chap.ready = true; }
   if (!PLAYER) { PLAYER = G.cast(CH === 2 ? "orpheus" : "mikon", {seated: true}); PLAYER.play("Idle_Loop", 0); PLAYER.setHead(false); chap.onBody?.(PLAYER); }
   setTimeout(rotateHint, 50);
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
-  if (!new URLSearchParams(location.search).has("nointro")) await (CH === 1 ? weddingFilm() : playIntro(CH));
+  if (!new URLSearchParams(location.search).has("nointro")) await (CH === 1 ? weddingFilm() : orpheusFilm());
   playing = true; me.started = performance.now();
   grabMouse();
   if (CH !== 1 || new URLSearchParams(location.search).has("nointro")) setTimeout(() => { if (!talking) toast("Hermes is waiting for you, just ahead."); }, 700);
@@ -1330,7 +1479,7 @@ let bob = 0;
 let staging = false;
 function moveBody(dt) {
   if (!PLAYER) return;
-  if (staging) { if (NPC.mikon !== PLAYER) PLAYER.mixer.update(dt); PLAYER.expr?.update(performance.now(), PLAYER.speaking, sound.voiceLevel ? sound.voiceLevel() : 0); return; }
+  if (staging) { if (!Object.values(NPC).includes(PLAYER)) PLAYER.mixer.update(dt); PLAYER.expr?.update(performance.now(), PLAYER.speaking, sound.voiceLevel ? sound.voiceLevel() : 0); return; }
   const moved = flat(me.pos).distanceTo(flat(bodyPrev)) / Math.max(dt, 1e-3); bodyPrev.copy(me.pos);
   const f = V(-Math.sin(me.yaw), 0, -Math.cos(me.yaw));
   PLAYER.root.position.set(me.pos.x - f.x * .02, fpPos.y - 1.66, me.pos.z - f.z * .02);
