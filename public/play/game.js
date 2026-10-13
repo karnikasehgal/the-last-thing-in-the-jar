@@ -87,6 +87,7 @@ addEventListener("resize", resize); resize();
 const sky = new THREE.HemisphereLight(0x9fb3c8, 0x2a1d12, 0.55); scene.add(sky);
 const moon = new THREE.DirectionalLight(0xbfd3ff, 0.9); moon.position.set(-40, 60, 80); scene.add(moon);
 const torches = [];
+const keyLight = new THREE.PointLight(0xffe2c4, 0, 6, 1.6); scene.add(keyLight);
 function torch(x, y, z, power = 22) {
   const l = new THREE.PointLight(0xff9a4a, power, 18, 1.7); l.position.set(x, y, z); scene.add(l);
   const flame = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({color: 0xffc070}));
@@ -292,8 +293,10 @@ const lairGlow = new THREE.PointLight(0xff3a1a, 10, 12, 2); lairGlow.position.se
 /* ---------- the way up: a sea cave of layered sandstone at the west end of the bank, opening on a sunrise ---------- */
 {
   sandstoneTunnel(scene, {x0: -36.5, x1: -56, z: 13, r: 4.3});
-  const view = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), new THREE.MeshBasicMaterial({map: sunrise(), fog: false}));
-  view.position.set(-60, 5, 13); view.rotation.y = Math.PI / 2; scene.add(view);
+  const view = new THREE.Mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshBasicMaterial({map: sunrise(), fog: false}));
+  view.position.set(-56.6, 3.3, 13); view.rotation.y = Math.PI / 2; scene.add(view);
+  // boulders heaped over the cave, so from the river it reads as a cliff
+  for (let i = 0; i < 22; i++) { const r = 2 + Math.random() * 3, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), new THREE.MeshStandardMaterial({color: 0x2c2420, roughness: .95})); m.position.set(-40 - Math.random() * 18, 5 + Math.random() * 5, 13 + (Math.random() - .5) * 16); m.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(m); }
   const sun = new THREE.PointLight(0xffa860, 46, 28, 1.3); sun.position.set(-52, 3.2, 13); scene.add(sun);
   const bounce = new THREE.PointLight(0xff7a3a, 14, 14, 1.6); bounce.position.set(-43, 1.4, 13); scene.add(bounce);
   // a rough face of rock around the mouth, so the cave sits in a cliff
@@ -305,7 +308,7 @@ const lairGlow = new THREE.PointLight(0xff3a1a, 10, 12, 2); lairGlow.position.se
 }
 
 /* ---------- the far bank (built in farbank.js) ---------- */
-const nearLights = []; scene.traverse(o => { if (o.isPointLight) nearLights.push(o); });
+const nearLights = []; scene.traverse(o => { if (o.isPointLight && o !== keyLight) nearLights.push(o); });
 const farLights = [];
 const farWorld = buildFarBank({scene, boxes, circles, noise, tex, LIB, lights: farLights});
 function setLightsFar(far) { nearLights.forEach(l => l.visible = !far); farLights.forEach(l => l.visible = far); sky.intensity = far ? .9 : .55; }
@@ -836,6 +839,9 @@ function tick(now) {
   // camera: first person, or a close-up during conversations
   fpPos.set(me.pos.x, ride ? 1.95 : inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
   moveBody(dt);
+  // in conversations and cutaways, a soft key light from beside the camera, the way films light a face
+  keyLight.intensity += ((camShot.active ? 2.6 : 0) - keyLight.intensity) * .15;
+  if (camShot.active) keyLight.position.copy(camera.position).add(V(Math.cos(me.yaw) * .6, .45, -Math.sin(me.yaw) * .6));
   // looking down, your head tips forward and you can see yourself: chest, hem, sandals
   const lean = Math.max(0, -me.pitch - .35) * .32;
   fpPos.x -= Math.sin(me.yaw) * lean; fpPos.z -= Math.cos(me.yaw) * lean; fpPos.y -= lean * .35;

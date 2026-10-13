@@ -189,7 +189,7 @@ function outline(B, y, band, SEG, include) {
 let LONG = false; // set while dressing a realistic body: sleeves to the wrist, hems to the ankle
 function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035}) {
   const B = study(body);
-  if (LONG && to > .3 && to < .8 && from < 1.1) to = SEATED ? .5 : .1;
+  if (LONG && to < .8 && from < 1.1) to = SEATED ? .46 : Math.min(to, .1);
   include ||= d => TORSO.test(d) || LEGS.test(d);
   const rows = Math.max(2, Math.ceil((from - to) / step) + 1), full = arc[1] - arc[0] >= Math.PI * 2 - 1e-6;
   const cols = full ? SEG : Math.round(SEG * (arc[1] - arc[0]) / (Math.PI * 2)) + 1;
@@ -458,8 +458,8 @@ const LOOKS = {
     put(p, drape(body, {from: .99, to: .03, mat: red, flare: .14, folds: .022, weightsAt: skirtWeights(B, .45)}));
     put(p, drape(body, {from: 1.3, to: .86, mat: cloth(0x7d2129, {folds: true}), off: .035, flare: .05, folds: .015, include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.1 ? [["spine_03", .6], ["spine_02", .4]] : [["spine_01", .6], ["pelvis", .4]])}));
     put(p, drape(body, {from: 1.015, to: .985, mat: gold, off: .045, flare: 0, folds: 0, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_01", 1]])}));
-    mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, 1.675, -.012));
-    const pom = pomegranate(); mount(p, "hand_l", pom, new THREE.Vector3(.7, 1.38, .01));
+    mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, p.norm ? 1.76 : 1.675, -.012));
+    const pom = pomegranate(); mount(p, "hand_l", pom, p.norm ? new THREE.Vector3(.76, 1.43, .02) : new THREE.Vector3(.7, 1.38, .01));
   }},
   // Eurydice: a shade, so she's pale and not quite there. A plain white peplos; barefoot, because of the snake.
   eurydice: {body: "female", tone: 0xffffff, hair: ["hair_long"], hairColor: 0x3a2a1c, sandals: false, ghost: true, dress(p, B, body) {
@@ -534,7 +534,9 @@ function makeFace(root) {
       const b = Math.max(0, 1 - Math.abs(now - blinkAt - 70) / 70);
       set("AK_09_EyeBlinkLeft", b); set("AK_10_EyeBlinkRight", b);
       // speech: the mouth follows the loudness of the voice, moving between vowel and consonant shapes
-      const target = speaking ? Math.min(1, level * 5) : 0;
+      // if the voice can't be measured (a muted phone, say), the mouth still moves in the rhythm of speech
+      const lv = level > .012 ? level : speaking ? (.06 + .1 * Math.abs(Math.sin(now / 95))) * (Math.sin(now / 430) > -.35 ? 1 : .2) : 0;
+      const target = speaking ? Math.min(1, lv * 5) : 0;
       if (now > visT) { vis = target > .55 ? VISEMES[Math.random() * 5 | 0] : VISEMES[5 + (Math.random() * 3 | 0)]; visT = now + 70 + Math.random() * 90; }
       for (const v of VISEMES) set(v, (w[v] || 0) + (((v === vis ? target : 0) * .85) - (w[v] || 0)) * .45);
       set("AK_25_JawOpen", (w.AK_25_JawOpen || 0) + (target * .25 - (w.AK_25_JawOpen || 0)) * .4);
@@ -583,7 +585,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const person = {root, bones, body: ref, norm: {k, turn}, female};
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
-  const low = seated ? .5 : .1;
+  const low = seated ? .58 : .1;
   for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
     const m = o.material.clone();
     m.onBeforeCompile = sh => {

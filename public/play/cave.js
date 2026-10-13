@@ -46,7 +46,7 @@ export function sandstoneTunnel(scene, {x0, x1, z, r = 4.2, palette = SAND, dark
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors: true, map: speckle, roughness: .88, side: THREE.BackSide}));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors: true, map: speckle, roughness: .88, side: THREE.DoubleSide}));
   mesh.position.set((x0 + x1) / 2, cy, z);
   scene.add(mesh);
   return mesh;
