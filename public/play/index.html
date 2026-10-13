@@ -185,6 +185,7 @@ body.daylight::after{content:"";position:fixed;inset:0;z-index:18;background:#ff
 @media (max-width:760px){.howgrid{grid-template-columns:1fr}.steps div{font-size:16px}}
 @media (max-width:700px){.rule{font-size:15px;top:10px}.compass{top:34px}.goal{top:64px;left:14px;max-width:58vw;font-size:15px}.stats{top:134px;right:14px;font-size:12.5px}.mapbtn{right:14px}.codexbtn{right:14px}}
 body:has(#perform.on) .skiphint{opacity:0}
+body.over .hud,body.over #prompt,body.over #toast,body.over #danger,body.over .mapbtn,body.over .codexbtn,body.over #lyremeter,body.over #mapBtn{opacity:0!important;pointer-events:none}
 body.cinema .hud,body.cinema .mapbtn,body.cinema .codexbtn,body.cinema .skiphint,body.cinema #namecard{opacity:0!important;pointer-events:none}
 .cine{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
 .cine.on{display:block}

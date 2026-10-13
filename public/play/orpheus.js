@@ -257,6 +257,10 @@ export function makeOrpheus(G) {
 
     // Cerberus at the gate
     if (st.side === "far" && !dog.asleep) guardDog(dt, now);
+    // asleep, he pads aside and lies down by the gate post, so the way through is clear (you used to walk through him)
+    if (st.side === "far" && dog.asleep) { const rest = V(FAR.gateMouth.x - 5.4, 0, FAR.gateMouth.z - 1.2), to = flat(rest).sub(flat(dog.pos)), d = to.length();
+      if (d > .15) { dog.mode = "guard"; dog.speed = 1.3; dog.yaw = Math.atan2(to.x, to.z); dog.pos.addScaledVector(to.normalize(), Math.min(d, dt * 1.3)); }
+      else if (dog.mode !== "sleep") { dog.mode = "sleep"; dog.speed = 0; dog.yaw = Math.PI * .5; } }
 
     // Sisyphus stops to listen
     const sis = NPC.sisyphus, listening = st.lyre && flat(sis.pos).distanceTo(flat(me.pos)) < 18;

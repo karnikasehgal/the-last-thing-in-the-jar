@@ -778,7 +778,7 @@ $("#again").onclick = () => location.reload();
 /* ---------- controls ---------- */
 const touchMode = matchMedia("(pointer: coarse)").matches;
 if (touchMode) $("#keys").innerHTML = "<b>Left thumb</b><span>walk</span><b>Right thumb</b><span>look</span><b>use</b><span>talk, pick up</span><b>drop</b><span>drop the coin</span>";
-function grabMouse() { if (!touchMode && !talking && !ended) canvas.requestPointerLock?.(); }
+function grabMouse() { if (!touchMode && !talking && !ended) canvas.requestPointerLock?.()?.catch?.(() => {}); } // (refused inside some frames; the game still plays)
 function releaseMouse() { if (document.pointerLockElement) document.exitPointerLock(); }
 document.addEventListener("pointerlockchange", () => { if (!document.pointerLockElement && playing && !talking && !ended && !touchMode && !$("#mapview").classList.contains("on") && !$("#codex").classList.contains("on") && !$("#perform").classList.contains("on")) $("#paused").classList.add("on"); });
 $("#resume").onclick = () => { $("#paused").classList.remove("on"); grabMouse(); };
@@ -1635,4 +1635,4 @@ $("#tF").addEventListener("touchstart", e => { e.preventDefault(); lyreHeld = tr
 $("#tF").addEventListener("touchend", () => { lyreHeld = false; }); $("#tF").addEventListener("touchcancel", () => { lyreHeld = false; });
 
 // For testing only: /play/?debug exposes the game state in the console.
-if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses};
+if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses, get trinkets() { return trinkets; }, earnTrinket};
