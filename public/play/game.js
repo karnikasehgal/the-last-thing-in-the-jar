@@ -10,6 +10,8 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { pbr, hdri } from "./pbr.js";
 import { PROPS, rockify, place } from "./props.js";
@@ -33,10 +35,14 @@ const flat = v => V(v.x, 0, v.z);
 /* ---------- the place ----------
    x runs along the river, z runs from the back wall of the arcade (0) down to the river (22+).
    The arcade:  x -36..36, z 0..8, columns along z = 8.
-   The quay:    z 8..22.   The river starts at z = 22; you can wade to about z = 29.
+   The bank:    z 8..22, paved to z = 13, then a sand beach. The river starts at z = 22; you can wade to about z = 29.
    The dock:    x -1.4..1.4, z 22..35, Charon's boat at z ≈ 37.
    The temple:  centred on x = 56, z = 4. The dog's grotto: x ≈ 72, z ≈ 12.            */
-const SHORE = 22, DEEP = 29;
+const SHORE = 22, DEEP = 29, BEACH = 13; // the river's edge, as far out as you can wade, where the paving gives way to sand
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// the ground's height along the beach: level sand, then a gentle slope that meets the water just before SHORE
+// and levels out waist-deep, where the old quay used to drop you
+const sandY = z => z < BEACH || z > 40 ? 0 : -.5 * smooth(SHORE - 4, SHORE + 2, z);
 const PLACES = {
   start: V(-31, 0, 4), hermes: V(-27, 0, 5.2), elpenor: V(-6, 0, 15.5),
   altar: V(56, 0, 9), chairs: V(56, 0, -1), dogHome: V(72, 0, 12), coinSpot: V(69.4, 0, 13.6), dock: V(0, 0, 35), boat: V(0, 0, 37.5)
@@ -123,7 +129,13 @@ const Painterly = {
 // A multisampled one keeps edges smooth, the way the renderer alone would draw them.)
 const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, {type: THREE.HalfFloatType, samples: LITE ? 0 : 4}));
 composer.addPass(new RenderPass(scene, camera));
+// soft shadow where things meet and in every crease (ambient occlusion): what makes a scene sit together
+const ao = LITE ? null : new GTAOPass(scene, camera, innerWidth, innerHeight);
+if (ao) { ao.updateGtaoMaterial({radius: .45, distanceExponent: 1, thickness: 1, scale: 1}); ao.blendIntensity = .85; composer.addPass(ao); }
 if (!LITE) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .22, .5, .96)); // candles, torches and silk highlights glow
+// a real lens in the film shots: whoever is speaking in focus, the room behind them soft
+const lens = LITE ? null : new BokehPass(scene, camera, {focus: 2, aperture: .0009, maxblur: .006});
+if (lens) { lens.enabled = false; composer.addPass(lens); }
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
 composer.addPass(new OutputPass());
 function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
@@ -207,10 +219,27 @@ function solid(x, z, r = .35) {
 }
 
 /* ---------- the ground and the river ---------- */
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 120), M.stone);
-ground.rotation.x = -Math.PI / 2; ground.position.set(20, 0, -38); scene.add(ground);
-const quay = new THREE.Mesh(new THREE.BoxGeometry(240, .5, .8), M.marble);
-quay.position.set(20, -.2, SHORE); scene.add(quay);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 98 + BEACH), M.stone);
+ground.rotation.x = -Math.PI / 2; ground.position.set(20, 0, (BEACH - 98) / 2); scene.add(ground);
+// The bank runs down to the water as a beach: the paving stops at a low marble kerb, and pale sand slopes away under
+// the river, darker and smoother where the water has wetted it.
+const kerb = new THREE.Mesh(new THREE.BoxGeometry(240, .1, .5), M.marble); kerb.position.set(20, .02, BEACH); scene.add(kerb);
+const beach = (() => {
+  const geo = new THREE.PlaneGeometry(240, 32, 480, 96); geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i) + 20, z = pos.getZ(i) + BEACH + 16;
+    // the walked slope, then on down under the water; small wind ripples on the dry sand, none where it's wet
+    const dry = 1 - smooth(SHORE - 2.5, SHORE - .3, z), ripple = (Math.sin(x * 2.1 + Math.sin(z * .7) * 2) * .5 + .5) * .012 * dry;
+    // the waterline wanders: the sand rises and falls a little along the shore, so the water reaches further in some places
+    const wander = (Math.sin(x * .31) * .07 + Math.sin(x * .83 + 1.3) * .04 + Math.sin(x * 2.1 + 4) * .015) * smooth(SHORE - 5, SHORE - 2, z);
+    pos.setY(i, sandY(z) + wander - .6 * smooth(SHORE + 2, SHORE + 10, z) + ripple + (z < BEACH + .3 ? .015 : 0));
+    const k = .62 + .38 * dry; col[i * 3] = k; col[i * 3 + 1] = k * .99; col[i * 3 + 2] = k * .97;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, pbr("coast_sand_01", {size: 2.4, tint: 0xb0a490, vc: true, bump: 1.2}));
+  m.position.set(20, 0, BEACH + 16); m.receiveShadow = true; scene.add(m); return m;
+})();
 const riverBed = new THREE.Mesh(new THREE.PlaneGeometry(240, 140), new THREE.MeshStandardMaterial({color: 0x0c0e0c, roughness: 1}));
 riverBed.rotation.x = -Math.PI / 2; riverBed.position.set(20, -1.1, SHORE + 70); scene.add(riverBed);
 // Ripples for the river: a tiling height field of overlapping waves, turned into a normal map.
@@ -230,17 +259,17 @@ const waterNormals = (() => {
   g.putImageData(img, 0, 0);
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 })();
-const water = new Water(new THREE.PlaneGeometry(240, 140), {
+const water = new Water(new THREE.PlaneGeometry(240, 146), {
   textureWidth: LITE ? 256 : 512, textureHeight: LITE ? 256 : 512, waterNormals, sunDirection: moon.position.clone().normalize(),
   sunColor: 0x9fc8d8, waterColor: 0x020d10, distortionScale: 1.1, fog: true
 });
-water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 70); scene.add(water);
+water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 67); scene.add(water);
 // The river of the dead: black, glassy water that mirrors the torches, with only a faint cold glow from below
 // along the quay, broken up by the ripples, and a pale rim where it laps the stone.
 water.material.uniforms.glow = {value: new THREE.Color(0x0b6a78)};
 water.material.uniforms.deep = {value: new THREE.Color(0x02161c)};
 water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outgoingLight = albedo;", `
-  float d = max(worldPosition.z - ${SHORE.toFixed(1)}, 0.0);
+  float d = max(worldPosition.z - ${(SHORE - .4).toFixed(1)}, 0.0); // (from the waterline on the sand)
   float c = 0.0;
   for (int i = 0; i < 2; i++) {
     vec2 q = worldPosition.xz * (i == 0 ? 1.0 : 2.3) + float(i) * 7.0;
@@ -251,8 +280,8 @@ water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outg
   float near = exp(-d / 7.0);
   vec3 tint = mix(deep, glow, near);
   float body = (.05 + .22 * near) * (.55 + rip * .6);
-  float rim = smoothstep(.8, 0.0, d);
-  vec3 outgoingLight = albedo * .7 + tint * body + vec3(.45, .8, .85) * rim * (.12 + .25 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
+  float rim = smoothstep(1.6, 0.0, d);
+  vec3 outgoingLight = albedo * .7 + tint * body + vec3(.45, .8, .85) * rim * (.03 + .08 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
 // Light thrown up by the river onto the quay, the dock and anyone standing near the water (faint and cold).
 for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2fb0c0, 2.2, 12, 1.6); l.position.set(x, .2, SHORE + 2.5); scene.add(l); }
 // Mist lying on the river in slow drifting banks, thicker in the distance.
@@ -339,9 +368,9 @@ bench(-6, 16); bench(14, 16); bench(-20, 16);
 function brazier(x, z) {
   const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.45, .25, .4, 12), new THREE.MeshStandardMaterial({color: 0x3a2a1a, metalness: .6, roughness: .5}));
   const stand = new THREE.Mesh(new THREE.CylinderGeometry(.06, .1, 1.1, 6), bowl.material);
-  stand.position.set(x, .55, z); bowl.position.set(x, 1.2, z); scene.add(stand, bowl);
-  const coals = new THREE.Mesh(new THREE.SphereGeometry(.32, 10, 6), new THREE.MeshBasicMaterial({color: 0xff7a2a})); coals.scale.y = .35; coals.position.set(x, 1.38, z); scene.add(coals);
-  const l = new THREE.PointLight(0xff8a3a, 26, 16, 1.6); l.position.set(x, 1.9, z); scene.add(l); torches.push({l, base: 26, seed: x});
+  const y = sandY(z); stand.position.set(x, y + .55, z); bowl.position.set(x, y + 1.2, z); scene.add(stand, bowl);
+  const coals = new THREE.Mesh(new THREE.SphereGeometry(.32, 10, 6), new THREE.MeshBasicMaterial({color: 0xff7a2a})); coals.scale.y = .35; coals.position.set(x, y + 1.38, z); scene.add(coals);
+  const l = new THREE.PointLight(0xff8a3a, 26, 16, 1.6); l.position.set(x, y + 1.9, z); scene.add(l); torches.push({l, base: 26, seed: x});
   circles.push([x, z, .5]);
 }
 brazier(-9, 13.5); brazier(8, 19); brazier(-2.6, 21); brazier(2.6, 21); brazier(30, 13);
@@ -501,6 +530,7 @@ const dog = {pos: PLACES.dogHome.clone(), yaw: Math.PI * .8, mode: "sleep", spee
 function animateDog(dt, now) {
   const gait = (dog.mode === "sleep" || dog.mode === "drugged") ? "sleep" : dog.speed > 4 ? "run" : dog.speed > .3 ? "walk" : "idle";
   animateHound(hound, {mode: gait, speed: dog.speed, x: dog.pos.x, z: dog.pos.z, yaw: dog.yaw, hunting: dog.mode === "hunt"}, dt, now);
+  hound.g.position.y += sandY(dog.pos.z);
 }
 
 /* ---------- the player ---------- */
@@ -537,7 +567,7 @@ const sound = {
   step(kind, vol = 1) {
     if (!actx) return; if (kind === true) kind = "water"; if (kind === false) kind = "stone";
     const n = this.noise(.16), f = actx.createBiquadFilter(), v = .85 + Math.random() * .3;
-    const S = {water: ["bandpass", 1300, .25, .14], wood: ["bandpass", 520, .3, .07], marble: ["highpass", 1800, .1, .05], stone: ["lowpass", 380 + Math.random() * 120, .17, .09]}[kind] || ["lowpass", 360, .16, .1];
+    const S = {water: ["bandpass", 1300, .25, .14], wood: ["bandpass", 520, .3, .07], marble: ["highpass", 1800, .1, .05], sand: ["bandpass", 2400, .13, .09], stone: ["lowpass", 380 + Math.random() * 120, .17, .09]}[kind] || ["lowpass", 360, .16, .1];
     f.type = S[0]; f.frequency.value = S[1]; f.Q.value = kind === "wood" ? 4 : 1; n.connect(f); this.env(f, S[2] * vol * v, .004, S[3]); n.start();
     if (kind === "wood") { const o = actx.createOscillator(); o.frequency.value = 140 + Math.random() * 30; this.env(o, .06 * vol, .002, .08); o.start(); o.stop(actx.currentTime + .1); }
   },
@@ -988,7 +1018,7 @@ function tick(now) {
       if (!solid(me.pos.x + dx, me.pos.z)) me.pos.x += dx;
       if (!solid(me.pos.x, me.pos.z + dz)) me.pos.z += dz;
       else if (me.pos.z + dz > DEEP - .5) toast("Too deep. You can't swim either.", 1500);
-      stepT -= dt; if (stepT <= 0) { sound.step(wet ? "water" : onDock(me.pos) || onFarDock(me.pos) ? "wood" : me.pos.z > FAR.hallZ ? "marble" : "stone"); if (speed > 5) sound.breath(); stepT = wet ? .7 : (speed > 5 ? .3 : .45); }
+      stepT -= dt; if (stepT <= 0) { sound.step(wet ? "water" : onDock(me.pos) || onFarDock(me.pos) ? "wood" : me.pos.z > FAR.hallZ ? "marble" : me.pos.z > BEACH && me.pos.z < 40 ? "sand" : "stone"); if (speed > 5) sound.breath(); stepT = wet ? .7 : (speed > 5 ? .3 : .45); }
     }
     if (wet && !wasWet) { sound.splash(); me.splashed++; paintStats(); if (dog.mode === "hunt") toast("It won't follow you into the river."); }
     wasWet = wet;
@@ -1011,12 +1041,16 @@ function tick(now) {
   }
   animateDog(dt, now);
   // camera: first person, or a close-up during conversations
-  fpPos.set(me.pos.x, ride ? 1.95 : inWater(me.pos) ? 1.12 : (onTemple(me.pos) ? STEP : 0) + 1.62, me.pos.z);
+  fpPos.set(me.pos.x, ride ? 1.95 : onDock(me.pos) ? 1.62 : (onTemple(me.pos) ? STEP : 0) + sandY(me.pos.z) + 1.62, me.pos.z);
   moveBody(dt);
   // in conversations and cutaways, a soft key light from beside the camera, the way films light a face
   // nobody blocks a shot: in a film shot, anyone whose head sits right on the line between the camera and the speaker
   // steps out of the picture until the shot moves on
   unblock(camShot.active);
+  // the film passes (soft contact shadows, a shallow focus) only in film shots: each draws the scene again, which
+  // halves the frame rate, too dear while you're walking
+  if (ao) ao.enabled = camShot.active;
+  if (lens) { lens.enabled = camShot.active; if (camShot.active) lens.uniforms.focus.value = camera.getWorldPosition(new THREE.Vector3()).distanceTo(camShot.look); }
   // a soft light from beside the camera, the way films keep a face lit: strong in a shot or a conversation, faint otherwise
   keyLight.intensity += ((camShot.active ? 4 : talking ? 3 : .9) - keyLight.intensity) * .15;
   { const cp = camera.getWorldPosition(new THREE.Vector3()), r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); keyLight.position.copy(cp).addScaledVector(r, .6).add(V(0, .45, 0)); }

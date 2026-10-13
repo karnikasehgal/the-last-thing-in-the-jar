@@ -509,7 +509,7 @@ const LOOKS = {
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
   }},
   // The wedding at Corinth. Demeas, the uncle who gives the toast.
-  demeas: {dress(p, B, body) { greek(p, B, body, 0xd9cdb0, 0x6b2a5a); }},
+  demeas: {dress(p, B, body) { if (p.toon) beard(p, body, 0xe8e2d8, {thick: .018, chin: .6}); greek(p, B, body, 0xd9cdb0, 0x6b2a5a); }}, // a bushy white beard
   // Kleio, the aunt who runs everything.
   aunt: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0x1f3a6a, fabric: "jersey", armband: true}); }},
   // Lykon, Mikon's friend, who has heard the goat joke before.
@@ -1069,8 +1069,37 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   // Snow, the animated man, was drawn with a long neck; ours sits the head lower on the shoulders. Done after the
   // clothes are fitted (they and the body share the same rest pose), so everything above the neck moves down together.
   if (toon && !female) { const h = bones.Head; h.position.multiplyScalar(.62); h.updateMatrixWorld(true); }
+  if (toon && SHAPE[id]) shapeBody(root, bones, SHAPE[id], seated);
   scene.add(root);
   return person;
+}
+
+// Body shapes from the character sheets: everyone is built on one of two animated bodies, so each is resized by
+// its bones. Every scale is uniform (a stretched bone shears when its children turn), and none is animated, so the
+// clips play on top unchanged. Each part is sized on its own, the next part up undoing it: hips, belly (the waist),
+// chest (shoulders and arms), head, legs (thigh to toe, the body lowered so the feet stay down), size (overall height).
+const SHAPE = {
+  mikon: {size: .97, hips: 1.35, belly: 1.4, chest: 1, head: 1.28, legs: .8},          // pear-shaped, round belly, short legs
+  aunt: {size: .92, hips: 1.3, belly: 1.3, chest: 1.06, head: 1.16, legs: .86},       // Kleio: short, round, formidable
+  demeas: {size: 1.05, hips: 1.2, belly: 1.4, chest: 1.12, head: 1.18, legs: .85},    // huge and barrel-chested
+  charon: {size: 1.02, belly: .94, chest: .96, head: 1.06, legs: 1.04},               // very tall and gaunt (he is built 1.08 tall already)
+  orpheus: {size: 1.03, belly: .95, chest: .97, head: 1.1, legs: 1.04},              // slim and long-limbed
+  hermes: {belly: .95, head: 1.1, legs: 1.03},
+  lykon: {size: 1.07, belly: .92, chest: .95, head: 1.1, legs: 1.06},                // tall and lanky
+  nikias: {size: 1.05, head: 1.1, legs: 1.02},
+  thea: {size: .93, head: 1.06},                                                     // petite
+  hades: {size: 1.06, chest: 1.06, head: 1.08},
+};
+function shapeBody(root, bones, {size = 1, hips = 1, belly = 1, chest = 1, head = 1, legs = 1}, seated) {
+  const arm = bones.pelvis.parent, v = new THREE.Vector3(), sc = (b, k) => b && b.scale.multiplyScalar(k);
+  // what has to stay put: the feet on the ground, or for someone seated, the hips on the seat
+  const anchor = () => { root.updateMatrixWorld(true); return seated ? bones.pelvis.getWorldPosition(v).y : Math.min(bones.foot_l.getWorldPosition(v).y, bones.foot_r.getWorldPosition(v).y); };
+  const y0 = anchor();
+  sc(bones.spine_01, hips); sc(bones.spine_02, belly / hips); sc(bones.spine_03, chest / belly); sc(bones.neck_01, head / chest);
+  for (const s of ["l", "r"]) sc(bones["thigh_" + s], legs);
+  arm.scale.multiplyScalar(size); arm.position.multiplyScalar(size);
+  arm.position.y += (y0 - anchor()) / root.scale.y;
+  root.updateMatrixWorld(true);
 }
 
 // Someone in a crowd: a lighter body, plain Greek dress in their own colours.

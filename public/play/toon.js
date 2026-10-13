@@ -72,6 +72,8 @@ export function toonClips(asset, rbAnims, clips) {
   const leg = (r, a, b) => wp(by(r, a)).distanceTo(wp(by(r, b)));
   const k = leg(dst, "Bip01_L_Thigh", "Bip01_L_Foot") / leg(src, "Bip01_L_Thigh", "Bip01_L_Foot"), hipS0 = wp(hipS), hipD0 = wp(hipD), hipRest = hipD.position.clone();
   const mixer = new THREE.AnimationMixer(src), out = {}, want = new THREE.Quaternion(), pw = new THREE.Quaternion();
+  // how far a hand must stay from the face: the head's own size (cartoon heads are big)
+  let faceR = .16; { const hb = by(dst, "Bip01_Head"), nb = by(dst, "Bip01_Neck"); if (hb && nb) faceR = Math.max(.27, wp(hb).distanceTo(wp(nb)) * 2.8); }
   for (const [name, clip] of Object.entries(clips)) {
     const FPS = 30, n = Math.max(2, Math.round(clip.duration * FPS) + 1), times = new Float32Array(n);
     const Q = pairs.map(() => new Float32Array(n * 4)), H = new Float32Array(n * 3);
@@ -84,6 +86,20 @@ export function toonClips(asset, rbAnims, clips) {
         p.D.parent.getWorldQuaternion(pw); p.D.quaternion.copy(pw.invert().multiply(want)); p.D.updateMatrixWorld(true);
         p.D.quaternion.toArray(Q[i], f * 4);
       });
+      // hands off the face: the gestures were made for a smaller, realistic head; where a hand would pass into this
+      // bigger one, the upper arm swings out just enough to keep it clear
+      for (const s of "LR") {
+        const ui = pairs.findIndex(p => p.D.name === `Bip01_${s}_UpperArm`), up = pairs[ui]?.D, hand = by(dst, `Bip01_${s}_Hand`), headB = by(dst, "Bip01_Head");
+        if (!up || !hand || !headB) continue;
+        const fore = by(dst, `Bip01_${s}_Forearm`), wrist = wp(hand), hp = wrist.clone().add(wrist.clone().sub(wp(fore)).normalize().multiplyScalar(.1)); // (the fingertips, not the wrist)
+        const hc = wp(headB).add(new THREE.Vector3(0, faceR * .45, faceR * .2)), d = hp.distanceTo(hc);
+        if (d < faceR) {
+          const sh = wp(up), want2 = hc.clone().add(hp.clone().sub(hc).normalize().multiplyScalar(faceR));
+          const turn = new THREE.Quaternion().setFromUnitVectors(hp.clone().sub(sh).normalize(), want2.sub(sh).normalize());
+          const w = turn.multiply(wq(up)); up.parent.getWorldQuaternion(pw); up.quaternion.copy(pw.invert().multiply(w)); up.updateMatrixWorld(true);
+          up.quaternion.toArray(Q[ui], f * 4);
+        }
+      }
       // the hips carry the bob and sway, scaled to our legs (Rocketbox moves its root; we move the pelvis)
       const d = wp(hipS).sub(hipS0).multiplyScalar(k), target = hipD0.clone().add(d);
       hipD.parent.worldToLocal(target); target.toArray(H, f * 3); hipD.position.copy(target); hipD.updateMatrixWorld(true);
@@ -149,7 +165,7 @@ const SKIN = {fair: 0xf8cfb4, porcelain: 0xf1cdb6, rosy: 0xefc1a8, olive: 0xd8aa
 const LOOK = {
   orpheus: ["golden", 0x2a1a10], hermes: ["fair", 0xd9b45e], charon: ["ash", 0xb8b0a4], hades: ["porcelain", 0x0e0a08], sisyphus: ["umber", 0x7a6a58],
   mikon: ["olive", 0x3b2a1c], mikon_bank: ["olive", 0x3b2a1c], elpenor: ["tan", 0x5a3a20], theseus: ["brown", 0x3a2516], pirithous: ["deep", 0x1d140d],
-  demeas: ["rosy", 0x8a8278], nikias: ["dark", 0x1a120c], lykon: ["ebony", 0x120c08], piper: ["umber", 0x2a1d14], shade: ["olive", 0x3a3028],
+  demeas: ["rosy", 0xd8d2c8], nikias: ["dark", 0x1a120c], lykon: ["ebony", 0x120c08], piper: ["umber", 0x2a1d14], shade: ["olive", 0x3a3028],
   persephone: ["porcelain", 0x2a160e], eurydice: ["tan", 0x3a2a1c], eurydice_alive: ["tan", 0x3a2a1c], eurydice_meadow: ["tan", 0x3a2a1c],
   aunt: ["dark", 0x9a9088], thea: ["deep", 0x6a3a1a], dancer: ["golden", 0x120c08],
 };
