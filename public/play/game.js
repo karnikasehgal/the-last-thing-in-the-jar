@@ -10,14 +10,14 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { makeHound, animateHound } from "./hound.js";
-import { makeCastMember, oar, mount } from "./people.js";
+import { makeCastMember, oar, mount, makeExtra, cloneExtra } from "./people.js";
 import { buildFarBank, FAR } from "./farbank.js";
 import { placeTrinkets, showFound, openCodex, save } from "./lore.js";
 import { lyreInit } from "./music.js";
 import { trial } from "./trials.js";
 import { makeOrpheus } from "./orpheus.js";
 import { sandstoneTunnel, sunrise } from "./cave.js";
-import { buildWedding, W, SEATS } from "./wedding.js";
+import { buildWedding, W, SEATS, CROWD } from "./wedding.js";
 
 const $ = s => document.querySelector(s);
 const LIB = "../img/lib/";
@@ -343,9 +343,10 @@ const REAL = ["hermes", "charon", "mikon", "orpheus", "elpenor", "theseus", "pir
 const ASSETS = {}, CLIPS = {};
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
-    ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx"];
+    ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
+    ...Array.from({length: 10}, (_, i) => "crowd/m" + i), ...Array.from({length: 9}, (_, i) => "crowd/f" + i)];
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_")] = await gltf.loadAsync(`assets/${n}.glb`); progress(++done / list.length); }));
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
 }
 const NPC = {};
@@ -898,6 +899,7 @@ function tick(now) {
     $("#compassText").textContent = `${Math.round(d.length())} m`;
   }
   farWorld.animate(now);
+  if (crowd && wedding?.lights[0]?.visible) { crowd.update(dt, now); wedding.animate(now); }
   for (const l of farWorld.flicker) l.intensity = 30 * (.82 + Math.sin(now / 90 + l.position.x) * .07 + Math.random() * .1);
   for (const t of torches) t.l.intensity = t.base * (.82 + Math.sin(now / 90 + t.seed) * .07 + Math.random() * .1);
   coins.forEach(c => c.rotation.z = now / 600);
@@ -1079,6 +1081,50 @@ function setWeddingLights(on) {
   if (on) { nearLights.forEach(l => l.visible = false); farLights.forEach(l => l.visible = false); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; sky.intensity = .8; }
   else { scene.fog.color.set(0x1d1813); scene.fog.density = .021; setLightsFar(false); }
 }
+
+// The wedding crowd: everyone Thea's family has ever met. Built once, the first time the film plays.
+let crowd = null;
+const PALETTE = [[0xe9e0cc, 0x8a2f24], [0x6b7a4a, 0x3a2a1a], [0x2f4a6b, 0xd8cdb6], [0xa8823a, 0x5a3a20], [0xd8d4ca, 0x6b4a7a], [0x8a3a2a, 0xe0d0b0], [0xc8b48a, 0x2a3a5a], [0x5a6b78, 0xa86a3a], [0xd89a2a, 0xf2ede2], [0x7a2a4a, 0xd8cdb6]];
+function buildCrowd() {
+  const people = [], few = LITE ? 14 : 44;
+  const pal = () => PALETTE[Math.random() * PALETTE.length | 0];
+  // one dressed person per face, seated or standing; then cheaper copies in new colours
+  const base = {standing: [], seated: []};
+  const keys = [...Array.from({length: 10}, (_, i) => ["crowd_m" + i, false]), ...Array.from({length: 9}, (_, i) => ["crowd_f" + i, true])];
+  keys.forEach(([k, female], i) => {
+    if (!ASSETS[k]) return;
+    const c = pal(), seated = i % 2 === 0;
+    const p = makeExtra(ASSETS[k], {ASSETS, scene, female, seated, colors: [c[0], c[1], 0xe8e0d0], veil: female && Math.random() < .5});
+    p.root.visible = false; (seated ? base.seated : base.standing).push(p);
+  });
+  let si = 0, ti = 0;
+  const take = kind => { const list = base[kind]; const b = list[(kind === "seated" ? si++ : ti++) % list.length]; if (!b.used) { b.used = true; return b; } return cloneExtra(b, ASSETS, scene, (Math.random() - .5) * .12); };
+  const placeAt = (p, x, z, ry, clip) => { p.root.position.copy(wpos(x, 0, z)); p.root.rotation.set(0, ry, 0); p.root.visible = true; p.play(clip, 0); people.push(p); return p; };
+  // the tables
+  const seats = CROWD.tables.slice().sort(() => Math.random() - .5).slice(0, LITE ? 6 : 18);
+  for (const [x, z, ry] of seats) placeAt(take("seated"), x, z, ry, ["sittable", "sittabletalk", "sittablethink"][Math.random() * 3 | 0]);
+  // the ring dance, turning slowly around the dance floor
+  const ring = [];
+  for (let i = 0; i < (LITE ? 5 : CROWD.ring.n); i++) { const p = placeAt(take("standing"), 0, 0, 0, "walk"); p.ring = i; ring.push(p); }
+  // people standing about, talking, laughing, drinking
+  for (const [gx, gz] of CROWD.groups.slice(0, LITE ? 2 : 6)) for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.random(); placeAt(take("standing"), gx + Math.cos(a) * .8, gz + Math.sin(a) * .8, Math.atan2(-Math.cos(a), -Math.sin(a)), ["Idle_Talking_Loop", "laugh", "drink", "listen", "cheer"][Math.random() * 5 | 0]); }
+  // the band: two more players beside the piper
+  for (const [bx, bz, ry] of CROWD.band) placeAt(take("standing"), bx, bz, ry, "clap");
+  // servers walking between the tables with trays
+  const servers = [];
+  for (let i = 0; i < (LITE ? 1 : CROWD.servers); i++) {
+    const p = placeAt(take("standing"), 0, 0, 0, "walk"); p.serve = i;
+    const tray = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .03, 16), new THREE.MeshStandardMaterial({color: 0xb8b0a0, metalness: .6, roughness: .3}));
+    for (let k = 0; k < 4; k++) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(.05, .03, .06, 10), new THREE.MeshStandardMaterial({color: 0x1a1410})); cup.position.set(Math.cos(k * 1.6) * .12, .04, Math.sin(k * 1.6) * .12); tray.add(cup); }
+    tray.position.set(.2, 1.15, .32); p.root.add(tray); servers.push(p);
+  }
+  return {people, ring, servers, update(dt, now) {
+    for (const p of people) p.mixer.update(dt);
+    const R = CROWD.ring;
+    ring.forEach((p, i) => { const a = now / 6000 + i / ring.length * Math.PI * 2; p.root.position.copy(wpos(R.x + Math.cos(a) * R.r, 0, R.z + Math.sin(a) * R.r)); p.root.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a)); if (p.action) p.action.timeScale = .75; });
+    servers.forEach((p, i) => { const a = now / 9000 * (i % 2 ? 1 : -1) + i * 1.7, rx = 7.5, rz = 8; p.root.position.copy(wpos(3 + Math.cos(a) * rx, 0, Math.sin(a) * rz)); p.root.rotation.y = Math.atan2(-Math.sin(a) * rx * (i % 2 ? 1 : -1), Math.cos(a) * rz * (i % 2 ? 1 : -1)); });
+  }, hide() { people.forEach(p => p.root.visible = false); }, show() { people.forEach(p => p.root.visible = true); }};
+}
 async function weddingFilm() {
   if (!wedding) {
     wedding = buildWedding(scene, {noise});
@@ -1088,6 +1134,11 @@ async function weddingFilm() {
       thea: Object.assign(G.cast("thea", {seated: true}), {name: "Thea"}), piper: Object.assign(G.cast("piper"), {name: "the piper"}), dancer: Object.assign(G.cast("dancer"), {name: "a guest"})
     };
   }
+  if (!crowd) {
+    const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
+    $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");
+    await pause(1200); crowd = buildCrowd(); await pause(600); card.classList.remove("on");
+  } else crowd.show();
   const cast = {...guests, mikon: PLAYER};
   for (const [k, p] of Object.entries(guests)) NPC[k] = p;
   NPC.mikon = PLAYER; PLAYER.name = "Mikon";
@@ -1103,11 +1154,26 @@ async function weddingFilm() {
   stage(cast.dancer, SEATS.dancer); cast.dancer.play("dance", 0);
   wedding.mood("wedding"); setWeddingLights(true); sound.party(true);
   const reel = async () => {
-    // Corinth, last spring
-    shot([7, 4.6, 5.6], [0, 1, 0], [4.6, 2.3, 3.6], [0, 1, 0], 9000);
-    await fade("clear", 1800);
-    const card = $("#namecard"); card.querySelector("b").textContent = "Corinth"; card.querySelector("span").textContent = "Last spring. A wedding."; card.classList.add("on"); setTimeout(() => card.classList.remove("on"), 4500);
-    await say("mikon", "v2_i1", "My name is Mikon. I sold salt fish in the agora at Corinth for twenty-two years, and I was, by every account, fine at it.");
+    // Corinth, last spring: the whole wedding from above, then Mikon walking in through the gate with his present
+    shot([-2, 9, 14], [-6, 0, -2], [6, 6, 11], [-4, 0, -1], 7000);
+    await fade("clear", 1600);
+    const card = $("#namecard"); card.querySelector("b").textContent = "Corinth"; card.querySelector("span").textContent = "Last spring. Thea's wedding."; card.classList.add("on"); setTimeout(() => card.classList.remove("on"), 5000);
+    await pause(4200);
+    const basket = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(.17, .13, .2, 14, 1, true), new THREE.MeshStandardMaterial({color: 0x9a7a4a, roughness: 1, side: THREE.DoubleSide})); basket.add(b); for (let k = 0; k < 5; k++) { const f = new THREE.Mesh(new THREE.CapsuleGeometry(.03, .16, 4, 8), new THREE.MeshStandardMaterial({color: 0xb8b8a8, metalness: .4, roughness: .3})); f.rotation.z = Math.PI / 2 + (k - 2) * .25; f.position.set(0, .1, (k - 2) * .05); basket.add(f); } }
+    mount(PLAYER, "hand_r", basket, V(-.9, 1.32, .02));
+    const g0 = performance.now(), from = wpos(CROWD.gate[0], 0, CROWD.gate[1]), to = wpos(-.7, 0, -1.9);
+    PLAYER.root.rotation.set(0, -Math.PI / 2, 0); PLAYER.play("walk", .1);
+    let walking = true;
+    (function walk() { if (!walking) return; const u = Math.min(1, (performance.now() - g0) / 11000); PLAYER.root.position.lerpVectors(from, to, u); if (u < 1) requestAnimationFrame(walk); else { PLAYER.play("Idle_Loop"); walking = false; } })();
+    (function follow() { if (!walking) return; const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); camShot.active = true; shot.cur = null; camShot.pos.copy(h).add(V(-1.3, .05, .45)); camShot.look.copy(h).add(V(0, -.05, 0)); requestAnimationFrame(follow); })();
+    await say("mikon", "w_i1", "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.");
+    if (skipped) return;
+    faceShot(cast.lykon, {side: .2}); cast.lykon.play("sittabletalk"); await say("lykon", "w_l0", "Mikon! Over here, I saved you a seat. Wait. Is that fish? You brought fish to a wedding?");
+    walking = false; PLAYER.root.position.copy(to); PLAYER.root.rotation.set(0, -Math.PI / 2, 0); PLAYER.play("Idle_Talking_Loop");
+    faceShot(PLAYER, {dist: 1, side: .25}); await say("mikon", "w_m0", "Salt fish from Lechaion. The good kind. It's a present.");
+    faceShot(cast.kleio, {side: -.2}); cast.kleio.play("sittabletalk"); await say("kleio", "w_a0", "Give that to me before the bride smells it. Sit down, Mikon, have some wine, and try to enjoy yourself for once.");
+    basket.parent?.remove(basket);
+    stage(PLAYER, SEATS.mikon); PLAYER.play("sittable", 0); cast.kleio.play("sittable");
     if (skipped) return;
     // the toast
     faceShot(cast.demeas, {dist: 1.6, side: .5, up: -.05, ms: 9000});
@@ -1147,7 +1213,7 @@ async function weddingFilm() {
     $("#view").style.transition = ""; $("#view").style.filter = ""; $("#pov").classList.remove("on"); sound.setMuffle(20000, .5);
     if (skipped) return;
     // the next night: the same courtyard, cleared, and Mikon laid out on the table
-    wedding.mood("funeral"); PLAYER.setHead(true);
+    wedding.mood("funeral"); PLAYER.setHead(true); crowd.hide();
     PLAYER.root.position.copy(wpos(.55, .86, 0)); PLAYER.root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(V(0, 0, -1), V(-1, 0, 0), V(0, 1, 0)));
     PLAYER.play("Idle_Loop", 0); PLAYER.action && (PLAYER.action.timeScale = 0); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: 1, AK_10_EyeBlinkRight: 1};
     for (const k of ["lykon", "nikias", "piper", "dancer"]) cast[k].root.visible = false;
@@ -1167,7 +1233,7 @@ async function weddingFilm() {
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);
   sound.party(false); sound.setMuffle(20000, .2); $("#view").style.filter = ""; $("#pov").classList.remove("on");
-  setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false;
+  setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false; crowd?.hide();
   for (const k of Object.keys(guests)) delete NPC[k];
   PLAYER.root.quaternion.identity(); PLAYER.root.position.set(-20.4, 0, 16.05); PLAYER.root.rotation.set(0, Math.PI, 0);
   PLAYER.action && (PLAYER.action.timeScale = 1); PLAYER.play("Sitting_Idle_Loop", 0); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: 1, AK_10_EyeBlinkRight: 1};

@@ -366,7 +366,7 @@ const NECKLINE_HIGH = "b.y < 1.585 && !(b.z > .0 && pow(b.x / .085, 2.) + pow((b
 let NECKLINE = NECKLINE_LOW;
 const SLEEVE = w => `abs(b.x) < ${LONG ? .6 : w}`;
 const UPPER = (x, y, z, d) => y > .96 && y < 1.6 && (TORSO.test(d) || ARMS.test(d) || d === "neck_01");
-const put = (p, m) => (m.userData.home || p.root).add(m);
+const put = (p, m) => { const h = m.userData.home; delete m.userData.home; (h || p.root).add(m); };
 const LOOKS = {
   // Hermes: young and beardless as the classical painters show him, in a traveller's hat with
   // wings, a short pinned cloak over a short tunic, winged sandals, and the herald's staff.
@@ -586,9 +586,9 @@ function makeFace(root) {
     }
   };
 }
-function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
-  const female = FEMALE.has(id) || look.body === "female";
-  const root = SkeletonUtils.clone(ASSETS["rb_" + id].scene);
+function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, female: fem}) {
+  const female = fem ?? (FEMALE.has(id) || look.body === "female");
+  const root = SkeletonUtils.clone((asset || ASSETS["rb_" + id]).scene);
   root.updateMatrixWorld(true);
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
   // stand them up in the tailor's space: facing +z, scaled so the head sits where the tailor expects it
@@ -674,6 +674,23 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false}) {
   return person;
 }
 
+// Someone in a crowd: a lighter body, plain Greek dress in their own colours.
+export function makeExtra(asset, {ASSETS, scene, female, seated = false, colors, veil}) {
+  const look = {dress(p, B, body) { greek(p, B, body, colors[0], colors[1], {veil: veil ? colors[2] : undefined}); }};
+  return makeRealPerson("extra", look, {ASSETS, scene, scale: 1, seated, asset, female});
+}
+// Another of the same person, cheaply: the same body and clothes, a new skeleton, its own colours.
+export function cloneExtra(p, ASSETS, scene, tint) {
+  const root = SkeletonUtils.clone(p.root);
+  root.traverse(o => { if (o.isMesh && o.userData.garment && !/gold|leather/.test(o.material.name)) { o.material = o.material.clone(); if (o.material.color) o.material.color.offsetHSL(tint, (Math.random() - .5) * .2, (Math.random() - .5) * .15); } });
+  const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
+  const clips = rbClips(ASSETS, p.female), mixer = new THREE.AnimationMixer(root);
+  const q = {root, bones, mixer, female: p.female, action: null, current: null, play(name, fade = .35) {
+    const clip = clips[CLIPMAP[name] || name] || clips.idle; if (!clip || this.current === name) return;
+    const a = mixer.clipAction(clip); a.reset().fadeIn(fade).play(); a.time = Math.random() * clip.duration;
+    if (this.action && this.action !== a) this.action.fadeOut(fade); this.action = a; this.current = name; }};
+  scene.add(root); return q;
+}
 export function makeCastMember(id, {ASSETS, CLIPS, scene, scale = 1, seated = false}) {
   const look = LOOKS[id];
   if (ASSETS["rb_" + (look.as || id)]) return makeRealPerson(look.as || id, look, {ASSETS, scene, scale, seated});
