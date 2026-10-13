@@ -13,7 +13,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
 import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { pbr, hdri } from "./pbr.js";
+import { pbr, hdri, skyPhoto } from "./pbr.js";
 import { buildTemple } from "./temple.js";
 import { PROPS, rockify, place } from "./props.js";
 import { groundHeight } from "./meadow.js";
@@ -96,8 +96,17 @@ function unblock(on) {
 // interior; the wedding courtyard at dusk takes a sunrise; the meadow by day, a meadow. Chosen by where the camera is.
 const ENV = {};
 hdri(renderer, "small_cathedral", .1, [.75, .9, 1.15]).then(e => ENV.under = e);
-hdri(renderer, "spruit_sunrise", .45, [1.1, .95, .8]).then(e => ENV.dusk = e);
-hdri(renderer, "meadow_2", .7).then(e => ENV.day = e);
+// The wedding's real skies, photographed (Poly Haven, CC0): a low sun setting over open country, and a clear day with
+// clouds. Each is turned so its sun stands where the wedding's sunlight comes from (the sunset beyond the colonnade,
+// to the west), and the same photograph is both the light and the sky you see. The river's sky is a real night sky,
+// the Milky Way across it.
+const TURN = {dusk: .387, day: .266, night: 0};
+hdri(renderer, "kloppenheim_06_puresky", .55, [1, .97, .92], TURN.dusk).then(e => ENV.dusk = e);
+hdri(renderer, "kloofendal_48d_partly_cloudy_puresky", .5, [1, 1, 1], TURN.day).then(e => ENV.day = e);
+const SKY = {};
+skyPhoto("kloppenheim_06_puresky", TURN.dusk).then(t => SKY.dusk = t);
+skyPhoto("kloofendal_48d_partly_cloudy_puresky", TURN.day).then(t => SKY.day = t);
+skyPhoto("qwantani_night_puresky", TURN.night).then(t => SKY.night = t);
 hdri(renderer, "small_cathedral", .06, [.8, .8, 1]).then(e => ENV.night = e);
 // The air and the fill light, by where the camera is: the wedding has its own (a warm golden haze at dusk, clear blue
 // air by day, cold night for the funeral); everywhere else is the river at night. (It used to be a brown fog over
@@ -113,6 +122,10 @@ function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
   const want = ENV[x > 200 ? (mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
+  // the sky you see: the photograph for the place, once it's loaded (the painted skies stand in until then)
+  const bg = x > 200 ? SKY[mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk"] : SKY.night;
+  if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "funeral" ? .5 : 1.25) : .55; }
+  starDome.visible = !SKY.night; if (wedding) wedding.sky.visible = !bg || x <= 200;
   moon.visible = x <= 200; // (the river's moon has no business lighting a wedding at sunset)
   if (x > 200) { const a = AIR[mood] || AIR.wedding; scene.fog.color.setHex(a.fog); scene.fog.density = a.density; sky.color.setHex(a.top); sky.groundColor.setHex(a.ground); sky.intensity = a.fill; sky.userData.wed = true; }
   else if (sky.userData.wed) { sky.userData.wed = false; scene.fog.color.setHex(NIGHT); scene.fog.density = .021; sky.color.setHex(NIGHT_SKY[0]); sky.groundColor.setHex(NIGHT_SKY[1]); setLightsFar(farOn); }

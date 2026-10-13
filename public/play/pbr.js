@@ -40,14 +40,31 @@ export function pbr(base, {size = 2, tint = 0xffffff, rough = 1, bump = 1, ao = 
   return cache[key] = m;
 }
 
+// spin a panorama about the vertical: every row shifted round by the same number of columns
+function spin(f, w, h, turn) {
+  const out = new Float32Array(f.length), k = Math.round(((turn % 1) + 1) % 1 * w);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = (y * w + x) * 4, b = (y * w + (x + k) % w) * 4; out[b] = f[a]; out[b + 1] = f[a + 1]; out[b + 2] = f[a + 2]; out[b + 3] = f[a + 3]; }
+  return out;
+}
+// A photographed sky to see (the same place as an HDRI, as a sharp picture), spun like the light so they agree.
+const skies = {};
+export function skyPhoto(name, turn = 0) {
+  return skies[name + turn] ||= new Promise(res => { const img = new Image(); img.onload = () => {
+    const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d"), k = Math.round(((turn % 1) + 1) % 1 * img.width);
+    g.drawImage(img, k, 0); g.drawImage(img, k - img.width, 0);
+    const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; res(t); };
+    img.src = `assets/env/sky_${name}.jpg`; });
+}
 // An HDRI as the scene's light from all around, scaled (strength) and tinted to suit the place.
 const envs = {};
-export function hdri(renderer, name, strength = 1, tint = [1, 1, 1]) {
-  const key = name + strength + tint;
+// turn: how far round to spin it (a fraction of a full turn), so its sun can be put where the scene needs it.
+export function hdri(renderer, name, strength = 1, tint = [1, 1, 1], turn = 0) {
+  const key = name + strength + tint + turn;
   return envs[key] ||= new Promise(res => new RGBELoader().load(`assets/env/${name}.hdr`, t => {
     const d = t.image.data; // (half floats: scale them through a float copy)
-    const f = d instanceof Uint16Array ? Float32Array.from(d, THREE.DataUtils.fromHalfFloat) : d;
+    let f = d instanceof Uint16Array ? Float32Array.from(d, THREE.DataUtils.fromHalfFloat) : d;
     for (let i = 0; i < f.length; i += 4) { f[i] *= strength * tint[0]; f[i + 1] *= strength * tint[1]; f[i + 2] *= strength * tint[2]; }
+    if (turn) f = spin(f, t.image.width, t.image.height, turn);
     const t2 = new THREE.DataTexture(f, t.image.width, t.image.height, THREE.RGBAFormat, THREE.FloatType); t2.mapping = THREE.EquirectangularReflectionMapping; t2.needsUpdate = true;
     const pm = new THREE.PMREMGenerator(renderer), env = pm.fromEquirectangular(t2).texture; pm.dispose(); t.dispose(); t2.dispose();
     res(env);

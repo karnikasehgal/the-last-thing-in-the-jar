@@ -193,7 +193,7 @@ export function buildWedding(scene, {noise, lite = false}) {
     mood(kind) {
       this.kind = kind;
       const fun = kind === "funeral", day = kind === "day";
-      sun.color.set(day ? 0xfff4e2 : 0xffb46e); sun.position.set(day ? -10 : -30, day ? 30 : 9, day ? 12 : 7);
+      sun.color.set(day ? 0xfff4e2 : 0xffb46e); sun.position.copy(day ? new THREE.Vector3(Math.cos(2.268) * .669, .743, Math.sin(2.268) * .669) : new THREE.Vector3(-.99, .14, 0)).multiplyScalar(30); // (where the sun stands in the photographed sky)
       sun.userData.dir = sun.position.clone().normalize(); // (the shadow rig keeps its own copy of the sun's direction: tell it)
       skyU.mode.value = fun ? 2 : day ? 1 : 0;
       food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
