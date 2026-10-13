@@ -199,13 +199,13 @@ const waterNormals = (() => {
 })();
 const water = new Water(new THREE.PlaneGeometry(240, 140), {
   textureWidth: LITE ? 256 : 512, textureHeight: LITE ? 256 : 512, waterNormals, sunDirection: moon.position.clone().normalize(),
-  sunColor: 0xcfeeff, waterColor: 0x0c3a40, distortionScale: 2.4, fog: true
+  sunColor: 0x9fc8d8, waterColor: 0x020d10, distortionScale: 1.1, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 70); scene.add(water);
-// The river glows from underneath like a lit cave river: bright turquoise along the bank, a lit rim
-// where it meets the stone, darkening toward the far side. The ripples break the glow up.
-water.material.uniforms.glow = {value: new THREE.Color(0x10b8dc)};
-water.material.uniforms.deep = {value: new THREE.Color(0x06357a)};
+// The river of the dead: black, glassy water that mirrors the torches, with only a faint cold glow from below
+// along the quay, broken up by the ripples, and a pale rim where it laps the stone.
+water.material.uniforms.glow = {value: new THREE.Color(0x0b6a78)};
+water.material.uniforms.deep = {value: new THREE.Color(0x02161c)};
 water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outgoingLight = albedo;", `
   float d = max(worldPosition.z - ${SHORE.toFixed(1)}, 0.0);
   float c = 0.0;
@@ -215,13 +215,41 @@ water.material.fragmentShader = water.material.fragmentShader.replace("vec3 outg
     c += pow(1.0 - abs(w) * .5, 7.0) * (i == 0 ? .7 : .45);
   }
   float rip = clamp(.5 + (surfaceNormal.x + surfaceNormal.z) * 5.0, 0.0, 1.0) * .35 + c;
-  float near = exp(-d / 10.0);
+  float near = exp(-d / 7.0);
   vec3 tint = mix(deep, glow, near);
-  float body = (.12 + .5 * near) * (.45 + rip);
-  float rim = smoothstep(1.2, 0.0, d);
-  vec3 outgoingLight = albedo * .35 + tint * body + vec3(.5, .95, 1.0) * rim * (.35 + .5 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
-// Light thrown up by the river onto the quay, the dock and anyone standing near the water.
-for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2fd0e0, 6, 16, 1.6); l.position.set(x, .2, SHORE + 2.5); scene.add(l); }
+  float body = (.05 + .22 * near) * (.55 + rip * .6);
+  float rim = smoothstep(.8, 0.0, d);
+  vec3 outgoingLight = albedo * .7 + tint * body + vec3(.45, .8, .85) * rim * (.12 + .25 * rip);`).replace("uniform vec3 waterColor;", "uniform vec3 waterColor; uniform vec3 glow; uniform vec3 deep;");
+// Light thrown up by the river onto the quay, the dock and anyone standing near the water (faint and cold).
+for (const x of [-30, -6, 18, 42, 66]) { const l = new THREE.PointLight(0x2fb0c0, 2.2, 12, 1.6); l.position.set(x, .2, SHORE + 2.5); scene.add(l); }
+// Mist lying on the river in slow drifting banks, thicker in the distance.
+const mistU = {time: {value: 0}};
+{ const mat = new THREE.ShaderMaterial({uniforms: mistU, transparent: true, depthWrite: false,
+    vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float time; varying vec3 vW;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+      void main(){ vec2 p = vW.xz * .06 + vec2(time * .012, time * .004);
+        float m = n(p) * .55 + n(p * 2.3 + 5.) * .3 + n(p * 5.1 - time * .02) * .15;
+        float far = smoothstep(${(SHORE + 2).toFixed(1)}, ${(SHORE + 40).toFixed(1)}, vW.z);
+        float a = smoothstep(.52, .88, m) * (.05 + .22 * far);
+        gl_FragColor = vec4(vec3(.55, .66, .7), a); }`});
+  const sheets = []; for (let i = 0; i < 4; i++) { const sheet = new THREE.Mesh(new THREE.PlaneGeometry(260, 150), mat); sheet.rotation.x = -Math.PI / 2; sheet.position.set(20, -.1 + i * .35, SHORE + 72); sheet.renderOrder = 5; scene.add(sheet); sheets.push(sheet); }
+  // the river mirrors the torches and the arcade, not the mist lying on it
+  const mirror = water.onBeforeRender; water.onBeforeRender = (...a) => { sheets.forEach(m => m.visible = false); mirror.apply(water, a); sheets.forEach(m => m.visible = true); }; }
+// Pale lights hanging over the water: the souls waiting to cross, drifting and bobbing.
+const souls = (() => {
+  const n = LITE ? 30 : 70, pos = new Float32Array(n * 3), seed = new Float32Array(n);
+  for (let i = 0; i < n; i++) { pos[i * 3] = -60 + Math.random() * 160; pos[i * 3 + 1] = .3 + Math.random() * 2.2; pos[i * 3 + 2] = SHORE + 4 + Math.random() * 90; seed[i] = Math.random() * 100; }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
+  const pts = new THREE.Points(geo, new THREE.ShaderMaterial({uniforms: mistU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `uniform float time; attribute float seed; varying float vA;
+      void main(){ vec3 p = position + vec3(sin(time * .2 + seed) * 1.5, sin(time * .7 + seed * 3.) * .25, cos(time * .15 + seed) * 1.2);
+        vec4 mv = modelViewMatrix * vec4(p, 1.); gl_Position = projectionMatrix * mv;
+        vA = .5 + .5 * sin(time * 1.3 + seed * 7.); gl_PointSize = (520. / -mv.z) * (.6 + vA * .6); }`,
+    fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord - .5); float g = smoothstep(.5, 0., d); gl_FragColor = vec4(vec3(.55, .9, 1.) * (g * g * .55 + smoothstep(.1, 0., d) * .9) * (.35 + vA * .6), 1.); }`}));
+  scene.add(pts); return pts;
+})();
 const far = new THREE.Mesh(new THREE.PlaneGeometry(320, 90), new THREE.MeshBasicMaterial({map: tex(LIB + "styx/patinir-styx.jpg"), color: 0x6b6258, fog: false}));
 far.position.set(20, 28, 150); far.rotation.y = Math.PI; scene.add(far);
 
@@ -966,7 +994,7 @@ function tick(now) {
   for (const [i, d] of farWorld.doors.entries()) d.rotation.y += ((i ? 1 : -1) * (dog.asleep ? 1.25 : .35) - d.rotation.y) * .02;
   if (NPC.charon) NPC.charon.root.position.y = .25 + Math.sin(now / 1100) * .05;
   water.material.uniforms.time.value += dt * .45;
-  paint.uniforms.time.value = now / 1000;
+  paint.uniforms.time.value = now / 1000; mistU.time.value = now / 1000;
   if (!LITE) shadows(now);
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
   PLAYER?.fpCut?.();

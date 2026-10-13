@@ -109,23 +109,50 @@ export function buildMeadow(lite) {
         d.data[i] = 128 + nx * 90; d.data[i + 1] = 128 + nz * 90; d.data[i + 2] = 255; d.data[i + 3] = 255; }
       g.putImageData(d, 0, 0); return cv; })());
     ripple.wrapS = ripple.wrapT = THREE.RepeatWrapping; ripple.repeat.set(30, 1.5);
-    const seg = 160, P = [], C = [], UV = [], I = [], shallow = new THREE.Color(0x8ec8c0), deep = new THREE.Color(0x2a6a78), c = new THREE.Color();
+    const seg = 160, P = [], C = [], UV = [], I = [], shallow = new THREE.Color(0xa8e0cc), deep = new THREE.Color(0x3a9090), c = new THREE.Color();
     for (let i = 0; i <= seg; i++) {
       const x = 12 + i / seg * 90, z0 = streamZ(x);
       for (let j = 0; j <= 6; j++) { const t = j / 6, z = z0 + (t - .5) * 2 * (STREAM_W + .25); P.push(x, -.13, z); c.copy(shallow).lerp(deep, Math.sin(t * Math.PI) ** 1.5); C.push(c.r, c.g, c.b); UV.push(i / seg, t); }
     }
     for (let i = 0; i < seg; i++) for (let j = 0; j < 6; j++) { const a = i * 7 + j, b = a + 7; I.push(a, a + 1, b, a + 1, b + 1, b); } // (wound to face up)
     const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute("color", new THREE.Float32BufferAttribute(C, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2)); geo.setIndex(I); geo.computeVertexNormals();
-    const water = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({vertexColors: true, roughness: .06, metalness: 0, transparent: true, opacity: .86, normalMap: ripple, normalScale: new THREE.Vector2(.35, .35),
+    const water = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({vertexColors: true, roughness: .04, metalness: 0, transparent: true, opacity: .5, depthWrite: false, normalMap: ripple, normalScale: new THREE.Vector2(.35, .35),
       clearcoat: 1, clearcoatRoughness: .05, sheen: .3, sheenColor: new THREE.Color(0xd8f0ff), envMapIntensity: 1.5}));
     water.onBeforeRender = () => { ripple.offset.x = -performance.now() / 9000; }; // it runs downstream
     water.receiveShadow = true; meadow.add(water);
     // pebbles along the banks and showing through the shallows
     const peb = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.08, 1), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: .75}), lite ? 600 : 1800), m = new THREE.Matrix4(), q = new THREE.Quaternion(), pc = new THREE.Color();
-    for (let i = 0; i < peb.count; i++) { const x = 13 + Math.random() * 85, side = Math.random() < .5 ? -1 : 1, off = (STREAM_W - .2 + Math.random() * .9) * side, z = streamZ(x) + off;
+    for (let i = 0; i < peb.count; i++) { const x = 13 + Math.random() * 85, side = Math.random() < .5 ? -1 : 1, off = (i % 2 ? Math.random() * STREAM_W : STREAM_W - .2 + Math.random() * .9) * side, z = streamZ(x) + off; // (half on the banks, half on the bed, seen through the water)
       q.setFromEuler(new THREE.Euler(Math.random() * 3, Math.random() * 3, 0)); const s = .3 + Math.random() * 1.1;
       m.compose(new THREE.Vector3(x, groundHeight(x, z) - .02, z), q, new THREE.Vector3(s * 1.3, s * .55, s)); peb.setMatrixAt(i, m); peb.setColorAt(i, pc.setHSL(.08, .08 + Math.random() * .1, .45 + Math.random() * .25)); }
     meadow.add(peb);
+  }
+  // mossy boulders along the banks, green where the rain falls on them
+  {
+    const rnd = (a => () => (a = (a * 9301 + 49297) % 233280) / 233280)(11), moss = new THREE.Color(0x5a7a32), stone = new THREE.Color(0x8a867c);
+    for (let k = 0; k < 26; k++) {
+      const geo = mergeVertices(new THREE.IcosahedronGeometry(.35 + rnd() * .5, 2)); geo.deleteAttribute("normal"); geo.deleteAttribute("uv");
+      const p = geo.attributes.position, col = [], c = new THREE.Color();
+      for (let i = 0; i < p.count; i++) { const v = new THREE.Vector3().fromBufferAttribute(p, i), n = 1 + (vnoise(v.x * 4 + k, v.z * 4 + v.y * 3) - .5) * .5; v.multiplyScalar(n); v.y *= .65; p.setXYZ(i, v.x, v.y, v.z);
+        c.copy(stone).lerp(moss, smooth(.0, .25, v.y) * (.6 + vnoise(v.x * 9, v.z * 9) * .4)); col.push(c.r, c.g, c.b); }
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();
+      const x = 18 + rnd() * 70, side = rnd() < .5 ? -1 : 1, z = streamZ(x) + side * (STREAM_W + .2 + rnd() * .9);
+      const b = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors: true, roughness: .9})); b.position.set(x, groundHeight(x, z) - .08, z); b.rotation.y = rnd() * 6; b.castShadow = b.receiveShadow = true; meadow.add(b);
+    }
+  }
+  // ferns where the ground is wet: arching fronds, each a stem with leaflets that shrink toward the tip
+  {
+    const frond = (() => { const P = [], C = [], N = 14, light = new THREE.Color(0x7aa848), dark = new THREE.Color(0x2e5a24), c = new THREE.Color();
+      for (let i = 0; i < N; i++) { const t = i / N, t2 = (i + 1) / N, y = s => Math.sin(s * 1.9) * .32, z = s => s * .55, w = (1 - t) * .09 + .01;
+        for (const sd of [-1, 1]) { const a = [0, y(t), z(t)], b = [0, y(t2), z(t2)], tip = [sd * w, y(t) + .02 - t * .03, z(t) + .03]; P.push(...a, ...b, ...tip);
+          for (const k of [0, 1, 2]) { c.copy(dark).lerp(light, t * .6 + (k === 2 ? .4 : 0)); C.push(c.r, c.g, c.b); } } }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals(); return g; })();
+    const parts = []; for (let k = 0; k < 7; k++) { const f = frond.clone(); f.rotateY(k / 7 * Math.PI * 2); parts.push(f); }
+    const fern = mergeGeometries(parts), n = lite ? 120 : 360;
+    const ferns = new THREE.InstancedMesh(fern, windy(new THREE.MeshStandardMaterial({vertexColors: true, roughness: .75, side: THREE.DoubleSide}), .03), n), m = new THREE.Matrix4(), q = new THREE.Quaternion();
+    for (let i = 0; i < n; i++) { const x = 14 + Math.random() * 80, side = Math.random() < .5 ? -1 : 1, z = streamZ(x) + side * (STREAM_W + .3 + Math.random() * 1.6), s = .9 + Math.random() * 1.1;
+      q.setFromEuler(new THREE.Euler(0, Math.random() * 6.3, 0)); m.compose(new THREE.Vector3(x, groundHeight(x, z) - .03, z), q, new THREE.Vector3(s, s, s)); ferns.setMatrixAt(i, m); }
+    ferns.receiveShadow = true; meadow.add(ferns);
   }
   // trees: round, full crowns of many leafy clumps, lit from above and shadowed beneath, on a trunk with a branch or two
   {
