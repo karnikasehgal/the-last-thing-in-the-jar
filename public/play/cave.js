@@ -1,6 +1,7 @@
 // Sandstone caves: layered rock worn smooth into ridges and honeycomb hollows, like a sea cave lit by the
 // morning sun. The layers are coloured by height, so they run level the way real sandstone beds do.
 import * as THREE from "three";
+import { pbr } from "./pbr.js";
 
 // small, cheap value noise
 const hash = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
@@ -46,7 +47,7 @@ export function sandstoneTunnel(scene, {x0, x1, z, r = 4.2, palette = SAND, dark
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({vertexColors: true, map: speckle, roughness: .88, side: THREE.DoubleSide}));
+  const mesh = new THREE.Mesh(geo, pbr("rock_wall_10", {size: 3.5, vc: true, rough: .95, bump: 1.2, side: THREE.DoubleSide}) /* real rock under the sandstone's bands */);
   mesh.position.set((x0 + x1) / 2, cy, z);
   scene.add(mesh);
   return mesh;

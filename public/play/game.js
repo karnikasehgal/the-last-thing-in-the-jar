@@ -11,6 +11,7 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { pbr, hdri } from "./pbr.js";
 import { makeHound, animateHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
 import { prepareToon } from "./toon.js";
@@ -65,6 +66,18 @@ scene.fog = new THREE.FogExp2(0x1d1813, 0.021);
 const camera = new THREE.PerspectiveCamera(68, 1, 0.05, 400);
 camera.rotation.order = "YXZ"; scene.add(camera); // so things held in your hands can ride on it
 
+// Light from all around, captured in real places (HDRIs) and dimmed to suit: the underworld is a cold, dim stone
+// interior; the wedding courtyard at dusk takes a sunrise; the meadow by day, a meadow. Chosen by where the camera is.
+const ENV = {};
+hdri(renderer, "small_cathedral", .1, [.75, .9, 1.15]).then(e => ENV.under = e);
+hdri(renderer, "spruit_sunrise", .45, [1.1, .95, .8]).then(e => ENV.dusk = e);
+hdri(renderer, "meadow_2", .7).then(e => ENV.day = e);
+hdri(renderer, "small_cathedral", .06, [.8, .8, 1]).then(e => ENV.night = e);
+function sceneLight() {
+  const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
+  const want = ENV[x > 200 ? (mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk") : "under"];
+  if (want && scene.environment !== want) scene.environment = want;
+}
 // The film finish: a warm grade with rich colour, a soft vignette, a whisper of grain (and the blur/dim/danger effects
 // the story uses). It used to smear the picture into brushy patches and drain the colour; animated films are crisp and saturated.
 const Painterly = {
@@ -148,12 +161,13 @@ function noise(base, vein, size = 512, veins = 22, alpha = .16) {
 const marbleTex = noise("#d6cab4", "#6b5a49", 512, 30); marbleTex.repeat.set(30, 6);
 const stoneTex = noise("#a69a86", "#4a3f33", 512, 12, .12); stoneTex.repeat.set(40, 40);
 const plasterTex = noise("#c9b89a", "#6b5a49", 256, 4, .08);
+// real scanned surfaces (pbr.js): polished marble underfoot, marble columns, plastered walls, worn stone, old planks
 const M = {
-  marble: new THREE.MeshStandardMaterial({map: marbleTex, roughness: .42, metalness: .03}),
-  stone: new THREE.MeshStandardMaterial({map: stoneTex, roughness: .92}),
-  column: new THREE.MeshStandardMaterial({color: 0xe2d8c4, roughness: .55}),
-  plaster: new THREE.MeshStandardMaterial({map: plasterTex, roughness: .9}),
-  wood: new THREE.MeshStandardMaterial({color: 0x3a2a1c, roughness: .85}),
+  marble: pbr("marble_01", {size: 2.4, rough: .55, tint: 0xe8e0d0}),
+  stone: pbr("monastery_stone_floor", {size: 2.6, tint: 0xb8ad9a}),
+  column: pbr("marble_01", {size: 1.3, rough: .7, tint: 0xf2ece0}),
+  plaster: pbr("plastered_wall_02", {size: 3, tint: 0xe2d4ba}),
+  wood: pbr("weathered_planks", {size: 2, tint: 0x8a7056}),
   dark: new THREE.MeshStandardMaterial({color: 0x1b1612, roughness: 1})
 };
 
@@ -234,8 +248,8 @@ const mistU = {time: {value: 0}};
       void main(){ vec2 p = vW.xz * .06 + vec2(time * .012, time * .004);
         float m = n(p) * .55 + n(p * 2.3 + 5.) * .3 + n(p * 5.1 - time * .02) * .15;
         float far = smoothstep(${(SHORE + 2).toFixed(1)}, ${(SHORE + 40).toFixed(1)}, vW.z);
-        float a = smoothstep(.52, .88, m) * (.05 + .22 * far);
-        gl_FragColor = vec4(vec3(.55, .66, .7), a); }`});
+        float a = smoothstep(.55, .9, m) * (.03 + .13 * far);
+        gl_FragColor = vec4(vec3(.42, .5, .54), a); }`});
   const sheets = []; for (let i = 0; i < 4; i++) { const sheet = new THREE.Mesh(new THREE.PlaneGeometry(260, 150), mat); sheet.rotation.x = -Math.PI / 2; sheet.position.set(20, -.1 + i * .35, SHORE + 72); sheet.renderOrder = 5; scene.add(sheet); sheets.push(sheet); }
   // the river mirrors the torches and the arcade, not the mist lying on it
   const mirror = water.onBeforeRender; water.onBeforeRender = (...a) => { sheets.forEach(m => m.visible = false); mirror.apply(water, a); sheets.forEach(m => m.visible = true); }; }
@@ -253,7 +267,7 @@ const souls = (() => {
   scene.add(pts); return pts;
 })();
 const far = new THREE.Mesh(new THREE.PlaneGeometry(320, 90), new THREE.MeshBasicMaterial({map: tex(LIB + "styx/patinir-styx.jpg"), color: 0x6b6258, fog: false}));
-far.position.set(20, 28, 150); far.rotation.y = Math.PI; scene.add(far);
+far.position.set(20, 28, 150); far.rotation.y = Math.PI; far.visible = false; scene.add(far); // (a flat picture in the sky read as a broken slab from the side: the dark and the mist do better)
 
 /* ---------- the arcade: columns, arches, painted vaults ---------- */
 const VAULTS = ["styx/last-judgment.jpg", "styx/giordano-charon.jpg", "styx/raphael-wedding-banquet.jpg", "styx/giordano-proserpina.jpg", "styx/signorelli-resurrection.jpg", "styx/brueghel-orpheus-pluto.jpg"];
@@ -264,7 +278,7 @@ for (let i = 0; i < 6; i++) {
   const xc = -36 + i * 12 + 6;
   // a flat coffered ceiling, with the painting set into it as a framed panel
   // (quadro riportato, the way the Farnese and Sistine ceilings do it), at its true proportions
-  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(12, .3, 8.6), new THREE.MeshStandardMaterial({map: plasterTex, roughness: .95, color: 0xcabba0}));
+  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(12, .3, 8.6), pbr("plastered_wall_02", {size: 3, tint: 0xcabba0}));
   ceiling.position.set(xc, 9.75, 4.1); scene.add(ceiling);
   const beam = new THREE.Mesh(new THREE.BoxGeometry(.6, .5, 8.6), M.column); beam.position.set(xc - 6, 9.5, 4.1); scene.add(beam);
   const panel = new THREE.Group(); panel.position.set(xc, 9.58, 4.1); scene.add(panel);
@@ -998,6 +1012,7 @@ function tick(now) {
   if (NPC.charon) NPC.charon.root.position.y = .25 + Math.sin(now / 1100) * .05;
   water.material.uniforms.time.value += dt * .45;
   paint.uniforms.time.value = now / 1000; mistU.time.value = now / 1000;
+  sceneLight();
   if (!LITE) shadows(now);
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
   PLAYER?.fpCut?.();

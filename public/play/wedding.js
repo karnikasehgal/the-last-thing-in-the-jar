@@ -4,6 +4,7 @@
 // It is built far from the river (around x = 300) and only ever seen in the opening film.
 import * as THREE from "three";
 import { buildMeadow } from "./meadow.js";
+import { pbr } from "./pbr.js";
 
 export const W = new THREE.Vector3(300, 0, 0);
 // where everyone sits and stands (relative to W). Mikon and Lykon on the near bench, facing the table;
@@ -33,17 +34,17 @@ export function buildWedding(scene, {noise, lite = false}) {
   // floor, whitewashed walls, a colonnade open to the west
   const pav = noise("#b9a487", "#6b5a44", 512, 40, .14); pav.repeat.set(5, 4);
   pav.repeat.set(10, 8);
-  add(new THREE.Mesh(new THREE.BoxGeometry(36, .2, 28), new THREE.MeshStandardMaterial({map: pav, roughness: .9})), 0, -.1, 0);
+  add(new THREE.Mesh(new THREE.BoxGeometry(36, .2, 28), pbr("terracotta_floor_tiles", {size: 2.2, tint: 0xd8c8b0})), 0, -.1, 0);
   const lime = noise("#e6dccb", "#9a8a72", 256, 6, .1);
-  const wallM = new THREE.MeshStandardMaterial({map: lime, roughness: .95});
+  const wallM = pbr("plastered_wall_02", {size: 3, tint: 0xf2e8d6}); // whitewashed lime plaster
   add(new THREE.Mesh(new THREE.BoxGeometry(36, 4, .5), wallM), 0, 2, 14);
   add(new THREE.Mesh(new THREE.BoxGeometry(36, 4, .5), wallM), 0, 2, -14);
   // the east wall, with the gate Mikon walks in through
   add(new THREE.Mesh(new THREE.BoxGeometry(.5, 4, 12), wallM), 18, 2, -8); add(new THREE.Mesh(new THREE.BoxGeometry(.5, 4, 12), wallM), 18, 2, 8);
   add(new THREE.Mesh(new THREE.BoxGeometry(.6, 1, 4.2), wallM), 18, 3.5, 0);
-  for (const z of [-2.1, 2.1]) add(new THREE.Mesh(new THREE.CylinderGeometry(.25, .3, 3.2, 12), S(0xe8dfcf)), 17.6, 1.6, z);
+  for (const z of [-2.1, 2.1]) add(new THREE.Mesh(new THREE.CylinderGeometry(.25, .3, 3.2, 24), pbr("marble_01", {size: 1.3, rough: .7, tint: 0xf2ece0})), 17.6, 1.6, z);
   // the west side is a colonnade, open to the sunset
-  for (let z = -12; z <= 12; z += 3) add(new THREE.Mesh(new THREE.CylinderGeometry(.24, .28, 3.8, 14), S(0xe8dfcf)), -18, 1.9, z);
+  for (let z = -12; z <= 12; z += 3) add(new THREE.Mesh(new THREE.CylinderGeometry(.24, .28, 3.8, 24), pbr("marble_01", {size: 1.3, rough: .7, tint: 0xf2ece0})), -18, 1.9, z);
   add(new THREE.Mesh(new THREE.BoxGeometry(.7, .45, 28), S(0xe0d6c4)), -18, 3.9, 0);
   // doorways into the house, and a painted band along the walls
   for (const x of [-8, 4, 12]) add(new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.5, .1), S(0x1a120c)), x, 1.25, 13.73);
@@ -155,6 +156,7 @@ export function buildWedding(scene, {noise, lite = false}) {
     animate(now) { const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0015; if (y < 2.6) y = 5.6; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
     // "wedding": warm dusk; "funeral": the next night, lamps only
     mood(kind) {
+      this.kind = kind;
       const fun = kind === "funeral", day = kind === "day";
       sun.color.set(day ? 0xfff2d8 : 0xffb070); sun.position.set(day ? -10 : -30, day ? 30 : 8, day ? 12 : 4);
       sky.material.map = day ? skyDay : skyT; sky.material.needsUpdate = true;
