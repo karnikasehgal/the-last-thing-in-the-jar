@@ -5,7 +5,7 @@
 // so the clothes move with the animations. Hats, beards, props and jewellery ride on the bones.
 import * as THREE from "three";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
-import { toonClips, hairSprings, toonFace, tintToon, toonLook } from "./toon.js";
+import { toonClips, hairSprings, toonFace, tintToon, toonLook, skinShader } from "./toon.js";
 
 const TORSO = /^(pelvis|spine_0[123]|neck_01|clavicle_[lr])$/;
 const LEGS = /^(thigh|calf|foot|ball)_/;
@@ -1007,6 +1007,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   for (const o of bodyParts) if (/_body/i.test([].concat(o.material)[0].name)) {
     const m = o.material.clone();
     m.onBeforeCompile = sh => {
+      if (m.userData.skinTone) skinShader(sh, m); // (an animated character's own skin colour)
       sh.uniforms.uFP = fp; sh.uniforms.uHH = hh;
       sh.fragmentShader = "uniform float uFP; uniform float uHH;\n" + sh.fragmentShader;
       sh.vertexShader = "attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind; vH = aHand;");

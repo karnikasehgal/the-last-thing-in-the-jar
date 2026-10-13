@@ -12,6 +12,8 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { pbr, hdri } from "./pbr.js";
+import { PROPS, rockify, place } from "./props.js";
+import { groundHeight } from "./meadow.js";
 import { makeHound, animateHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
 import { prepareToon } from "./toon.js";
@@ -426,14 +428,32 @@ async function loadAssets(progress) {
   // the animated-film cast: one character model each for the women and the men, dressed and coloured per person
   for (const n of REAL) list.splice(list.indexOf("rb/" + n), 1);
   for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
-  list.push("toon/rain", "toon/snow");
+  list.push("toon/rain", "toon/snow", ...PROPS.map(n => "props/" + n));
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
   prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow);
   for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
   for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
   for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
+  dressWorld();
+}
+// The real objects: scanned boulders in place of the placeholder rocks; tall clay jars along the arcade between the
+// columns, as a Greek stoa would keep them.
+function dressWorld() {
+  rockify(scene, ASSETS);
+  for (let i = 0; i < 6; i++) { const x = -36 + i * 12 + 6;
+    place(ASSETS, i % 2 ? "antique_ceramic_vase_01" : "ceramic_vase_02", scene, x - 3.2, 0, .55, .95, {tint: 0xd8b89a});
+    place(ASSETS, "ceramic_vase_02", scene, x + 3.4, 0, .5, .7, {tint: 0xc8a888}); }
+}
+// the same for the wedding set and its meadow, once they're built
+function dressWedding() {
+  if (!wedding || wedding.dressed) return; wedding.dressed = true;
+  rockify(wedding.g, ASSETS);
+  const g = wedding.g;
+  for (const [x, z] of [[-16.6, -12.6], [-16.6, 12.6], [16.6, -12.6], [16.6, 12.6], [12, 13], [-6, 13]]) place(ASSETS, x > 0 ? "antique_ceramic_vase_01" : "ceramic_vase_02", g, x, 0, z, 1.05, {tint: 0xe0c0a0});
+  for (const [x, z, h] of [[28, -9, 1.1], [42, -3, .9], [35, 16, 1.2], [48, 10, 1], [23, 13, .8], [60, -14, 1.3], [33, 6.5, .7]]) place(ASSETS, "shrub_02", g, x, groundHeight(x, z), z, h);
+  for (const [x, z] of [[31, 9.6], [37, 13.8], [45, 8.7], [27, 12.9]]) place(ASSETS, "fern_02", g, x, -.05, z, .7);
 }
 const NPC = {};
 function placePeople() {
@@ -1245,7 +1265,7 @@ function buildCrowd() {
 }
 async function weddingFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to the river bank
   if (!wedding && !skip) {
-    wedding = buildWedding(scene, {noise, lite: LITE});
+    wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding();
     guests = {
       demeas: Object.assign(G.cast("demeas"), {name: "Demeas"}), kleio: Object.assign(G.cast("aunt", {seated: true}), {name: "Kleio"}),
       lykon: Object.assign(G.cast("lykon", {seated: true}), {name: "Lykon"}), nikias: Object.assign(G.cast("nikias", {seated: true}), {name: "Nikias"}),
@@ -1456,7 +1476,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     $(".cine").classList.remove("on"); document.body.classList.remove("talking", "cinema"); staging = false; camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
     return paintGoal();
   }
-  if (!wedding) wedding = buildWedding(scene, {noise, lite: LITE});
+  if (!wedding) { wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding(); }
   if (!crowd) {
     const card = $("#titlecard"); card.querySelector("small").textContent = "Thrace"; card.querySelector("b").textContent = "Spring";
     $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on");

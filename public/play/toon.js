@@ -143,8 +143,9 @@ export function toonFace(w) {
 
 // Everyone shares two faces, so colouring does the rest: a skin tone of their own, from porcelain to ebony (multipliers
 // on the model's painted skin, which is a medium brown), and hair from black to grey.
-const SKIN = {fair: [2.75, 2.42, 2.22], porcelain: [2.45, 2.12, 1.96], rosy: [2.15, 1.72, 1.56], olive: [1.75, 1.6, 1.28], golden: [1.55, 1.3, .98], tan: [1.3, 1.12, .95],
-  brown: [1, .9, .82], umber: [.9, .82, .7], deep: [.72, .6, .54], dark: [.56, .46, .41], ebony: [.43, .35, .32], ash: [1.5, 1.48, 1.46]};
+// (each a real skin colour; the painted texture keeps only its light and shade, its own brown is replaced)
+const SKIN = {fair: 0xf8cfb4, porcelain: 0xf1cdb6, rosy: 0xefc1a8, olive: 0xd8aa7e, golden: 0xcb905e, tan: 0xb27c54,
+  brown: 0x8f5c3d, umber: 0x7c5438, deep: 0x5e3b27, dark: 0x47291c, ebony: 0x33201a, ash: 0xbab0a8};
 const LOOK = {
   orpheus: ["golden", 0x2a1a10], hermes: ["fair", 0xd9b45e], charon: ["ash", 0xb8b0a4], hades: ["porcelain", 0x0e0a08], sisyphus: ["umber", 0x7a6a58],
   mikon: ["olive", 0x3b2a1c], mikon_bank: ["olive", 0x3b2a1c], elpenor: ["tan", 0x5a3a20], theseus: ["brown", 0x3a2516], pirithous: ["deep", 0x1d140d],
@@ -157,11 +158,18 @@ export function toonLook(id) {
   const [tone, hair] = LOOK[id] || [TONES[Math.random() * TONES.length | 0], [0x120c08, 0x2a1a10, 0x4a3018, 0x6a4422, 0x8a8278][Math.random() * 5 | 0]];
   return {tone: SKIN[tone], hairColor: hair};
 }
+// Recolour skin: the painted texture's brightness (its light, shade and freckles) times the person's own skin colour.
+const BASE_LUM = .16; // the painted skin's average brightness (linear)
+export function skinShader(sh, m) {
+  const t = m.userData.skinTone; sh.uniforms.uSkin = {value: t.isColor ? t : typeof t === "number" ? new THREE.Color(t) : new THREE.Color(t.r, t.g, t.b)}; // (a copied material carries it as a hex number)
+  sh.fragmentShader = "uniform vec3 uSkin;\n" + sh.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
+    { float lum = dot(diffuseColor.rgb, vec3(.2126, .7152, .0722)); diffuseColor.rgb = uSkin * clamp(lum / ${BASE_LUM.toFixed(3)}, .45, 1.5); }`);
+}
 export function tintToon(root, {tone, hairColor}) {
   root.traverse(o => {
     if (!o.isMesh) return;
     o.material = [].concat(o.material).map(m => {
-      if (tone && m.userData.skin) { m = m.clone(); m.color.setRGB(...tone); }
+      if (tone && m.userData.skin) { m = m.clone(); m.userData.skinTone = new THREE.Color(tone); m.onBeforeCompile = sh => skinShader(sh, m); m.customProgramCacheKey = () => "skin"; }
       else if (hairColor && m.userData.hair) { m = m.clone(); const h = new THREE.Color(hairColor), l = h.getHSL({}).l;
         if (l > .12) { m.map = null; m.color = h; m.roughness = .55; } // (the painted hair is near black: a lighter colour replaces it outright)
         else m.color = h.multiplyScalar(1.2 / Math.max(.08, .1 + l * .3)); }
