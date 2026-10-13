@@ -103,8 +103,9 @@ hdri(renderer, "small_cathedral", .06, [.8, .8, 1]).then(e => ENV.night = e);
 // air by day, cold night for the funeral); everywhere else is the river at night. (It used to be a brown fog over
 // the wedding, which muddied it.)
 const AIR = {
-  wedding: {fog: 0xd8a888, density: .0035, top: 0xffd8b0, ground: 0x8a6448, fill: 1.15},
-  day: {fog: 0xc8d8e6, density: .0035, top: 0xe2efff, ground: 0x8a7a5a, fill: 1.2},
+  // (the fill is the sky's: cool blue against the warm sun, so shadows read as shade and not just as darker sun)
+  wedding: {fog: 0xd0a080, density: .002, top: 0x8eaad8, ground: 0x7a5640, fill: .6},
+  day: {fog: 0xc8d8e6, density: .002, top: 0xbcd6f4, ground: 0x8a7a5a, fill: .7},
   funeral: {fog: 0x151826, density: .02, top: 0x5a6890, ground: 0x1a140e, fill: .45}
 };
 const NIGHT_SKY = [0x9fb3c8, 0x2a1d12];
@@ -112,6 +113,7 @@ function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
   const want = ENV[x > 200 ? (mood === "day" ? "day" : mood === "funeral" ? "night" : "dusk") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
+  moon.visible = x <= 200; // (the river's moon has no business lighting a wedding at sunset)
   if (x > 200) { const a = AIR[mood] || AIR.wedding; scene.fog.color.setHex(a.fog); scene.fog.density = a.density; sky.color.setHex(a.top); sky.groundColor.setHex(a.ground); sky.intensity = a.fill; sky.userData.wed = true; }
   else if (sky.userData.wed) { sky.userData.wed = false; scene.fog.color.setHex(NIGHT); scene.fog.density = .021; sky.color.setHex(NIGHT_SKY[0]); sky.groundColor.setHex(NIGHT_SKY[1]); setLightsFar(farOn); }
 }
@@ -130,7 +132,7 @@ const Painterly = {
       float l = dot(c, vec3(.299,.587,.114));
       c = mix(vec3(l), c, 1.24); // (AgX is restrained: a little more colour back)
       c *= vec3(1.03, 1.0, .95);
-      c = clamp(c, 0., 1.); c = c * c * (3. - 2. * c) * .35 + c * .65; // a gentle S-curve: deeper shadows, brighter highlights
+      c = clamp(c, 0., 1.); c = c * c * (3. - 2. * c) * .55 + c * .45; // an S-curve: deeper shadows, brighter highlights, the contrast of a film print
       c = mix(c, c * vec3(1.25,.55,.45), danger * .35);
       float v = smoothstep(1.05, .35, distance(vUv, vec2(.5)));
       c *= mix(.78, 1.0, v);

@@ -193,10 +193,11 @@ export function buildWedding(scene, {noise, lite = false}) {
     mood(kind) {
       this.kind = kind;
       const fun = kind === "funeral", day = kind === "day";
-      sun.color.set(day ? 0xfff2d8 : 0xffb070); sun.position.set(day ? -10 : -30, day ? 30 : 8, day ? 12 : 4);
+      sun.color.set(day ? 0xfff4e2 : 0xffb46e); sun.position.set(day ? -10 : -30, day ? 30 : 9, day ? 12 : 7);
+      sun.userData.dir = sun.position.clone().normalize(); // (the shadow rig keeps its own copy of the sun's direction: tell it)
       skyU.mode.value = fun ? 2 : day ? 1 : 0;
       food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
-      sun.intensity = fun ? .15 : day ? 3 : 2.8; // (a low golden sun across the courtyard)
+      sun.intensity = fun ? .15 : day ? 3.4 : 3.6; // (the key light: a low golden sun raking across the courtyard)
       lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
     }
   };
