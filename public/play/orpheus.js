@@ -359,7 +359,7 @@ export function makeOrpheus(G) {
     interact(n) { if (n.kind === "talk") conversation(n.id); },
     onBody(p) { // the same lyre, hanging from your left hand when you're not playing it
       const c = lyre.g.clone(); c.visible = true; c.scale.setScalar(1.05);
-      G.mount(p, "hand_l", c, V(.78, 1.36, 0), [0, 0, -Math.PI / 2]); st.carried = c;
+      G.hold(p, "l", c, V(0, .31, 0)); st.carried = c; // held by the crossbar, the body of the lyre hanging below the hand
     },
     onRide(on) { st.ride = on; },
     howto: `
