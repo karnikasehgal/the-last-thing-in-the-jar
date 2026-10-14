@@ -1402,9 +1402,15 @@ async function buildCrowd() {
   // the tables
   const seats = CROWD.tables.slice().sort(() => Math.random() - .5).slice(0, LITE ? 8 : 28);
   for (const [x, z, ry] of seats) placeAt(take("seated"), x, z, ry, ["sittable", "sittabletalk", "sittablethink"][Math.random() * 3 | 0]);
-  // the ring dance, turning slowly around the dance floor
-  const ring = [];
-  for (let i = 0; i < (LITE ? 6 : CROWD.ring.n); i++) { const p = placeAt(take("standing"), 0, 0, 0, "walk"); p.ring = i; ring.push(p); }
+  // the dance floor: three guests dancing in the middle, and the rest standing round the edge facing them, clapping
+  // along to the piper, cheering them on, laughing, a cup in hand
+  const ring = [], R = CROWD.ring, n = LITE ? 6 : R.n, dancers = LITE ? 2 : 3;
+  for (let i = 0; i < n; i++) {
+    if (i < dancers) { const a = i / dancers * Math.PI * 2 + .4, x = R.x + Math.cos(a) * .9, z = R.z + Math.sin(a) * .9; const p = placeAt(take("standing"), x, z, Math.atan2(R.x - x, R.z - z) + (Math.random() - .5), "dance"); p.spin = (i % 2 ? 1 : -1) * (.15 + Math.random() * .15); ring.push(p); continue; }
+    // (a loose crowd round three sides, some a step further back; open on the side facing the high table)
+    const a = Math.PI * (.4 + 1.2 * (i - dancers) / (n - dancers - 1)) + (Math.random() - .5) * .25, r = R.r - .3 + Math.random() * .8, x = R.x + Math.cos(a) * r, z = R.z + Math.sin(a) * r;
+    const p = placeAt(take("standing"), x, z, Math.atan2(R.x - x, R.z - z), i % 4 === 1 ? "cheer" : "clap"); p.moods = ["clap", "clap", "clap", "cheer", "laugh", "drink"]; p.next = 4000 + Math.random() * 8000; ring.push(p);
+  }
   // people standing about, talking, laughing, drinking
   for (const [gx, gz] of CROWD.groups.slice(0, LITE ? 2 : 9)) for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.random(); const p = placeAt(take("standing"), gx + Math.cos(a) * .8, gz + Math.sin(a) * .8, Math.atan2(-Math.cos(a), -Math.sin(a)), ["Idle_Talking_Loop", "laugh", "drink", "listen", "Idle_Loop"][Math.random() * 5 | 0]); p.moods = ["Idle_Talking_Loop", "listen", "Idle_Loop", "laugh", "drink", "listen", "Idle_Talking_Loop"]; p.next = 3000 + Math.random() * 9000; }
   // the band: two more players beside the piper
@@ -1423,8 +1429,7 @@ async function buildCrowd() {
     if (this.freeze) return;
     // people in conversation don't repeat one gesture forever: every so often they listen, laugh, take a drink
     for (const p of people) if (p.moods && (p.next -= dt * 1000) < 0) { p.next = 5000 + Math.random() * 9000; p.play(p.moods[Math.random() * p.moods.length | 0], .6); if (p.action) p.action.timeScale = .85 + Math.random() * .3; }
-    const R = CROWD.ring;
-    ring.forEach((p, i) => { const a = now / 6000 + i / ring.length * Math.PI * 2; p.root.position.copy(wpos(R.x + Math.cos(a) * R.r, 0, R.z + Math.sin(a) * R.r)); p.root.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a)); if (p.action) p.action.timeScale = .75; });
+    for (const p of ring) if (p.spin) p.root.rotation.y += p.spin * dt; // the dancers turn slowly as they dance
     servers.forEach((p, i) => { const a = now / 9000 * (i % 2 ? 1 : -1) + i * 1.7, rx = 7.5, rz = 8; p.root.position.copy(wpos(3 + Math.cos(a) * rx, 0, Math.sin(a) * rz)); p.root.rotation.y = Math.atan2(-Math.sin(a) * rx * (i % 2 ? 1 : -1), Math.cos(a) * rz * (i % 2 ? 1 : -1)); });
   }, hide() { people.forEach(p => p.root.visible = false); }, show() { people.forEach(p => p.root.visible = true); }};
 }
@@ -1452,6 +1457,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
   for (const [k, p] of Object.entries(guests)) NPC[k] = p;
   NPC.mikon = PLAYER; PLAYER.name = "Mikon";
   let skipped = skip; skipIntro = () => { skipped = true; skipLine?.(); };
+  const acts = new Set(), stopActs = () => { for (const g of acts) poses.delete(g); acts.clear(); };
   // for testing only: ?debug&from=<words> jumps the film to the first line containing them
   let fast = new URLSearchParams(location.search).has("debug") && new URLSearchParams(location.search).get("from");
   const say = (who, id, text, how = "voice") => { if (skipped) return null; if (fast) { if (!text.includes(fast)) return pause(20); fast = null; } return line(who, id, text, how); };
@@ -1466,6 +1472,20 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
   stage(cast.piper, SEATS.piper); cast.piper.play("Idle_Loop", 0);
   stage(cast.dancer, SEATS.dancer); cast.dancer.play("dance", 0);
   wedding.mood("wedding"); setWeddingLights(true); sound.party(true);
+  // Acting with the hands: an arm pose laid over someone's clip each frame (it gets t, the seconds since it began, and
+  // returns true when it's done), and a hurried walk from place to place along a path in courtyard coordinates.
+  const act = f => { const t0 = performance.now(), g = now => { if (f((now - t0) / 1000, now)) { poses.delete(g); acts.delete(g); } }; poses.add(g); acts.add(g); return g; };
+  const ss = (a, b, t) => { const u = Math.min(1, Math.max(0, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
+  const fwdOf = p => V(Math.sin(p.root.rotation.y), 0, Math.cos(p.root.rotation.y)), rightOf = p => { const f = fwdOf(p); return V(-f.z, 0, f.x); };
+  const at = (p, bone) => p.bones[bone].getWorldPosition(new THREE.Vector3());
+  const toward = (p, side, goal, pole, w, palm = .07) => { if (w <= 0) return; reach(p, side, at(p, "hand_" + side).lerp(goal, Math.min(1, w)), pole, palm); }; // (w: how far from the clip's own hand toward the goal)
+  const hurry = (p, pts, {speed = 2.6, clip = "run", end = "Idle_Talking_Loop", face} = {}) => new Promise(res => {
+    const P = [p.root.position.clone(), ...pts.map(([x, z]) => wpos(x, 0, z))]; let i = 0, last = performance.now(); p.root.rotation.x = 0; p.play(clip, .2);
+    (function step() { const now = performance.now(); let d = speed * Math.min(.05, (now - last) / 1000); last = now;
+      while (d > 0 && i < P.length - 1) { const v = P[i + 1].clone().sub(p.root.position), L = v.length(); if (L <= d) { p.root.position.copy(P[i + 1]); d -= L; i++; } else { p.root.position.addScaledVector(v, d / L); d = 0; }
+        if (L > .05) { let dy = Math.atan2(v.x, v.z) - p.root.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); p.root.rotation.y += dy * .25; } }
+      if (i < P.length - 1) return requestAnimationFrame(step);
+      if (face !== undefined) p.root.rotation.y = face; p.play(end, .25); res(); })(); });
   const reel = async () => {
     // Corinth, last spring: the whole wedding from above, then Mikon walking in through the gate with his present
     shot([-2, 9, 14], [-6, 0, -2], [6, 6, 11], [-4, 0, -1], 7000);
@@ -1475,15 +1495,20 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     const basket = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(.17, .13, .2, 14, 1, true), new THREE.MeshStandardMaterial({color: 0x9a7a4a, roughness: 1, side: THREE.DoubleSide})); basket.add(b); for (let k = 0; k < 5; k++) { const f = new THREE.Mesh(new THREE.CapsuleGeometry(.03, .16, 4, 8), new THREE.MeshStandardMaterial({color: 0xb8b8a8, metalness: .4, roughness: .3})); f.rotation.z = Math.PI / 2 + (k - 2) * .25; f.position.set(0, .1, (k - 2) * .05); basket.add(f); }
       const handle = new THREE.Mesh(new THREE.TorusGeometry(.15, .012, 6, 18, Math.PI), new THREE.MeshStandardMaterial({color: 0x7a5a32, roughness: 1})); handle.position.y = .1; basket.add(handle); }
     hold(PLAYER, "r", basket, V(0, .25, 0));
-    const g0 = performance.now(), from = wpos(CROWD.gate[0], 0, CROWD.gate[1]), to = wpos(-.7, 0, -1.9);
+    // in through the gate and down the walk between the near bench and the pool, the middle of the gap: clear of the
+    // vine's posts (at z = -2, on the pool's edge), the bench, and the people standing about
+    const g0 = performance.now(), path = [wpos(CROWD.gate[0], 0, CROWD.gate[1]), wpos(4.2, 0, -1.5), wpos(-.7, 0, -1.5)], to = path[2];
+    const legs = path.slice(1).map((p, i) => p.distanceTo(path[i])), total = legs.reduce((a, b) => a + b);
     PLAYER.root.rotation.set(0, -Math.PI / 2, 0); PLAYER.play("walk", .1);
     let walking = true, following = true;
-    (function walk() { if (!walking) return; const u = Math.min(1, (performance.now() - g0) / 10000); PLAYER.root.position.lerpVectors(from, to, u); if (u < 1) requestAnimationFrame(walk); else { PLAYER.play("Idle_Loop"); walking = false; } })();
+    (function walk() { if (!walking) return; const u = Math.min(1, (performance.now() - g0) / 10000); let d = u * total, i = 0; while (i < legs.length - 1 && d > legs[i]) d -= legs[i++];
+      PLAYER.root.position.lerpVectors(path[i], path[i + 1], Math.min(1, d / legs[i])); const dir = path[i + 1].clone().sub(path[i]); PLAYER.root.rotation.y = Math.atan2(dir.x, dir.z);
+      if (u < 1) requestAnimationFrame(walk); else { PLAYER.play("Idle_Loop"); walking = false; } })();
     // first over his shoulder as he walks into the party, then round to his face once the crowd is behind him
     (function follow() { if (!following) return; const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); camShot.active = true; shot.cur = null;
       const u = (performance.now() - g0) / 10000;
       if (u < .45) { camShot.pos.copy(h).add(V(1.4, .25, .55)); camShot.look.copy(h).add(V(-6, -.6, -.4)); }
-      else { camShot.pos.copy(h).add(V(-1.25, .05, .6)); camShot.look.copy(h).add(V(0, -.05, 0)); }
+      else { camShot.pos.copy(h).add(V(-1.25, .05, -.45)); camShot.look.copy(h).add(V(0, -.05, 0)); } // (from the pool side: behind him the high table, and no post to seem to walk into)
       requestAnimationFrame(follow); })();
     await vo("mikon", "w_i1", "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.");
     following = false; walking = false; PLAYER.root.position.copy(to); PLAYER.root.rotation.set(0, .5, 0); PLAYER.play("Idle_Loop");
@@ -1511,20 +1536,66 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     faceShot(cast.lykon, {side: .2}); cast.lykon.play("sittablethink"); await say("lykon", "w_l1", "Mikon, it's your cousin's wedding. Not the goat one. Anything but the goat one.");
     faceShot(cast.mikon, {side: -.18, ms: 9000}); await say("mikon", "w_m2", "So the goat walks right up to the altar, and the priest looks at the goat, and the goat looks at the priest, and the priest says...");
     if (skipped) return;
-    // the olive
-    const olive = wedding.olives.children[3]; if (olive) { const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h); const from = new THREE.Vector3(); olive.getWorldPosition(from); const t0 = performance.now(); scene.attach(olive);
-      (function fly() { const u = Math.min(1, (performance.now() - t0) / 450); olive.position.lerpVectors(from, h.clone().add(V(0, -.06, .07)), u); olive.position.y += Math.sin(u * Math.PI) * .25; if (u < 1) requestAnimationFrame(fly); else olive.visible = false; })(); }
+    // the olive: still in the middle of the story, he reaches into the bowl, takes one, and pops it in his mouth
+    const olive = wedding.olives.children[3];
+    if (olive) {
+      shot([-.3, 1.2, .32], [-.62, .98, -.6], [-.36, 1.22, .2], [-.66, 1.08, -.72], 3400); PLAYER.play("sittabletalk");
+      const from = olive.getWorldPosition(new THREE.Vector3()); let held = false;
+      act(t => { const P = PLAYER, f = fwdOf(P), r = rightOf(P), chest = at(P, "spine_03"), mouth = at(P, "Head").addScaledVector(f, .13).add(V(0, .08, 0));
+        // out to the bowl, a moment to pick, up to the mouth, and back down to the table
+        const w = ss(0, .8, t) * (1 - ss(2.5, 3.3, t)), goal = from.clone().add(V(0, .02, 0)).lerp(mouth, ss(1.15, 1.95, t));
+        toward(P, "r", goal, chest.clone().addScaledVector(r, .55).addScaledVector(f, -.15).add(V(0, -.45, 0)), w, .06);
+        if (!held && t > .95) { held = true; olive.scale.multiplyScalar(1.6); hold(P, "r", olive); }
+        if (t > 1.75 && t < 2.3) P.expr.hold = {AK_25_JawOpen: .45};
+        if (held && t > 2.05 && olive.parent) { olive.removeFromParent(); P.expr.hold = {AK_44_MouthSmileLeft: .7, AK_45_MouthSmileRight: .7}; }
+        return t > 3.4; });
+      await pause(2300);
+    }
     PLAYER.expr.hold = {AK_44_MouthSmileLeft: .7, AK_45_MouthSmileRight: .7};
+    faceShot(PLAYER, {side: .22, dist: 1, ms: 5000});
     await say("mikon", "w_m3", "Ha! No, wait, wait, this is the good part, this is the...");
     PLAYER.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .35};
     cast.mikon.play("choke", .2); sound.cough(); sound.party(false); crowd.freeze = true; shot([-.6, 1.25, .45], [-.7, 1.1, -1.02], [-.65, 1.2, .2], [-.7, 1.05, -1.02], 4000); await pause(1600);
-    stage(cast.lykon, [.15, -1.75, -.6]); cast.lykon.play("Idle_Talking_Loop"); cast.lykon.expr.hold = {AK_03_BrowInnerUp: .9};
-    faceShot(cast.lykon, {side: .25, dist: .8}); await say("lykon", "w_l2", "Mikon? Mikon, are you all right? You've gone a very strange colour.");
-    // everyone up
-    stage(cast.demeas, [-1.2, -1.75, .3]); cast.demeas.play("Idle_Talking_Loop"); stage(cast.nikias, [-.2, -1.75, -.3]); cast.nikias.play("Idle_Talking_Loop");
-    faceShot(cast.kleio, {side: -.25, dist: .75}); cast.kleio.play("sittabletalk"); sound.cough(); await say("kleio", "w_a2", "He's choking! Somebody hit him on the back! Not like that, Demeas, harder!");
-    shot([-.3, 1.7, .9], [-.6, 1.1, -1.2], [-.3, 1.5, .7], [-.6, 1.05, -1.2], 4000); await say("nikias", "w_n1", "I've got him, I've got him! Breathe, cousin, just breathe!");
-    faceShot(cast.thea, {side: .2}); cast.thea.play("sittabletalk"); await say("thea", "w_t1", "Mikon, don't you dare. Not today! It's my wedding!");
+    // Lykon up beside him, a hand on his shoulder
+    stage(cast.lykon, [-.12, -1.42, -1]); cast.lykon.play("Idle_Talking_Loop"); cast.lykon.expr.hold = {AK_03_BrowInnerUp: .9};
+    const steady = act(t => { const L = cast.lykon; toward(L, "l", at(PLAYER, "upperarm_l").add(V(0, .07, 0)), at(L, "spine_03").addScaledVector(rightOf(L), -.5).add(V(0, -.4, 0)), ss(.2, .9, t), .05); });
+    shot([.6, 1.45, .05], [-.15, 1.3, -1.4], [.5, 1.45, -.05], [-.15, 1.3, -1.4], 5000); await say("lykon", "w_l2", "Mikon? Mikon, are you all right? You've gone a very strange colour.");
+    poses.delete(steady); acts.delete(steady);
+    // everyone up. Kleio on her feet across the table, pointing at him; Demeas hurrying round to thump his back; Lykon
+    // running for water; Nikias coming round the far end of the table to get behind him
+    stage(cast.kleio, [-.9, 1.45, Math.PI]); cast.kleio.play("Idle_Talking_Loop"); cast.kleio.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .2};
+    act(t => { const K = cast.kleio, s = at(K, "upperarm_r"), dir = at(PLAYER, "Head").sub(s).normalize(); toward(K, "r", s.clone().addScaledVector(dir, .7), s.clone().addScaledVector(rightOf(K), .35).add(V(0, -.45, 0)), ss(0, .5, t) * (1 - ss(5.5, 6.2, t)), 0); return t > 6.3; });
+    hurry(cast.lykon, [[3.6, -1.5], [5, -3.2], [7, -4]], {speed: 3}).then(() => cast.lykon.root.visible = false);
+    stage(cast.demeas, [-3.35, 0, Math.PI / 2]);
+    const demeasThere = hurry(cast.demeas, [[-3.1, -1.45], [-1.2, -1.42]], {face: 1.1, end: "Idle_Loop"});
+    const nikiasThere = new Promise(res => setTimeout(() => { stage(cast.nikias, [1.1, 1.45, 0]); hurry(cast.nikias, [[3.4, 1.45], [3.4, -1.05], [2.7, -1.55], [-.3, -1.6]], {speed: 2.9, face: -1.9, end: "Idle_Loop"}).then(res); }, 900));
+    // Demeas's thumps: his hand drawn back and brought down flat between Mikon's shoulders, and harder when Kleio says so
+    let harder = 1;
+    const thump = act(t => { const D = cast.demeas; if (t < 1.5) return; const back = at(PLAYER, "spine_03").addScaledVector(fwdOf(PLAYER), -.16).add(V(0, .05, 0)), away = back.clone().sub(at(D, "spine_03")).setY(0).normalize().negate();
+      const ph = ((t - 1.5) * 1.7) % 1, k = ph < .4 ? ss(0, .4, ph) ** 2 : 1 - ss(.45, 1, ph), up = back.clone().addScaledVector(away, .22 * harder).add(V(0, .3 * harder, 0));
+      toward(D, "r", up.lerp(back, k), at(D, "spine_03").addScaledVector(rightOf(D), .5).add(V(0, -.3, 0)), ss(1.5, 1.8, t), .05);
+      if (ph > .38 && ph < .45 && !D.hit) { D.hit = true; PLAYER.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .55}; } else if (ph > .6) { D.hit = false; PLAYER.expr.hold = {AK_03_BrowInnerUp: 1, AK_25_JawOpen: .3}; } });
+    shot([.45, 1.55, 1.9], [-.9, 1.3, .6], [.35, 1.5, 1.8], [-.9, 1.3, .55], 2400); sound.cough(); // Kleio in profile, her arm out across the table at him
+    setTimeout(() => { if (!skipped) shot([-2.3, 1.6, .85], [-.9, 1.05, -1.25], [-2.15, 1.55, .7], [-.9, 1.05, -1.25], 4000); }, 2200); // then Demeas at his back
+    setTimeout(() => harder = 1.6, 3400);
+    await Promise.all([say("kleio", "w_a2", "He's choking! Somebody hit him on the back! Not like that, Demeas, harder!"), demeasThere, nikiasThere]);
+    // Nikias has him up off the bench and stands behind him, arms round under his ribs, pulling in and up, again and
+    // again; Demeas steps back to give him room; Thea comes running down the walk to him
+    poses.delete(thump); acts.delete(thump); stage(cast.demeas, [-1.85, -1.5, Math.PI / 2]); cast.demeas.play("Idle_Talking_Loop");
+    stage(PLAYER, [-.6, -1.58, Math.PI / 2]); PLAYER.play("cough", 0); // (the choke is a seated clip; on his feet, he coughs and heaves)
+    const N = cast.nikias; stage(N, [-1.07, -1.58, Math.PI / 2]); N.play("Idle_Loop", 0); N.expr.hold = {AK_03_BrowInnerUp: .8};
+    act(t => { const pull = Math.max(0, Math.sin(t * 5.2)) ** 3, f = fwdOf(PLAYER), side = rightOf(PLAYER), belly = at(PLAYER, "spine_02").lerp(at(PLAYER, "spine_03"), .3);
+      // (leaning in over him, his chest against Mikon's back; each pull draws them both a little back and up)
+      N.root.position.copy(wpos(-1.07 - pull * .04, 0, -1.58)); N.root.rotation.set(0, Math.PI / 2, 0); N.root.rotateX(ss(0, .5, t) * (.1 + pull * .05));
+      PLAYER.root.position.copy(wpos(-.6 - pull * .04, pull * .02, -1.58));
+      for (const [s, sg] of [["l", -1], ["r", 1]]) toward(N, s, belly.clone().addScaledVector(side, sg * (.07 - pull * .03)).addScaledVector(f, .2 - pull * .06).add(V(0, pull * .06, 0)), at(N, "spine_03").addScaledVector(side, sg * .55).add(V(0, -.2, 0)), ss(.1, .6, t), .05); });
+    setTimeout(() => { if (skipped) return; stage(cast.thea, [.3, 1.45, 0]); cast.thea.expr.hold = {AK_03_BrowInnerUp: 1}; hurry(cast.thea, [[3.4, 1.45], [3.4, -1.05], [2.7, -1.58], [-.15, -1.58]], {speed: 3.2, face: -Math.PI / 2}).then(() => { if (skipped) return;
+      // her hands on his shoulders, facing him
+      act(t => { const T = cast.thea; for (const [s, his, sg] of [["l", "upperarm_r", -1], ["r", "upperarm_l", 1]]) toward(T, s, at(PLAYER, his).add(V(0, .08, 0)), at(T, "spine_03").addScaledVector(rightOf(T), sg * .5).add(V(0, -.4, 0)), ss(0, .5, t), .05); }); }); }, 600);
+    shot([-.6, 1.5, .55], [-.75, 1.15, -1.58], [-.5, 1.45, .45], [-.7, 1.15, -1.58], 4500); await say("nikias", "w_n1", "I've got him, I've got him! Breathe, cousin, just breathe!");
+    shot([-.25, 1.5, .1], [-.42, 1.3, -1.58], [-.3, 1.48, 0], [-.42, 1.3, -1.58], 5000); await say("thea", "w_t1", "Mikon, don't you dare. Not today! It's my wedding!");
+    stopActs(); N.root.rotation.set(0, 0, 0); cast.lykon.root.visible = true;
+    stage(PLAYER, SEATS.mikon); PLAYER.play("choke", .2); // (he sinks back down onto the bench)
     if (skipped) return;
     // through his eyes: the faces leaning in, the sound going, the light going
     const h = new THREE.Vector3(); PLAYER.bones.Head.getWorldPosition(h);
@@ -1562,6 +1633,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
   }
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);
+  stopActs(); if (guests.nikias) guests.nikias.root.rotation.set(0, 0, 0);
   PLAYER.hideHands?.(false); for (const g of Object.values(guests)) g.hideHands?.(false); sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
   setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false; crowd?.hide();
   for (const k of Object.keys(guests)) delete NPC[k];
