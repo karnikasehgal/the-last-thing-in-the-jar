@@ -101,7 +101,7 @@ hdri(renderer, "small_cathedral", .1, [.75, .9, 1.15]).then(e => ENV.under = e);
 // to the west), and the same photograph is both the light and the sky you see. The river's sky is a real night sky,
 // the Milky Way across it.
 const TURN = {dusk: .387, day: .266, night: 0};
-hdri(renderer, "kloppenheim_06_puresky", .32, [1, .95, .9], TURN.dusk).then(e => ENV.dusk = e);
+hdri(renderer, "kloppenheim_06_puresky", .5, [1, .97, .92], TURN.dusk).then(e => ENV.dusk = e);
 hdri(renderer, "kloofendal_48d_partly_cloudy_puresky", .5, [1, 1, 1], TURN.day).then(e => ENV.day = e);
 const SKY = {};
 skyPhoto("kloppenheim_06_puresky", TURN.dusk).then(t => SKY.dusk = t);
@@ -116,16 +116,17 @@ const AIR = {
   // (Thea's wedding is at night, by candlelight, as the board has it: a dim cold sky fill, a warm haze for the candles to light)
   wedding: {fog: 0x1a140f, density: .016, top: 0x2c3a5c, ground: 0x1c140e, fill: .22},
   day: {fog: 0xc8d8e6, density: .002, top: 0xbcd6f4, ground: 0x8a7a5a, fill: .7},
+  dusk: {fog: 0xd0a080, density: .002, top: 0x8eaad8, ground: 0x7a5640, fill: .6},
   funeral: {fog: 0x151826, density: .02, top: 0x5a6890, ground: 0x1a140e, fill: .45}
 };
 const NIGHT_SKY = [0x9fb3c8, 0x2a1d12];
 function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
-  const want = ENV[x > 200 ? (mood === "day" ? "day" : "night") : "under"];
+  const want = ENV[x > 200 ? (mood === "day" || mood === "dusk" ? mood : "night") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
   // the sky you see: the photograph for the place, once it's loaded (the painted skies stand in until then)
-  const bg = x > 200 ? SKY[mood === "day" ? "day" : "night"] : SKY.night;
-  if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "day" ? 1.25 : .32) : .55; /* (the wedding night: the stars faint over the candles) */ }
+  const bg = x > 200 ? SKY[mood === "day" || mood === "dusk" ? mood : "night"] : SKY.night;
+  if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "day" ? 1.25 : mood === "dusk" ? 1 : .32) : .55; /* (the wedding night: the stars faint over the candles) */ }
   starDome.visible = !SKY.night; if (wedding) wedding.sky.visible = !bg || x <= 200;
   moon.visible = x <= 200; // (the river's moon has no business lighting a wedding at sunset)
   if (x > 200) { const a = AIR[mood] || AIR.wedding; scene.fog.color.setHex(a.fog); scene.fog.density = a.density; sky.color.setHex(a.top); sky.groundColor.setHex(a.ground); sky.intensity = a.fill; sky.userData.wed = true; }
@@ -1182,6 +1183,9 @@ function tick(now) {
   // the wedding is a world of its own under its own sky, built off to one side: seen from outside that sky (from the
   // river) it would hang in the stars like a planet, so it's only drawn while the camera is inside it
   if (wedding) wedding.g.visible = camera.position.distanceTo(wedding.g.position) < 215;
+  // the arch of white strands over the gate is drawn only from a few steps away: shots that pass through the gate
+  // would otherwise look out through a thicket of white poles
+  const arch = wedding?.g.userData.arch; if (arch) arch.visible = camera.position.distanceTo(wedding.g.localToWorld(arch.userData.center.clone())) > 3.4;
   sceneLight();
   if (!LITE) shadows(now);
   if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
@@ -1748,7 +1752,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     await pause(2800); await fade("black", 2000);
     if (skipped) return;
     // grief: alone by the stream at dusk; the birds stop singing
-    wedding.mood("wedding"); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; crowd.hide(); eury.root.visible = false; hymen.root.visible = false; wedding.snake.visible = false; smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
+    wedding.mood("dusk"); crowd.hide(); eury.root.visible = false; hymen.root.visible = false; wedding.snake.visible = false; smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
     PLAYER.root.position.copy(wpos(33, .18, 9.15)); PLAYER.root.rotation.set(0, Math.PI, 0); PLAYER.play("Sitting_Idle_Loop", 0); playLyre(PLAYER, true);
     shot([30.5, 1.4, 6.2], [33, 1, 8.8], [29.8, 2, 5.4], [33, 1, 9], 12000);
     await fade("clear", 2000);

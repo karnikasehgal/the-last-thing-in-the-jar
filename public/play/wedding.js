@@ -203,14 +203,18 @@ export function buildWedding(scene, {noise, lite = false}) {
     g, lights, food, bier, olives, sky, petals, meadow, snake, sun,
     animate(now) { skyU.time.value = now / 1000; const a = pg.attributes.position; for (let i = 0; i < pn; i++) { let y = a.getY(i) - .0015; if (y < 2.6) y = 5.6; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(now / 900 + i) * .002); } a.needsUpdate = true; },
     // "wedding": warm dusk; "funeral": the next night, lamps only
+    // "wedding": Thea's wedding, at night by candlelight; "day": Eurydice's, in spring sun; "dusk": the stream at
+    // sunset, after; "funeral": the next night, lamps only
     mood(kind) {
       this.kind = kind;
-      const fun = kind === "funeral", day = kind === "day";
-      sun.color.set(day ? 0xfff4e2 : 0x9fb4e0); sun.position.copy(day ? new THREE.Vector3(Math.cos(2.268) * .669, .743, Math.sin(2.268) * .669) : new THREE.Vector3(-.3, .9, -.3)).multiplyScalar(30); // (where the sun stands in the photographed sky)
+      const fun = kind === "funeral", day = kind === "day", dusk = kind === "dusk";
+      sun.color.set(day ? 0xfff4e2 : dusk ? 0xffb46e : 0x9fb4e0);
+      // (where the sun stands in the photographed sky: high by day, low in the west at dusk; at night, the moon overhead)
+      sun.position.copy(day ? new THREE.Vector3(Math.cos(2.268) * .669, .743, Math.sin(2.268) * .669) : dusk ? new THREE.Vector3(-.99, .14, 0) : new THREE.Vector3(-.3, .9, -.3)).multiplyScalar(30);
       sun.userData.dir = sun.position.clone().normalize(); // (the shadow rig keeps its own copy of the sun's direction: tell it)
       skyU.mode.value = fun ? 2 : day ? 1 : 0;
       food.visible = !fun; bier.visible = fun; cloth.material.color.set(fun ? 0xd8d0c0 : 0xe9e0cf);
-      sun.intensity = fun ? .15 : day ? 3.4 : .3; sun.castShadow = day; // (at night only a little moonlight, too faint to cast shadows: no shadow pass) // (the key light: a low golden sun raking across the courtyard)
+      sun.intensity = fun ? .15 : day ? 3.4 : dusk ? 3 : .3; sun.castShadow = day || dusk; /* (the night's moonlight is too faint to cast shadows: no shadow pass) */
       lights.forEach(l => { if (l.isPointLight) l.intensity = l.userData.base ?? (l.userData.base = l.intensity); });
     }
   };
@@ -306,5 +310,5 @@ function dressed(g, S, lite) {
     }
     strands.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, .011, 4));
   }
-  g.add(new THREE.Mesh(mergeGeometries(strands), S(0xf6f4f0, {roughness: .35, metalness: .1})));
+  const arch = new THREE.Mesh(mergeGeometries(strands), S(0xf6f4f0, {roughness: .35, metalness: .1})); arch.userData.center = new THREE.Vector3(15.6, 1.8, 0); g.add(arch); g.userData.arch = arch;
 }
