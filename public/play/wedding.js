@@ -15,12 +15,12 @@ export const SEATS = {
   demeas: [-3.35, 0, Math.PI / 2], piper: [-3.6, 2.6, Math.PI * .8], dancer: [-2.2, 3.4, Math.PI]
 };
 
-// Where the crowd goes (relative to W): two more long tables, a ring dance, people standing and talking,
+// Where the crowd goes (relative to W): two more long tables, dancers with a ring of guests clapping round them, people standing and talking,
 // servers carrying trays, the band.
 export const CROWD = {
   tables: [-5.2, 5.2].flatMap(z => [-2.4, -1.6, -.8, 0, .8, 1.6, 2.4].flatMap(x => [[x, z - 1.02, 0], [x, z + 1.02, Math.PI]])),
   ring: {x: -9.5, z: 0, r: 2.9, n: 12},
-  groups: [[5.5, -9.5], [10, 7.5], [-3, 10], [11, -3], [-13, 8.5], [-13, -8.5], [2, -10.5], [-6, -11], [12.5, 10.5]],
+  groups: [[5.5, -9.5], [10, 7.5], [-3, 10], [11, -4.8], [-13, 8.5], [-13, -8.5], [2, -10.5], [-6, -11], [12.5, 10.5]],
   band: [[-9.5, -5.6, 0], [-8.1, -5.9, -.2]],
   servers: 4,
   gate: [16.5, -1.7]
@@ -105,7 +105,7 @@ export function buildWedding(scene, {noise, lite = false}) {
   // olives in a bowl, in front of Mikon
   const olives = new THREE.Group(); olives.add(new THREE.Mesh(new THREE.CylinderGeometry(.13, .08, .07, 16), S(0xb06a40)));
   for (let i = 0; i < 22; i++) { const o = new THREE.Mesh(new THREE.SphereGeometry(.018, 8, 6), S(i % 3 ? 0x5a6a2a : 0x2a2418, {roughness: .3})); o.scale.set(1, .8, .8); o.position.set((Math.random() - .5) * .16, .035 + Math.random() * .03, (Math.random() - .5) * .16); olives.add(o); }
-  put(olives, -.55, .82, -.2);
+  put(olives, -.72, .82, -.24); // (within reach of his hand)
   // bread, figs, a krater of wine, cups
   for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), S(0xc89050)); b.scale.y = .5; put(b, -2 + i * 1.1, .83, .02); }
   const krater = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.08, 0], [.1, .05], [.16, .18], [.18, .3], [.17, .34], [0, .34]].map(([x, y]) => new THREE.Vector2(x, y)), 20), S(0x2a1a12));
