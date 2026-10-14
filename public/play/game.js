@@ -642,7 +642,6 @@ const sound = {
     master = actx.createGain(); master.gain.value = .9;
     this.muffle = actx.createBiquadFilter(); this.muffle.type = "lowpass"; this.muffle.frequency.value = 20000;
     master.connect(this.muffle).connect(actx.destination);
-    [55, 82.4, 110].forEach((f, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; g.gain.value = .022 / (i + 1); o.connect(g).connect(master); o.start(); });
     const b = actx.createBuffer(2, actx.sampleRate * 4, actx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let last = 0; for (let i = 0; i < d.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; } }
     const n = actx.createBufferSource(); n.buffer = b; n.loop = true;
@@ -688,20 +687,17 @@ const sound = {
   bark() { if (!actx) return; [0, .18, .36, .7].forEach((d, i) => { const at = actx.currentTime + d, o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(200 - i * 25, at); o.frequency.exponentialRampToValueAtTime(70, at + .2); const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 700; o.connect(f); this.env(f, .55, .01, .22, at); o.start(at); o.stop(at + .3); }); },
   growl(level) { if (!actx) return; const o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.value = 42 + Math.random() * 12; const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 150; o.connect(f); this.env(f, .55 * level, .08, .55); o.start(); o.stop(actx.currentTime + .7); },
   hit() { if (!actx) return; const o = actx.createOscillator(); o.frequency.setValueAtTime(120, actx.currentTime); o.frequency.exponentialRampToValueAtTime(26, actx.currentTime + 1); this.env(o, 1, .005, 1.1); o.start(); o.stop(actx.currentTime + 1.2); const n = this.noise(.6); this.env(n, .7, .002, .5); n.start(); },
-  // a wedding: a piper on the double pipes, people talking, now and then a laugh
+  // a wedding: a piper on the double pipes (the crowd used to be pulsing static; gone)
   party(on) {
     if (!actx) return;
     if (!on) { this.partyStop?.(); this.partyStop = null; return; }
     const out = actx.createGain(); out.gain.value = .0; out.connect(master); out.gain.linearRampToValueAtTime(.5, actx.currentTime + 2);
-    const n = this.noise(4); n.loop = true; const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 380; f.Q.value = .3; /* a murmur, not static */
-    const am = actx.createGain(); am.gain.value = .07; const lfo = actx.createOscillator(); lfo.frequency.value = 1.7; const lg = actx.createGain(); lg.gain.value = .07; lfo.connect(lg).connect(am.gain); lfo.start();
-    n.connect(f).connect(am).connect(out); n.start();
     const tune = [62, 64, 65, 67, 69, 67, 65, 64, 62, 60, 62, 64, 65, 64, 62, 62], beat = .32; let k = 0, stop = false;
     const note = () => { if (stop) return; const at = actx.currentTime + .02, fq = 440 * Math.pow(2, (tune[k % tune.length] - 69) / 12);
       for (const d of [0, 7]) { const o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.value = fq * Math.pow(2, d / 1200 * 12 * (d ? 1 : 0)) * (d ? 1.498 : 1); const bf = actx.createBiquadFilter(); bf.type = "bandpass"; bf.frequency.value = 1400; bf.Q.value = 1.2; const gg = actx.createGain(); gg.gain.setValueAtTime(0, at); gg.gain.linearRampToValueAtTime(d ? .03 : .06, at + .04); gg.gain.linearRampToValueAtTime(0, at + beat * .95); o.connect(bf).connect(gg).connect(out); o.start(at); o.stop(at + beat); }
       k++; setTimeout(note, beat * 1000); };
     note();
-    this.partyStop = () => { stop = true; out.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); setTimeout(() => { n.stop(); lfo.stop(); }, 1600); };
+    this.partyStop = () => { stop = true; out.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); setTimeout(() => out.disconnect(), 1600); };
   },
   // birdsong in a spring meadow; birds() with no argument stops it
   birds(on) {
@@ -745,7 +741,7 @@ const goal = () => chap.goal();
 function paintGoal() { const l = goal().label; $("#goal").innerHTML = `<small>what to do</small>${typeof l === "function" ? l() : l}`; }
 
 /* ---------- conversations: spoken out loud, with the camera on whoever is talking ---------- */
-const voiceEl = $("#voice");
+const voiceEl = $("#voice"), storyEl = $("#story");
 let skipLine = null, choicePick = null, talkingTo = null;
 const camShot = {active: false, pos: new THREE.Vector3(), look: new THREE.Vector3()};
 function frameOn(p, side = 1) { // over-the-shoulder close-up
@@ -1205,7 +1201,7 @@ function tick(now) {
   const arch = wedding?.g.userData.arch; if (arch) arch.visible = camera.position.distanceTo(wedding.g.localToWorld(arch.userData.center.clone())) > 3.4;
   sceneLight();
   if (!LITE) shadows(now);
-  if (sound.river) sound.river.gain.value = .12 + Math.max(0, .7 - Math.abs(me.pos.z - SHORE) / 16);
+  if (sound.river) sound.river.gain.value = camera.position.x > 200 || storyEl.classList.contains("on") ? 0 : .12 + Math.max(0, .7 - Math.abs(me.pos.z - SHORE) / 16); /* only at the river: silent at the weddings and over the storybook */
   PLAYER?.fpCut?.();
   for (const f of poses) f(now);
   composer.render();
