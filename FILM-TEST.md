@@ -4,7 +4,7 @@ The goal is four short clips, so the video version can be judged against the 3D 
 
 ## Setup in Hailuo (MiniMax)
 
-- Use **image to video** with a subject reference where it's offered. Upload Mikon's Canva design (MAHX42SAltw) as the reference, so he looks the same in every clip.
+- Use **image to video** with a subject reference where it's offered. Upload Mikon's character image from Canva (Projects, Uploads: the one of him holding the fish basket) as the reference, so he looks the same in every clip.
 - 16:9, 1080p, the longest clip length available (6 or 10 seconds).
 - Paste the **style line** at the start of every prompt. It holds the clips together.
 - Make 2 or 3 takes of each and keep the best one. Bad hands and faces are normal; reroll them.
