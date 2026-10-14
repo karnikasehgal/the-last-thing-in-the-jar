@@ -135,6 +135,20 @@ body.talking .skiphint{opacity:1}
 @media (max-width:760px),(max-aspect-ratio:1/1){#start.on{display:block;overflow-y:auto}.plan-wrap{height:min(62vh,120vw);padding:6px}.bill{border-left:0;border-top:1px solid rgba(201,164,92,.35);background:#08070a}.cartouche{top:14px;left:18px}.cartouche .sub{font-size:10px}.planhint{bottom:10px;font-size:12px}}
 @media (max-height:480px) and (min-aspect-ratio:1/1){.bill{padding:14px 18px;justify-content:flex-start}.bill h1{font-size:34px}.bill .keys{display:none}.bill .big{margin-top:12px;padding:9px 24px}.bill .credits{display:none}.cartouche .name{font-size:30px}.planhint{display:none}}
 @media (prefers-reduced-motion:reduce){#palace .glow,#palace .seal.sel .ring{animation:none}#palace .thread.now{animation:none;stroke-dashoffset:0}}
+/* the storybook opening: painted stills that breathe */
+#story{position:fixed;inset:0;z-index:8;background:#000;opacity:0;pointer-events:none;overflow:hidden;transition:opacity .6s}
+#story.on{opacity:1}
+#story .still{position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease}
+#story .still.on{opacity:1}
+#story .cam{position:absolute;inset:0;transform-origin:50% 55%;will-change:transform}
+#story img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#story .ripple{filter:url(#storyripple);-webkit-mask-image:linear-gradient(to bottom,transparent 52%,#000 68%);mask-image:linear-gradient(to bottom,transparent 52%,#000 68%)}
+#story .glow{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 60%,rgba(255,190,110,.16),rgba(255,160,80,.05) 55%,transparent 75%);mix-blend-mode:screen;animation:candle 2.3s ease-in-out infinite alternate}
+#story .still::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.55));pointer-events:none}
+@keyframes candle{0%{opacity:.55}18%{opacity:.9}33%{opacity:.7}52%{opacity:1}71%{opacity:.62}86%{opacity:.85}100%{opacity:.7}}
+#story .still.shake .cam{animation:gulp .9s cubic-bezier(.36,.07,.19,.97) 2}
+@keyframes gulp{10%,90%{translate:-2px 0}20%,80%{translate:4px 1px}30%,50%,70%{translate:-6px -1px}40%,60%{translate:6px 1px}}
+@media (prefers-reduced-motion:reduce){#story .glow,#story .still.shake .cam{animation:none}}
 /* cards */
 .card{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,rgba(0,0,0,.5),rgba(0,0,0,.92))}
 .card.on{display:flex}
@@ -320,6 +334,7 @@ body.clipping #clip{display:block}
 <div class="skiphint">click to skip a line</div>
 <div class="cine"><button id="skipIntro">skip</button></div>
 <div id="titlecard"><small></small><b></b></div>
+<div id="story"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="storyripple" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".004 .05" numOctaves="2" seed="7"><animate attributeName="baseFrequency" dur="9s" values=".004 .05;.005 .062;.004 .05" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div id="artshot"><img alt=""></div>
 <video id="clip" playsinline preload="auto"></video><div id="fader"></div><div id="pov"></div>
 <div id="trial"><h3></h3><div class="thint"></div><div class="tbody"></div><button id="trialQuit">walk away</button></div>

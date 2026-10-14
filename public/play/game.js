@@ -1840,6 +1840,58 @@ async function videoFilm(ch) {
   await fade("black", 10); document.body.classList.remove("clipping");
   return true;
 }
+/* ---------- the storybook opening (/play/?stills): painted stills that breathe, candles, water and a slow camera, with the film's voices ---------- */
+const STORY = {1: [
+  {img: "01", move: [1.02, 1.13, 0, -3], water: true, party: true, lines: [["Mikon", "w_i1", "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.", true]]},
+  {img: "02", move: [1.12, 1.03, -3, 1], lines: [["Lykon", "w_l0", "Mikon! Over here, I saved you a seat. Wait. Is that fish? You brought fish to a wedding?"], ["Mikon", "w_m0", "Salt fish from Lechaion. The good kind. It's a present."], ["Kleio", "w_a0", "Give that to me before the bride smells it. Sit down, Mikon, have some wine, and try to enjoy yourself for once."]]},
+  {img: "01", move: [1.22, 1.3, 4, 3], water: true, lines: [["Mikon", "w_m1", "Lykon. Lykon. Have you heard the one about the goat who wandered into the temple of Zeus?"], ["Lykon", "w_l1", "Mikon, it's your cousin's wedding. Not the goat one. Anything but the goat one."], ["Mikon", "w_m2", "So the goat walks right up to the altar, and the priest looks at the goat, and the goat looks at the priest, and the priest says..."]]},
+  {img: "12", move: [1.03, 1.12, 0, 0], choke: true, lines: [["Mikon", "w_m3", "Ha! No, wait, wait, this is the good part, this is the..."], ["Lykon", "w_l2", "Mikon? Mikon, are you all right? You've gone a very strange colour."], ["Kleio", "w_a2", "He's choking! Somebody hit him on the back! Not like that, Demeas, harder!"], ["Nikias", "w_n1", "I've got him, I've got him! Breathe, cousin, just breathe!"], ["Thea", "w_t1", "Mikon, don't you dare. Not today! It's my wedding!"]]},
+  {img: null, lines: [["Mikon", "w_vo1", "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.", true]]}
+]};
+async function speak(name, id, text, vo) {
+  $("#sub b").textContent = name; $("#sub span").textContent = text; $("#sub").classList.add("on");
+  sound.narration(!!vo); voiceEl.src = `voice/${id}.m4a`;
+  const fallback = 900 + text.split(" ").length * 280;
+  await new Promise(res => {
+    let done = false; const fin = () => { if (done) return; done = true; voiceEl.onended = voiceEl.onerror = null; skipLine = null; res(); };
+    voiceEl.onended = fin; voiceEl.onerror = () => setTimeout(fin, fallback); skipLine = () => { voiceEl.pause(); fin(); };
+    voiceEl.play().catch(() => setTimeout(fin, fallback));
+  });
+  sound.narration(false); $("#sub").classList.remove("on"); await pause(240);
+}
+async function stillFilm(ch) {
+  const beats = STORY[ch]; if (!beats || !new URLSearchParams(location.search).has("stills")) return false;
+  const dir = `film/ch${ch}/stills/`;
+  if (!(await fetch(dir + beats[0].img + ".jpg", {method: "HEAD"}).then(r => r.ok).catch(() => false))) return false;
+  const box = $("#story"); box.innerHTML = ""; box.classList.add("on");
+  talking = true; staging = true; document.body.classList.add("cinema", "talking"); $(".cine").classList.add("on");
+  let skipped = false; skipIntro = () => { skipped = true; skipLine?.(); };
+  sound.birds?.(false);
+  let prev = null;
+  for (const b of beats) {
+    if (skipped) break;
+    const layer = document.createElement("div"); layer.className = "still";
+    if (b.img) {
+      const src = dir + b.img + ".jpg";
+      layer.innerHTML = `<div class="cam"><img src="${src}" alt="">${b.water ? `<img class="ripple" src="${src}" alt="">` : ""}<i class="glow"></i></div>`;
+      await layer.querySelector("img").decode().catch(() => {});
+      const [s0, s1, x0, y0] = b.move;
+      layer.firstChild.animate([{transform: `scale(${s0}) translate(${x0}%,${y0}%)`}, {transform: `scale(${s1}) translate(0,0)`}], {duration: 30000, easing: "cubic-bezier(.3,.1,.3,1)", fill: "forwards"});
+    }
+    box.appendChild(layer); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); layer.classList.add("on");
+    if (prev) { const old = prev; setTimeout(() => old.remove(), 1600); }
+    prev = layer;
+    if (b.party) sound.party(true);
+    if (b.choke) { sound.party(false); sound.cough(); layer.classList.add("shake"); }
+    await pause(b.img ? 900 : 1400);
+    for (const [name, id, text, vo] of b.lines) { if (skipped) break; await speak(name, id, text, vo); }
+    if (!skipped) await pause(600);
+  }
+  sound.party(false); $("#sub").classList.remove("on");
+  await fade("black", 10); box.style.transition = "opacity 1.4s"; box.classList.remove("on"); await pause(1500);
+  box.innerHTML = ""; box.style.transition = "";
+  return true;
+}
 $("#begin").onclick = async () => {
   const intro = !new URLSearchParams(location.search).has("nointro");
   if (intro) { $("#fader").style.transition = "none"; $("#fader").style.background = "#000"; $("#fader").style.opacity = 1; document.body.classList.add("cinema"); // black at once: the world behind is built and waiting, and mustn't flash up before the film
@@ -1850,7 +1902,7 @@ $("#begin").onclick = async () => {
   $("#howto").classList.remove("on"); $("#bg").remove(); $("#mapBtn").hidden = false;
   if (intro) {
     const film = CH === 1 ? weddingFilm : orpheusFilm;
-    await film({skip: await videoFilm(CH)}); // the animated video when it's there, otherwise the 3D film
+    await film({skip: await videoFilm(CH) || await stillFilm(CH)}); // the animated video when it's there, otherwise the 3D film
   }
   playing = true; me.started = performance.now();
   grabMouse();
