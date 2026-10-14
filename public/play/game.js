@@ -1,5 +1,6 @@
 // THE COIN: the game. An open riverbank in the Underworld, built like an Italian loggia,
 // with real people to talk to and something that can smell coins.
+import {drawPalace, markPalace} from "./palace.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
@@ -1937,17 +1938,16 @@ const howtoOne = $("#howto .steps").innerHTML, keysOne = $("#keys").innerHTML;
 function pickChapter(n) {
   const c = CHAPTERS.find(c => c.n === n); if (!c || c.soon) return;
   CH = n; chap = n === 2 ? (chap.id === 2 ? chap : makeOrpheus(G)) : chapterOne;
-  $("#start .over").textContent = c.over; $("#start h1").textContent = c.title;
-  $("#start .rulebig").textContent = c.rule; $("#start .small").textContent = c.line;
+  $("#chOver").textContent = c.over; $("#chTitle").textContent = c.title;
+  $("#chRule").textContent = c.rule; $("#chLine").textContent = c.line;
   $(".hud .rule").textContent = c.rule;
   $("#keys").innerHTML = n === 1 ? keysOne : touchMode ? "<b>Left thumb</b><span>walk</span><b>Right thumb</b><span>look</span><b>lyre</b><span>hold to play</span><b>tap</b><span>play a note, in a song</span><b>use</b><span>talk, pick up</span>" : chap.keys;
   $("#howto .steps").innerHTML = n === 2 ? chap.howto : howtoOne;
   $("#tQ").hidden = n !== 1; $("#tF").hidden = n !== 2;
-  document.querySelectorAll("#chapters button").forEach(b => b.classList.toggle("sel", +b.dataset.n === n));
+  markPalace($("#palace"), n);
   paintGoal(); paintStats();
 }
-$("#chapters").innerHTML = CHAPTERS.map(c => `<button data-n="${c.n}" ${c.soon ? "disabled" : ""}><i>${c.roman}</i><b>${c.title}</b><span>${c.soon ? "coming" : c.who}${save.get().done.includes(c.n) ? " · played" : ""}</span></button>`).join("");
-$("#chapters").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !b.disabled) pickChapter(+b.dataset.n); });
+drawPalace($("#palace"), CHAPTERS, pickChapter, save.get().done);
 pickChapter(+(new URLSearchParams(location.search).get("chapter") || (save.get().done.includes(1) ? 2 : 1)));
 // the lyre button on touch screens: hold to play
 $("#tF").addEventListener("touchstart", e => { e.preventDefault(); lyreHeld = true; }, {passive: false});
