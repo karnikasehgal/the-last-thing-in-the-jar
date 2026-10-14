@@ -536,21 +536,28 @@ const gltf = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const REAL = ["hermes", "charon", "mikon", "orpheus", "elpenor", "theseus", "pirithous", "hades", "sisyphus", "persephone", "eurydice", "demeas", "nikias", "lykon", "piper", "aunt", "thea", "dancer"];
 const ASSETS = {}, CLIPS = {};
 const TOON_F = ["persephone", "eurydice", "aunt", "thea", "dancer"];
+const CARTOON = new URLSearchParams(location.search).has("toon");
 const TOON_V = 4; // bump when a character file changes, so no browser keeps an old one
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
     ...Array.from({length: 10}, (_, i) => "crowd/m" + i), ...Array.from({length: 9}, (_, i) => "crowd/f" + i)];
-  // the animated-film cast: one character model each for the women and the men, dressed and coloured per person
-  for (const n of REAL) list.splice(list.indexOf("rb/" + n), 1);
-  for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
-  list.push("toon/rain", "toon/snow", "toon/cerberus", "toon/chiton_short", ...PROPS.map(n => "props/" + n));
+  // the animated-film cast (/play/?toon): one character model each for the women and the men, dressed and coloured per person.
+  // The game itself keeps the Rocketbox people.
+  if (CARTOON) {
+    for (const n of REAL) list.splice(list.indexOf("rb/" + n), 1);
+    for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
+    list.push("toon/rain", "toon/snow", "toon/chiton_short");
+  }
+  list.push("toon/cerberus", ...PROPS.map(n => "props/" + n));
   let done = 0;
   await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
-  prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow); prepareToon(ASSETS.toon_chiton_short); // (the tunic's bones renamed as the body's are)
-  for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
-  for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
-  for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
+  if (CARTOON) {
+    prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow); prepareToon(ASSETS.toon_chiton_short); // (the tunic's bones renamed as the body's are)
+    for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
+    for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
+    for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
+  }
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
   dressWorld();
   rigHound(hound, ASSETS.toon_cerberus); // the real dog takes over from the puppet

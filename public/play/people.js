@@ -512,20 +512,20 @@ const LOOKS = {
   // The wedding at Corinth. Demeas, the uncle who gives the toast.
   demeas: {dress(p, B, body) { if (p.toon) beard(p, body, 0xe8e2d8, {thick: .018, chin: .6}); greek(p, B, body, 0xd9cdb0, 0x6b2a5a); }}, // a bushy white beard
   // Kleio, the aunt who runs everything.
-  aunt: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0x1f3a6a, fabric: "jersey", armband: true}); }},
+  aunt: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0x1f3a6a, fabric: "jersey", armband: true}); else gown(p, B, body, 0x1f3a6a, 0x9ab0d8, {veil: 0x26385f}); }},
   // Lykon, Mikon's friend, who has heard the goat joke before.
   lykon: {dress(p, B, body) { greek(p, B, body, 0x6b7a4a, 0x4a3a2a); }},
   // Nikias, the groom, in white with a myrtle wreath.
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
-  thea: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); }}, // a bride too: the same liquid silk, in saffron
+  thea: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); else gown(p, B, body, 0xe8a83a, 0xf6e2b0, {wreath: true}); }}, // a bride too: the same liquid silk, in saffron
   // Eurydice on her wedding day: alive, in saffron, with a myrtle wreath
-  eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { weddingDrape(p, B, body, {wreath: true}); }},
+  eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {wreath: true}); else gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true}); }},
   // the same, standing, for the meadow: a full-length chiton, and a skirt for when she falls
-  eurydice_meadow: {as: "eurydice", body: "female", dress(p, B, body) { weddingDrape(p, B, body, {wreath: true, kneel: true}); }},
+  eurydice_meadow: {as: "eurydice", body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {wreath: true, kneel: true}); else gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true, kneel: true}); }},
   // the piper, who does not stop playing for anything
   piper: {dress(p, B, body) { greek(p, B, body, 0x8a2a20, 0x5a1a14); mount(p, "Head", aulos(), new THREE.Vector3(0, 1.6, .2), [1.15, 0, 0]); }},
-  dancer: {body: "female", dress(p, B, body) { weddingDrape(p, B, body, {color: 0xb5562e, fabric: "jersey", armband: true}); }},
+  dancer: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0xb5562e, fabric: "jersey", armband: true}); else gown(p, B, body, 0xc84a6a, 0xf0b8c8); }},
   // A shade on the meadow: anyone at all, faded.
   shade: {tone: 0xffffff, hair: ["hair_simpleparted"], hairColor: 0x3a3028, sandals: false, ghost: true, dress(p, B, body) {
     put(p, wrap(body, UPPER, {mat: cloth(0xd8d4ca), clip: `${NECKLINE} && ${SLEEVE(.34)} && b.y > .97`}));
@@ -560,10 +560,10 @@ const LOOKS = {
   }},
   // Eurydice: a shade, so she's pale and not quite there, still in her wedding gown.
   eurydice: {body: "female", tone: 0xffffff, hair: ["hair_long"], hairColor: 0x3a2a1c, sandals: false, ghost: true, dress(p, B, body) {
-    weddingDrape(p, B, body, {wreath: true}); // her wedding dress, and the wreath she died in
+    if (p.toon) weddingDrape(p, B, body, {wreath: true}); else gown(p, B, body, 0xeeeae0, 0xf6f2ea, {wreath: true}); // her wedding dress, and the wreath she died in
   }}
 };
-// Plain Greek dress for anyone: a chiton, a belt, a cloak behind; a veil or a myrtle wreath if they want one.
+// Plain Greek dress for anyone: a chiton, a belt, a cloak behind (not when seated: it stood off the back like a board); a veil or a myrtle wreath if they want one.
 function greek(p, B, body, color, cloak, {veil, wreath, kneel} = {}) { // cloak: a colour, or null for none
   if (p.toon && !p.female) return mensDrape(p, B, body, {color, accent: cloak ?? color, wreath});
   put(p, wrap(body, UPPER, {mat: cloth(color), clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`, smooth: 12, off: .022}));
@@ -573,7 +573,7 @@ function greek(p, B, body, color, cloak, {veil, wreath, kneel} = {}) { // cloak:
     const k = drape(body, {from: 1.0, to: .6, mat: cloth(color), flare: .2, folds: .01, weightsAt: boneWeights(B, [["pelvis", 1]])}); put(p, k); k.visible = false;
     p.kneel = on => { skirt.visible = !on; k.visible = on; }; }
   put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-  if (cloak !== null) put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+  if (cloak !== null && !SEATED) put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
   if (veil) put(p, wrap(body, (x, y, z, d) => (d === "Head" || d === "neck_01") && z < .02, {clip: "!(b.z > -.03 && pow(b.x / .09, 2.) + pow((b.y - 1.65) / .14, 2.) < 1.)", mat: cloth(veil), off: .018, smooth: 3, bulge: (x, y, z) => Math.max(0, -z) * .1}));
   if (wreath) wreathOn(p, {flowers: p.female, lift: p.female ? -.03 : 0});
 }
