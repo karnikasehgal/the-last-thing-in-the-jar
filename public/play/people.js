@@ -1151,8 +1151,8 @@ function shapeBody(root, bones, {size = 1, hips = 1, belly = 1, chest = 1, head 
 }
 
 // Someone in a crowd: a lighter body, plain Greek dress in their own colours.
-export function makeExtra(asset, {ASSETS, scene, female, seated = false, colors, veil}) {
-  const look = {dress(p, B, body) { if (female && p.toon) weddingDrape(p, B, body, {color: colors[0], fabric: "jersey", armband: true}); else (female ? gown : greek)(p, B, body, colors[0], colors[1], {veil: veil ? colors[2] : undefined}); }};
+export function makeExtra(asset, {ASSETS, scene, female, seated = false, colors, veil, ghost = false}) { // ghost: one of the waiting dead, pale and see-through
+  const look = {ghost, dress(p, B, body) { if (female && p.toon) weddingDrape(p, B, body, {color: colors[0], fabric: "jersey", armband: true}); else (female ? gown : greek)(p, B, body, colors[0], colors[1], {veil: veil ? colors[2] : undefined}); }};
   return makeRealPerson("extra", look, {ASSETS, scene, scale: 1, seated, asset, female});
 }
 // Another of the same person, cheaply: the same body and clothes, a new skeleton, its own colours.

@@ -457,6 +457,133 @@ torches.push({l: lantern, base: 16, seed: 3});
 const glass = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), new THREE.MeshBasicMaterial({color: 0xffd08a})); glass.position.copy(lantern.position); scene.add(glass);
 const pole = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), M.wood); pole.position.set(.8, 1.1, 36.5); scene.add(pole);
 
+/* ---------- the waiting bank: people who have lived on this beach for a hundred years ----------
+   West of the dock, Elpenor's camp: his bench and the net he mends, nets drying on poles against the glowing surf, his
+   upturned boat with its oars and rope, a lean-to made of an old red sail, a fire pit with a few shades sitting round it.
+   East of the dock, driftwood and a few more of the dead, looking at the water. Kept off the walk from the arcade to the
+   dock and to the temple; the scanned props (jars, the lantern, bowls) are set down in dressWorld once they've loaded. */
+const NET = (() => { // a knotted net: tarred cord in diamonds, the gaps see-through
+  const S = 256, c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d");
+  g.strokeStyle = "#e8dcc8"; g.lineWidth = 3.2; g.lineCap = "round";
+  for (let k = -4; k <= 4; k++) { g.beginPath(); g.moveTo(k * S / 4, 0); g.lineTo(k * S / 4 + S, S); g.stroke(); g.beginPath(); g.moveTo(k * S / 4, S); g.lineTo(k * S / 4 + S, 0); g.stroke(); }
+  g.fillStyle = "#e8dcc8"; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc(i * S / 4, j * S / 4, 4.5, 0, 7); g.fill(); g.beginPath(); g.arc(i * S / 4 + S / 8, j * S / 4 + S / 8, 4.5, 0, 7); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+})();
+const BANK = {
+  net: new THREE.MeshStandardMaterial({color: 0x6a5434, alphaMap: NET, alphaTest: .25, side: THREE.DoubleSide, roughness: 1}),
+  netHeap: (() => { const t = NET.clone(); t.repeat.set(9, 4); t.needsUpdate = true; return new THREE.MeshStandardMaterial({color: 0x6a5434, alphaMap: t, alphaTest: .4, side: THREE.DoubleSide, roughness: 1}); })(),
+  netDry: new THREE.MeshStandardMaterial({color: 0x4e3e2a, alphaMap: NET, alphaTest: .2, side: THREE.DoubleSide, roughness: 1}),
+  cork: new THREE.MeshStandardMaterial({color: 0xa88c62, roughness: .9}),
+  rope: new THREE.MeshStandardMaterial({color: 0x8a7048, roughness: .95, map: noise("#8a7048", "#3a2a18", 128, 40, .5)}),
+  hull: (() => { const m = M.wood.clone(); m.side = THREE.DoubleSide; m.color = new THREE.Color(0x4a3a2c); return m; })(), // (old wood, dark with tar and years)
+  tar: new THREE.MeshStandardMaterial({color: 0x1a1410, roughness: .6}),
+  sail: new THREE.MeshStandardMaterial({color: 0x7a2418, roughness: .95, side: THREE.DoubleSide, map: noise("#8a3020", "#2a0e08", 256, 26, .35)}),
+  straw: new THREE.MeshStandardMaterial({color: 0x8a6c40, roughness: 1, map: noise("#9a7a48", "#4a3418", 128, 60, .4)}),
+  drift: new THREE.MeshStandardMaterial({color: 0x8c8478, roughness: 1, map: noise("#9a9284", "#4a443a", 256, 30, .3)}),
+  ember: new THREE.MeshBasicMaterial({color: 0xff6a1e}), char: new THREE.MeshStandardMaterial({color: 0x161210, roughness: 1}),
+  floats: [], fire: null
+};
+const onSand = (o, x, z, lift = 0) => { o.position.set(x, beachY(x, z) + lift, z); scene.add(o); return o; };
+// a surface from a function of (u, v) in 0..1, its texture repeated (ru, rv) times across it
+function sheet(P, nu, nv, mat, ru = 1, rv = 1) {
+  const geo = new THREE.PlaneGeometry(1, 1, nu, nv), a = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < a.count; i++) { const u = uv.getX(i), v = uv.getY(i), p = P(u, v); a.setXYZ(i, p.x, p.y, p.z); uv.setXY(i, u * ru, v * rv); }
+  geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); scene.add(m); return m;
+}
+function cork(x, y, z) { const f = new THREE.Mesh(new THREE.CylinderGeometry(.032, .032, .05, 10), BANK.cork); f.position.set(x, y, z); f.rotation.set(Math.random() * 3, 0, Math.random() * 3); scene.add(f); return f; }
+// Elpenor's net: across his knees, down his shins, and out over the sand in front of him; the rest heaped on the bench
+{
+  const C = new THREE.CatmullRomCurve3([V(-6, .7, 15.74), V(-6, .62, 15.48), V(-6, .5, 15.36), V(-6, .24, 15.28), V(-6, .04, 15.16), V(-6.1, .03, 14.7), V(-6.25, .03, 14.2)]);
+  sheet((u, v) => { const c = C.getPoint(v), w = .28 + Math.max(0, v - .45) * 1.1, ground = smooth(.5, .62, v);
+    return V(c.x + (u - .5) * 2 * w + Math.sin(v * 9) * .04 * ground, c.y + ground * Math.pow(Math.sin(u * 7 + v * 11) * .5 + .5, 2) * .07, c.z + (1 - ground) * Math.sin(u * 13) * .015); }, 18, 40, BANK.net, 7, 15);
+  // the rest of it heaped on the bench at his side: a dark bundle with the mesh showing over it
+  const lump = (x, z, sx, sy, sz, mat) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat); m.scale.set(sx, sy, sz); m.position.set(x, .5, z); scene.add(m); return m; };
+  const tarred = new THREE.MeshStandardMaterial({color: 0x2e2216, roughness: 1});
+  lump(-4.98, 15.95, .34, .15, .27, tarred); lump(-4.98, 15.95, .36, .17, .29, BANK.netHeap); lump(-4.75, 16.12, .22, .11, .2, tarred); lump(-4.75, 16.12, .24, .13, .22, BANK.netHeap);
+  sheet((u, v) => V(-5.25 + (-5.72 + 5.25) * v, .62 + Math.sin(v * Math.PI) * -.06 + .04 * u, 15.8 + (u - .5) * .22 + v * -.08), 6, 10, BANK.net, 1, 2);
+  for (let i = 0; i < 6; i++) BANK.floats.push(cork(-6.6 + i * .28 + Math.random() * .1, .06, 14.35 + Math.random() * .5));
+  for (let i = 0; i < 4; i++) cork(-5.1 + Math.random() * .3, .66, 15.85 + Math.random() * .25);
+}
+// nets drying between two poles, by the water; cork floats along the top rope
+{
+  const A = V(-10.2, 0, 19.05), B = V(-7.0, 0, 19.55), top = 2.05;
+  for (const p of [A, B]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(.045, .06, 2.5, 7), M.wood); post.position.set(p.x, beachY(p.x, p.z) + 1.1, p.z); post.rotation.z = (p === A ? .04 : -.05); scene.add(post); circles.push([p.x, p.z, .15]); }
+  const at = (u, y) => V(A.x + (B.x - A.x) * u, y, A.z + (B.z - A.z) * u);
+  sheet((u, v) => { const sag = Math.sin(u * Math.PI) * (.28 + (1 - v) * .2), p = at(u, top - .02 - sag - (1 - v) * 1.35 * (1 - Math.sin(u * Math.PI) * .2));
+    p.z += Math.sin(u * 17 + v * 3) * .05 * (1 - v); return p; }, 30, 14, BANK.netDry, 13, 6);
+  sheet((u, v) => { const p = at(u, top + .02 - Math.sin(u * Math.PI) * .26); p.y += (v - .5) * .02; p.z += (v - .5) * .02; return p; }, 24, 1, BANK.rope, 20, 1);
+  for (let i = 1; i < 9; i++) { const u = i / 9, p = at(u, top - Math.sin(u * Math.PI) * .26 - .06); BANK.floats.push(cork(p.x, p.y, p.z)); }
+}
+// his boat, turned over on the sand to keep the rain off it that never comes: one end up on a stone, oars and rope beside it
+function smallBoat(L) { // a small open boat, keel up (turn it over to float it): planked hull, tarred keel, stems and gunwale
+  const boat = new THREE.Group();
+  const hullGeo = new THREE.SphereGeometry(1, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), a = hullGeo.attributes.position;
+  for (let i = 0; i < a.count; i++) { const z = a.getZ(i), k = Math.pow(Math.max(0, 1 - z * z), .25); a.setX(i, a.getX(i) * .72 * (.35 + .65 * k)); a.setY(i, a.getY(i) * .55); a.setZ(i, z * L); }
+  hullGeo.computeVertexNormals();
+  boat.add(new THREE.Mesh(hullGeo, BANK.hull));
+  const keel = new THREE.Mesh(new THREE.BoxGeometry(.06, .07, L * 2 - .25), BANK.tar); keel.position.y = .55; boat.add(keel);
+  for (const s of [-1, 1]) { const stem = new THREE.Mesh(new THREE.BoxGeometry(.06, .7, .08), BANK.tar); stem.position.set(0, .25, s * (L - .04)); stem.rotation.x = s * .35; boat.add(stem); }
+  const rim = []; for (let i = 0; i <= 40; i++) { const t = i / 40 * Math.PI * 2, z = Math.cos(t), k = Math.pow(Math.max(0, 1 - z * z), .25); rim.push(V(Math.sin(t) * .72 * (.35 + .65 * k), .02, z * L)); }
+  boat.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rim, true), 80, .035, 5, true), BANK.tar));
+  return boat;
+}
+{
+  const boat = smallBoat(1.75);
+  const bx = -11.4, bz = 18.1; boat.position.set(bx, beachY(bx, bz) + .02, bz); boat.rotation.set(0, Math.PI / 2 + .14, .0); boat.rotateX(-.07); scene.add(boat);
+  const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(.22, 0), new THREE.MeshStandardMaterial({color: 0x4a443c})); onSand(stone, bx + 1.62, bz - .25, .05);
+  boxes.push([bx - 1.75, bz - .65, bx + 1.75, bz + .65]);
+  const o1 = oar(); onSand(o1, bx - .2, bz - 1.05, .05); o1.rotation.set(Math.PI / 2, 0, Math.PI / 2 - .2); // lying on the sand
+  const o2 = oar(); o2.position.set(bx - 1.1, .62, bz - .78); o2.rotation.set(-.5, .2, .1); scene.add(o2); // leaning on the hull
+  const coil = []; for (let i = 0; i <= 160; i++) { const t = i / 160, a = t * Math.PI * 2 * 4.5, r = .1 + t * .2; coil.push(V(Math.cos(a) * r, .03 + (i % 36 < 3 ? .02 : 0), Math.sin(a) * r)); }
+  const rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(coil), 320, .028, 6), BANK.rope); onSand(rope, bx + 2.35, bz + .15);
+  for (let k = 0; k < 2; k++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.2 - k * .05, .028, 6, 24), BANK.rope); ring.rotation.x = Math.PI / 2; onSand(ring, bx + 2.35, bz + .15, .08 + k * .05); }
+  const scraper = new THREE.Mesh(new THREE.BoxGeometry(.32, .03, .07), BANK.tar); scraper.position.set(bx + .3, beachY(bx, bz) + .6, bz - .05); scraper.rotation.y = .4; scene.add(scraper);
+}
+// a lean-to made of an old red sail over a ridge pole, open toward the arcade: somebody's home for a long time
+{
+  const x0 = -16.2, x1 = -13.4, zf = 15.3, zb = 17.4, h = 1.5;
+  for (const x of [x0 + .1, x1 - .1]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(.045, .055, h + .2, 7), M.wood); post.position.set(x, beachY(x, zf) + (h + .2) / 2 - .1, zf); scene.add(post); circles.push([x, zf, .15]); }
+  const ridge = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, x1 - x0 + .4, 7), M.wood); ridge.rotation.z = Math.PI / 2; ridge.position.set((x0 + x1) / 2, h, zf); scene.add(ridge);
+  sheet((u, v) => { const x = x0 + (x1 - x0) * u, z = zf - .08 + (zb - zf) * v; return V(x, (h + .02) * (1 - v) + .02 - Math.sin(v * Math.PI) * .12 * Math.sin(u * Math.PI) + Math.sin(u * 23) * .012, z); }, 20, 12, BANK.sail, 2, 2);
+  const mat = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0 - .3, zb - zf - .4), BANK.straw); mat.rotation.x = -Math.PI / 2; onSand(mat, (x0 + x1) / 2, (zf + zb) / 2 + .1, .025);
+  const roll = new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .9, 12), new THREE.MeshStandardMaterial({color: 0x5a4a3a, roughness: 1})); roll.rotation.z = Math.PI / 2; onSand(roll, x0 + .9, zb - .55, .16);
+  boxes.push([x0, zf + .15, x1, zb]);
+  const lamp = new THREE.PointLight(0xffa04a, 5, 6, 1.8); lamp.position.set(x1 - .6, h - .35, zf + .25); scene.add(lamp); torches.push({l: lamp, base: 5, seed: 11});
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), new THREE.MeshBasicMaterial({color: 0xffc070})); glow.position.copy(lamp.position); scene.add(glow);
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .3, 4), BANK.tar); cord.position.set(lamp.position.x, h - .17, lamp.position.z); scene.add(cord);
+}
+// a fire pit in a ring of stones, with a few of the dead sitting round it on driftwood
+{
+  const fx = -11.3, fz = 14.5;
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, s = new THREE.Mesh(new THREE.DodecahedronGeometry(.13 + Math.random() * .05, 0), new THREE.MeshStandardMaterial({color: 0x3a3430})); s.rotation.set(Math.random() * 3, Math.random() * 3, 0); onSand(s, fx + Math.cos(a) * .55, fz + Math.sin(a) * .55, .06); }
+  for (let i = 0; i < 4; i++) { const log = new THREE.Mesh(new THREE.CylinderGeometry(.05, .06, .6, 7), BANK.char); log.rotation.set(Math.PI / 2 - .25, i * 1.6, 0); onSand(log, fx + Math.cos(i * 1.6) * .1, fz + Math.sin(i * 1.6) * .1, .1); }
+  const embers = new THREE.Group(); for (let i = 0; i < 14; i++) { const e = new THREE.Mesh(new THREE.IcosahedronGeometry(.035 + Math.random() * .03, 0), BANK.ember); e.position.set((Math.random() - .5) * .45, .03 + Math.random() * .05, (Math.random() - .5) * .45); embers.add(e); }
+  onSand(embers, fx, fz);
+  const fire = new THREE.PointLight(0xff6a24, 9, 7, 1.7); fire.position.set(fx, beachY(fx, fz) + .45, fz); scene.add(fire); torches.push({l: fire, base: 9, seed: 5});
+  BANK.fire = {embers, x: fx, z: fz};
+  circles.push([fx, fz, .75]);
+  // driftwood for seats: one each side of the fire, one by the dock (the boy's), a long one further along
+  for (const [x, z, len, along] of [[-12.6, 14.5, 1.2, true], [-10.0, 14.55, 1.2, true], [10.6, 19.0, 1.8, false], [4.0, 18.55, .7, false]]) {
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(.2, .23, len, 9), BANK.drift); log.rotation.set(0, along ? Math.PI / 2 + .08 : .05, Math.PI / 2); onSand(log, x, z, .18);
+    const hx = along ? .25 : len / 2, hz = along ? len / 2 : .25; boxes.push([x - hx, z - hz, x + hx, z + hz]);
+  }
+}
+// things the river has washed up, and things people have left: broken jars, a sandal, a few stones
+{
+  const clay = new THREE.MeshStandardMaterial({color: 0x9a5a38, roughness: .9, side: THREE.DoubleSide});
+  for (const [x, z] of [[-2.9, 19.3], [6.5, 19.6], [-14.6, 19.4], [17.5, 19.2], [-19.5, 19.8]]) { const sh = new THREE.Mesh(new THREE.CylinderGeometry(.16, .13, .22, 12, 1, true, 0, 1.3 + Math.random()), clay); sh.rotation.set(Math.PI / 2 + Math.random() * .5, Math.random() * 6, 0); onSand(sh, x, z, .06); }
+  const sandal = new THREE.Mesh(new THREE.BoxGeometry(.11, .02, .27), new THREE.MeshStandardMaterial({color: 0x5a3a22, roughness: .8})); sandal.rotation.y = .7; onSand(sandal, 7.7, 19.9, .015);
+  for (const [x, z, r] of [[-8.2, 20.1, .3], [12.9, 20.3, .25], [-18.8, 18.6, .35], [21.6, 19.2, .4]]) { const s = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), new THREE.MeshStandardMaterial({color: 0x5a524a})); s.rotation.set(Math.random(), Math.random(), Math.random()); onSand(s, x, z, r * .3); }
+}
+// east of the dock: a boat that came in with nobody in it, half sunk at the water's edge, and a broken oar
+{
+  const wreck = smallBoat(1.5); wreck.rotation.set(Math.PI + .12, .5, .18); wreck.position.set(17.6, beachY(17.6, 21.4) + .12, 21.4); scene.add(wreck);
+  const o = oar(); o.scale.set(1, .6, 1); onSand(o, 15.6, 20.2, .05); o.rotation.set(Math.PI / 2, 0, 1.1);
+  circles.push([17.6, 21.4, 1.1]);
+}
+// a little light by Elpenor, for mending in the dark (the lantern itself is set down with the scanned props)
+const elpLamp = new THREE.PointLight(0xffa850, 3.5, 5, 1.8); elpLamp.position.set(-7.3, .95, 16.05); scene.add(elpLamp); torches.push({l: elpLamp, base: 3.5, seed: 8});
+
 /* ---------- the temple (built in temple.js), its two stone chairs, and the altar ---------- */
 const STEP = .6;
 const onTemple = p => p.x > 45 && p.x < 67 && p.z > -5 && p.z < 13;
@@ -570,6 +697,18 @@ function dressWorld() {
   for (let i = 0; i < 6; i++) { const x = -36 + i * 12 + 6;
     place(ASSETS, i % 2 ? "antique_ceramic_vase_01" : "ceramic_vase_02", scene, x - 3.2, 0, .55, .95, {tint: 0xd8b89a});
     place(ASSETS, "ceramic_vase_02", scene, x + 3.4, 0, .5, .7, {tint: 0xc8a888}); }
+  // the waiting bank's belongings: Elpenor's lantern on his bench, jars and bowls at the camp, baskets of floats and rope
+  const sandAt = (x, z) => beachY(x, z) + .01;
+  place(ASSETS, "wooden_lantern_01", scene, -7.3, .5, 16.05, .34, {yaw: .3});
+  place(ASSETS, "ceramic_vase_04", scene, -6.95, sandAt(-6.95, 15.35), 15.35, .3, {tint: 0xc8b8a0});
+  for (const [x, z, h, n] of [[-13.75, 16.75, .72, "antique_ceramic_vase_01"], [-13.95, 17.1, .55, "ceramic_vase_02"], [-15.9, 17.0, .62, "ceramic_vase_02"], [-9.3, 17.0, .66, "antique_ceramic_vase_01"], [12.3, 18.55, .62, "antique_ceramic_vase_01"], [12.75, 18.9, .45, "ceramic_vase_02"], [24.6, 19.0, .55, "ceramic_vase_02"], [16.3, 16.75, .5, "ceramic_vase_02"], [16.7, 17.05, .62, "antique_ceramic_vase_01"]]) place(ASSETS, n, scene, x, sandAt(x, z), z, h, {tint: 0xc8a888});
+  const lying = place(ASSETS, "antique_ceramic_vase_01", scene, -4.2, sandAt(-4.2, 19.6), 19.6, .6, {tint: 0xb89878}); if (lying) { lying.rotation.set(0, .8, Math.PI / 2 - .2); lying.position.y = sandAt(-4.2, 19.6) + .14; }
+  for (const [x, z] of [[-10.55, 15.05], [-14.6, 16.3]]) place(ASSETS, "wooden_bowl_01", scene, x, sandAt(x, z), z, .09);
+  for (const [x, z, r, h] of [[-7.35, 14.9, .22, .26], [-12.2, 17.0, .26, .32], [-13.3, 18.9, .2, .22], [9.1, 18.6, .24, .28]]) {
+    const prof = [[0, 0], [r * .8, 0], [r, h * .3], [r * 1.05, h], [r * .98, h], [r * .9, h * .35], [0, .02]].map(([a, b]) => new THREE.Vector2(a, b));
+    const b = new THREE.Mesh(new THREE.LatheGeometry(prof, 18), Object.assign(BANK.straw.clone(), {side: THREE.DoubleSide})); b.position.set(x, sandAt(x, z), z); scene.add(b);
+    for (let i = 0; i < 3; i++) cork(x + (Math.random() - .5) * r, b.position.y + h - .02, z + (Math.random() - .5) * r);
+  }
 }
 // the same for the wedding set and its meadow, once they're built
 function dressWedding() {
@@ -608,8 +747,9 @@ function placePeople() {
   const cast = (id, opts) => makeCastMember(id, {ASSETS, CLIPS, scene, ...opts});
   NPC.hermes = Object.assign(cast("hermes"),
     {name: "Hermes", idle: "Idle_Loop", talk: "Idle_Talking_Loop", pos: PLACES.hermes.clone(), face: true});
+  // (on the bench as the seated clips sit, hips at bench height: raised by the bench's height he floated above it, feet on top)
   NPC.elpenor = Object.assign(cast("elpenor", {scale: .96, seated: true}),
-    {name: "Elpenor", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(-6, 0, 16.05), yaw: Math.PI, seatY: .5});
+    {name: "Elpenor", idle: "sittable", talk: "sittabletalk", pos: V(-6, 0, 15.8), yaw: Math.PI, seatY: .06});
   NPC.theseus = Object.assign(cast("theseus", {seated: true}),
     {name: "Theseus", idle: "Sitting_Idle_Loop", talk: "Sitting_Talking_Loop", pos: V(54.6, 0, PLACES.chairs.z + .1), yaw: 0, seatY: STEP + .5});
   NPC.pirithous = Object.assign(cast("pirithous", {seated: true}),
@@ -617,14 +757,58 @@ function placePeople() {
   NPC.charon = Object.assign(cast("charon", {scale: 1.08}),
     {name: "Charon", idle: "Idle_Torch_Loop", talk: "Idle_Talking_Loop", pos: V(0, 0, 37.2), yaw: Math.PI, seatY: .25, face: true});
   // Elpenor's oar, the one he asked to be buried with, leaning on the bench beside him.
-  const o = oar(); o.position.set(-7.3, 1.05, 16.4); o.rotation.set(.12, 0, -.32); scene.add(o);
+  const o = oar(); o.position.set(-4.35, 1.5, 16.62); o.rotation.set(.1, 0, .3); scene.add(o);
   for (const p of Object.values(NPC)) placeNPC(p);
+  mendNet(NPC.elpenor);
+}
+// Elpenor mends the net across his knees: the left hand holds the mesh, the right passes the netting needle through and
+// pulls the knot tight, then goes back for the next. He keeps at it while he talks, slower, and looks up only to speak.
+function mendNet(p) {
+  p.mixer.update(0); p.root.updateMatrixWorld(true);
+  const needle = new THREE.Group(), wd = new THREE.MeshStandardMaterial({color: 0xa8875a, roughness: .7});
+  needle.add(new THREE.Mesh(new THREE.BoxGeometry(.028, .19, .007), wd));
+  const twine = new THREE.Mesh(new THREE.CylinderGeometry(.011, .011, .09, 6), BANK.rope); twine.position.y = .015; needle.add(twine);
+  hold(p, "r", needle, V(0, .06, 0));
+  let w = 1, look = 1; const hip = new THREE.Vector3(), sh = new THREE.Vector3(), hp = new THREE.Vector3();
+  poses.add(now => {
+    if (!p.root.visible) return;
+    p.root.updateMatrixWorld(true);
+    const busy = p.speaking || talkingTo === p; w += ((busy ? .35 : 1) - w) * .04; look += ((busy ? 0 : 1) - look) * .06;
+    const ry = p.root.rotation.y, f = V(Math.sin(ry), 0, Math.cos(ry)), r = V(-Math.cos(ry), 0, Math.sin(ry));
+    p.bones.pelvis.getWorldPosition(hip);
+    const c = (now / 1000 % 1.9) / 1.9 * Math.PI * 2, pull = Math.pow(Math.max(0, Math.sin(c)), 1.5) * w, dip = Math.max(0, -Math.sin(c)) * w;
+    const L = hip.clone().addScaledVector(f, .3).addScaledVector(r, -.1).add(V(0, .11 + Math.sin(c) * .015 * w, 0));
+    const R = hip.clone().addScaledVector(f, .31 - dip * .03).addScaledVector(r, .09 + pull * .08 + Math.sin(c + .6) * .02 * w).add(V(0, .11 + pull * .16 - dip * .03, 0));
+    p.bones.upperarm_l.getWorldPosition(sh); reach(p, "l", L, sh.clone().addScaledVector(r, -.45).addScaledVector(f, -.15).add(V(0, -.35, 0)));
+    p.bones.upperarm_r.getWorldPosition(sh); reach(p, "r", R, sh.clone().addScaledVector(r, .45).addScaledVector(f, -.15).add(V(0, -.35, 0)));
+    if (look > .02) { p.bones.Head.getWorldPosition(hp); aimBone(p.bones.Head, f, f.clone().lerp(L.clone().lerp(R, .5).sub(hp).normalize(), .5 * look)); }
+  });
 }
 function placeNPC(p) {
   p.root.position.set(p.pos.x, p.seatY || 0, p.pos.z);
   p.root.rotation.y = p.yaw ?? 0;
   p.play(p.idle, 0);
   if (!p.seatY || p === NPC.charon) circles.push([p.pos.x, p.pos.z, .5]);
+}
+// The other dead on the bank: pale and quiet, by the fire or at the water's edge, looking across. Nobody to talk to;
+// they stopped talking a long time ago. The boy by the dock is the one Mikon asks Charon about.
+const shades = [];
+async function placeShades() {
+  const pale = [[0xcfc8bb, 0x8f897e], [0xb4aea4, 0x6e6a62], [0xd8d0c0, 0xa49a88]], base = {};
+  const make = (k, female, seated) => { if (!ASSETS[k]) return null; const p = makeExtra(ASSETS[k], {ASSETS, scene, female, seated, colors: [...pale[shades.length % 3], 0xd8d0c0], ghost: true}); p.root.visible = false; return p; };
+  // x, z, facing, seated, which body, size (the seated ones sit on the driftwood)
+  const spots = [[-12.6, 14.5, Math.PI / 2, true, "m"], [-10.0, 14.55, -Math.PI / 2, true, "f"], [-17.6, 20.25, .05, false, "f"], [4.0, 18.55, -.18, true, "m", .72],
+    [10.15, 19.0, -.06, true, "f"], [11.05, 19.0, .1, true, "m"], [23.5, 20.0, .25, false, "m"]].slice(0, LITE ? 4 : 7);
+  for (const [x, z, yaw, seated, sex, size = 1] of spots) {
+    await breathe();
+    const key = sex + (seated ? "s" : "t"); let p;
+    if (!base[key]) p = base[key] = make(sex === "m" ? (seated ? "crowd_m2" : "crowd_m4") : (seated ? "crowd_f3" : "crowd_f1"), sex === "f", seated);
+    else p = cloneExtra(base[key], ASSETS, scene, 0);
+    if (!p) continue;
+    p.root.scale.setScalar(size); p.root.position.set(x, beachY(x, z) - (seated ? .06 : 0), z); p.root.rotation.y = yaw; p.root.visible = true;
+    p.play(seated ? "Sitting_Idle_Loop" : "Idle_Loop", 0); if (p.action) p.action.timeScale = .6 + Math.random() * .2; // (the dead move slowly)
+    circles.push([x, z, seated ? .3 : .4]); shades.push(p);
+  }
 }
 
 /* ---------- Cerberus (built in hound.js) ---------- */
@@ -710,7 +894,7 @@ function paintStats() {
 }
 const GOALS = [
   {label: "Talk to Hermes, the man waiting in the arcade", at: () => NPC.hermes.pos},
-  {label: "Find a coin. Ask the sailor sitting by the river", at: () => NPC.elpenor.pos},
+  {label: "Find Elpenor, the sailor mending a net by the water. He'll explain", at: () => NPC.elpenor.pos},
   {label: "Get the honey cake from the altar in the old temple, at the far end of the arcade", at: () => PLACES.altar},
   {label: "Throw the honey cake to the dog. He sleeps in the cave past the temple", at: () => PLACES.dogHome},
   {label: "He's asleep. Take the coin from the cave, quickly", at: () => PLACES.coinSpot},
@@ -753,6 +937,7 @@ const CUTS = {
   grotto: {pos: V(68.2, 2.1, 18.6), look: V(71.8, .6, 12.4)},
   altar:  {pos: V(56, 2.3, 13.2), look: V(56, 1.7, 9)},
   river:  {pos: V(-20, 3, 14), look: V(0, -.3, 40)},
+  sailor: {pos: V(-5.0, 1.8, 12.4), look: V(-6.1, .75, 15.8)},
   chairs: {pos: V(56, 2.2, 4.5), look: V(56, 1.3, -1)}
 };
 function cutTo(name) { shot.cur = null; const c = CUTS[name]; camShot.pos.copy(c.pos); camShot.look.copy(c.look); camShot.active = true; camShot.snap = true; }
@@ -800,29 +985,32 @@ function nameCard(id) {
   const c = $("#namecard"); c.querySelector("b").textContent = CARDS[id][0]; c.querySelector("span").textContent = CARDS[id][1];
   c.classList.add("on"); setTimeout(() => c.classList.remove("on"), 4200);
 }
+// Waking on the bank, Hermes: kind, quick, already late for the next one. He doesn't explain the river; he hands Mikon
+// to Elpenor, who has the time. (Played in the opening film too. Each line's id is its recording: new words, new id.)
+const WAKE = [
+  ["hermes", "v4_h1", "Easy. Easy, sit up slowly. You'll feel cold for a while. That passes."],
+  ["mikon", "v4_m1", "Where... The wedding. I was at the wedding. Thea was about to dance."],
+  ["hermes", "v4_h2", "You were. And then you laughed with an olive in your mouth. I'm sorry, Mikon. You died at your cousin's wedding."],
+  ["mikon", "v4_m2", "I died. At a wedding. In front of everyone."],
+  ["hermes", "v4_h3", "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb."],
+  ["mikon", "v4_m3", "Who are you?"],
+  ["hermes", "v5_h4", "Hermes. I walk the dead down here. You're my third today, and I'm already late for the fourth."],
+  ["mikon", "v5_m4", "Down where? What is this place? What am I supposed to do?"],
+  ["hermes", "v5_h5", "All very good questions. I'd love to answer them. I'd also love a day off."],
+  ["hermes", "v5_h6", "See the sailor by the water, mending a net? That's Elpenor. He's been here longer than the sand. He'll tell you how it all works.", "sailor"],
+  ["mikon", "v5_m5", "You're leaving? Just like that?"],
+  ["hermes", "v5_h7", "Just like that. Somewhere up there, a man is trying to pat a lion. Good luck, Mikon. I mean it. And from now on, chew."]
+];
 function beginTalk(p, id) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; $("#toast").classList.remove("on"); clearTimeout(toastT); nameCard(id); }
 async function conversation(id) {
   beginTalk(NPC[id], id);
   const say = (who, lid, text, cut) => line(who, lid, text, cut);
   if (id === "hermes") {
-    await say("hermes", "v4_h1", "Easy. Easy, sit up slowly. You'll feel cold for a while. That passes.");
-    await say("mikon", "v4_m1", "Where... The wedding. I was at the wedding. Thea was about to dance.");
-    await say("hermes", "v4_h2", "You were. And then you laughed with an olive in your mouth. I'm sorry, Mikon. You died at your cousin's wedding.");
-    await say("mikon", "v4_m2", "I died. At a wedding. In front of everyone.");
-    await say("hermes", "v4_h3", "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb.");
-    await say("mikon", "v4_m3", "Who are you?");
-    await say("hermes", "v4_h4", "Hermes. I carry messages for the gods, and when someone dies, I walk them down here. You're my third today.");
-    await say("mikon", "v4_m4", "And where is here?");
-    await say("hermes", "v4_h5", "The bank of the River Styx. The dead cross on that ferry, at the end of the dock. The ferryman is Charon, and he takes one coin from every passenger. Your family should have put one under your tongue.", "ferry");
-    await say("mikon", "v4_m5", "And they didn't.");
-    await say("hermes", "v4_h6", "Nobody remembered. It happens more often than you'd think. Without a coin, you wait on this bank. A hundred years. That's the law, and Charon has never once broken it.", "charon");
-    await say("mikon", "v4_m6", "A hundred years.");
-    await say("hermes", "v4_h7", "Unless you find a coin. There is one, in the cave beyond the old temple, but a dog sleeps on it. Three heads, and a nose that can smell bronze through stone. If he wakes, get into the river. He won't follow you into the water.", "grotto");
-    await say("mikon", "v4_m7", "You're very calm about all of this.");
-    await say("hermes", "v4_h8", "I've had a lot of practice. Go and find the sailor down by the water. His name is Elpenor, and he's been here long enough to know where everything is. Good luck, Mikon. I mean that.", "river");
+    for (const [who, lid, text, cut] of WAKE) await say(who, lid, text, cut);
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
-    await say("elpenor", "v2_e1", "Oh, hello. Sorry, I don't get many people stopping, most of them walk straight past. Which, honestly, fair. I'm Elpenor. I rowed for Odysseus. Well, I rowed near Odysseus. There were a lot of us.");
+    // Elpenor is the one who explains how things work here: the ferry, the fare, the hundred years, the coin, the dog, the cake
+    await say("elpenor", "v5_e1", "Careful, you're standing on my net. No, it's fine, it's seen worse. I'm Elpenor. I rowed for Odysseus. Well, near Odysseus. There were a lot of us.");
     await say("mikon", "v2_m4", "Mikon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here.");
     await say("elpenor", "v2_e2", "That's a good one. Mine's worse. We were staying at Circe's house, and I'd had too much wine, so I went up on the roof to sleep where it was cool. In the morning I heard everyone leaving, jumped up in a hurry, and forgot about the ladder.");
     const k = await choose([{t: "Ask about a coin"}, {t: "Promise to get him out"}, {t: "Say how sad that is"}]);
@@ -830,7 +1018,17 @@ async function conversation(id) {
     if (k === 0) await say("mikon", "v2_m5", "I don't suppose you've seen a coin lying around anywhere?");
     if (k === 1) { await say("mikon", "v2_m6", "When I get across, I'll find a way to get you out of here too."); await say("elpenor", "v2_e5", "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person."); }
     if (k === 2) { await say("mikon", "v2_m7", "That might be the saddest thing I've ever heard."); await say("elpenor", "v2_e6", "Thank you. I tell it slightly differently at parties."); }
-    if (me.met.hermes) await say("elpenor", "v4_e0", "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.");
+    if (me.met.hermes) {
+      await say("elpenor", "v4_e0", "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.");
+      await say("elpenor", "v5_e2", "And let me guess. He pointed at me and ran. He always leaves the speech to me. Fine. Here's how it works.");
+    } else await say("elpenor", "v5_e2b", "Right. Nobody's given you the speech yet. Here's how it works.");
+    await say("elpenor", "v5_e3", "That's the Styx. That's the ferry. The cheerful one on board is Charon. One coin a passenger, no exceptions. Your family were meant to put one under your tongue.", "ferry");
+    await say("mikon", "v5_m6", "They forgot.");
+    await say("elpenor", "v5_e4", "Everyone on this beach has a family that forgot. No coin, you wait a hundred years. I've seen people beg him, bribe him, cry at him. He just flicks water at them.", "charon");
+    await say("mikon", "v5_m7", "How long have you been waiting?");
+    await say("elpenor", "v5_e5", "Long enough to take up a hobby. Nets. Strange thing to make on a river with no fish in it, but it keeps the hands busy.");
+    await say("mikon", "v5_m8", "So it's a hundred years, or nothing?");
+    await say("elpenor", "v5_e6", "Well. There is one other way. It's a terrible idea, so naturally I've thought about it a lot.");
     await say("elpenor", "v2_e3", "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.", "grotto");
     await say("elpenor", "v2_e4", "You can't just walk in and pick it up. He'll smell it the second it moves. You'd have to put him to sleep first.");
     await say("elpenor", "v2_e7", "There's a honey cake on the altar in the temple. Somebody left it as an offering years ago, and it hasn't gone stale, because nothing does down here. No dog alive can say no to honey cake. Throw it close to him, and he'll be out like a lamp.", "altar");
@@ -883,6 +1081,7 @@ $("#skipIntro")?.addEventListener("click", e => { e.stopPropagation(); skipIntro
 
 function hermesLeaves() {
   const h = NPC.hermes; h.leaving = true; h.play("Walk_Formal_Loop");
+  if (CH === 1) { h.exit = V(-40, 0, 12.6); if (h.action) h.action.timeScale = 1.3; } // in a hurry, back up the way the living come down, for the next one
   const i = circles.findIndex(c => c[0] === h.pos.x && c[1] === h.pos.z); if (i >= 0) circles.splice(i, 1);
 }
 
@@ -1131,7 +1330,8 @@ function tick(now) {
   chap.always?.(dt, now);
   trinkets?.animate(now, me.pos.x, me.pos.z);
   const h = NPC.hermes;
-  if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.position.y = sandY(h.root.position.z); h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
+  if (h?.leaving && h.exit) { const d = flat(h.exit).sub(flat(h.root.position)), k = d.length(); d.normalize(); h.root.position.addScaledVector(d, Math.min(k, dt * 2.3)); h.root.position.y = sandY(h.root.position.z); h.root.rotation.y = Math.atan2(d.x, d.z); if (k < .4) { h.root.visible = false; h.leaving = false; } }
+  else if (h?.leaving) { h.root.position.x += dt * 1.6; h.root.position.z += dt * .9; h.root.position.y = sandY(h.root.position.z); h.root.rotation.y = Math.atan2(1.6, .9); if (h.root.position.z > SHORE - 2) { h.root.visible = false; h.leaving = false; } }
   const voiceLevelNow = sound.voiceLevel ? sound.voiceLevel() : 0;
   for (const p of Object.values(NPC)) {
     p.mixer.update(dt);
@@ -1141,6 +1341,7 @@ function tick(now) {
     }
   }
   animateDog(dt, now);
+  if (camera.position.x < 200) for (const s of shades) if (s.root.visible && camera.position.distanceTo(s.root.position) < 45) s.mixer.update(dt);
   // camera: first person, or a close-up during conversations
   fpPos.set(me.pos.x, ride ? 1.95 : onDock(me.pos) ? 1.62 : (onTemple(me.pos) ? STEP : 0) + sandY(me.pos.z) + 1.62, me.pos.z);
   moveBody(dt);
@@ -1206,7 +1407,7 @@ function tick(now) {
   requestAnimationFrame(tick);
   try {
     await loadAssets(f => $("#loading").textContent = `Loading the Underworld… ${Math.round(f * 100)}%`);
-    placePeople();
+    placePeople(); placeShades().catch(e => console.error(e));
     trinkets = placeTrinkets(scene);
     $("#loading").textContent = ""; $("#go").disabled = false;
   } catch (e) { console.error(e); $("#loading").textContent = "Something didn't load. Try refreshing."; }
@@ -1573,13 +1774,11 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     await fade("clear", 2500);
     await pause(900); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: .5, AK_10_EyeBlinkRight: .5}; await pause(400); PLAYER.expr.hold = {};
     await say("mikon", "w_m4", "Oh. Oh, no. Is that a river? Why is it glowing?");
-    const hermes = [["hermes", "v4_h1"], ["mikon", "v4_m1"], ["hermes", "v4_h2"], ["mikon", "v4_m2"], ["hermes", "v4_h3"], ["mikon", "v4_m3"], ["hermes", "v4_h4"], ["mikon", "v4_m4"], ["hermes", "v4_h5", "ferry"], ["mikon", "v4_m5"], ["hermes", "v4_h6", "charon"], ["mikon", "v4_m6"], ["hermes", "v4_h7", "grotto"], ["mikon", "v4_m7"], ["hermes", "v4_h8"]];
-    const TXT = {"v4_h1": "Easy. Easy, sit up slowly. You'll feel cold for a while. That passes.", "v4_m1": "Where... The wedding. I was at the wedding. Thea was about to dance.", "v4_h2": "You were. And then you laughed with an olive in your mouth. I'm sorry, Mikon. You died at your cousin's wedding.", "v4_m2": "I died. At a wedding. In front of everyone.", "v4_h3": "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb.", "v4_m3": "Who are you?", "v4_h4": "Hermes. I carry messages for the gods, and when someone dies, I walk them down here. You're my third today.", "v4_m4": "And where is here?", "v4_h5": "The bank of the River Styx. The dead cross on that ferry, at the end of the dock. The ferryman is Charon, and he takes one coin from every passenger. Your family should have put one under your tongue.", "v4_m5": "And they didn't.", "v4_h6": "Nobody remembered. It happens more often than you'd think. Without a coin, you wait on this bank. A hundred years. That's the law, and Charon has never once broken it.", "v4_m6": "A hundred years.", "v4_h7": "Unless you find a coin. There is one, in the cave beyond the old temple, but a dog sleeps on it. Three heads, and a nose that can smell bronze through stone. If he wakes, get into the river. He won't follow you into the water.", "v4_m7": "You're very calm about all of this.", "v4_h8": "I've had a lot of practice. Go and find the sailor down by the water. His name is Elpenor, and he's been here long enough to know where everything is. Good luck, Mikon. I mean that.", "v4_e0": "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.", "v4_i4": "This is where I woke up. The bank of the River Styx, with a ferry I can't pay for, and a hundred years in front of me."};
-    for (const [who, id, cut] of hermes) {
+    for (const [who, id, text, cut] of WAKE) { // (the same words as the game's own wake-up, in conversation())
       if (skipped) break;
       if (cut) cutTo(cut); else faceShot(who === "hermes" ? H : PLAYER, {dist: who === "hermes" ? 1.1 : .9, side: who === "hermes" ? -.3 : .25});
       if (who === "hermes") H.play("Idle_Talking_Loop"); else PLAYER.play("Sitting_Talking_Loop");
-      await say(who, id, TXT[id]);
+      await say(who, id, text);
       H.play("Idle_Loop"); PLAYER.play("Sitting_Idle_Loop");
     }
   }
