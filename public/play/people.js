@@ -216,7 +216,7 @@ function outline(B, y, band, SEG, include) {
 //   flare: extra width gained toward the hem; folds: depth of the hanging folds;
 //   hem: optional function(angle) -> extra drop for a ragged or slanted hem.
 let LONG = false; // set while dressing a realistic body: sleeves to the wrist, hems to the ankle
-function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false, cling = true}) {
+function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false, cling = true, shrink = .985, soft = 0}) {
   const B = study(body);
   if (LONG && !free && to < .8 && from < 1.1) to = SEATED ? .46 : Math.min(to, .1);
   if (LONG && from > 1.1 && from - to > .1) off += .022;
@@ -227,15 +227,25 @@ function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc =
   const P = [], UV = [], SI = [], SW = [], I = [];
   let prev = null, cz0 = null;
   const seed = Math.random() * 10;
+  // soft: the outline smoothed down the rows and round each ring first, so the cloth flows in one line instead of
+  // following every bump of the clothes underneath (its centre too, which otherwise wanders ring to ring)
+  let O = null;
+  if (soft) {
+    O = []; for (let j = 0; j < rows; j++) { const o = outline(B, from - (from - to) * j / (rows - 1), Math.max(step * .8, .03), SEG, include); O.push({r: o.r.slice(), cz: o.cz}); }
+    for (let k = 0; k < soft; k++) {
+      const N = O.map((o, j) => ({cz: (O[Math.max(0, j - 1)].cz + o.cz * 2 + O[Math.min(rows - 1, j + 1)].cz) / 4, r: o.r.map((v, s) => (O[Math.max(0, j - 1)].r[s] + O[Math.min(rows - 1, j + 1)].r[s] + o.r[(s + 1) % SEG] + o.r[(s + SEG - 1) % SEG] + v * 4) / 8)}));
+      O = N;
+    }
+  }
   for (let j = 0; j < rows; j++) {
     const t = j / (rows - 1), y0 = from - (from - to) * t;
-    const o = outline(B, y0, step * .8, SEG, include); if (cz0 === null) cz0 = o.cz;
+    const o = O ? O[j] : outline(B, y0, step * .8, SEG, include); if (cz0 === null) cz0 = o.cz;
     const cur = [];
     for (let c = 0; c < cols; c++) {
       const a = full ? c / cols * Math.PI * 2 : arc[0] + (arc[1] - arc[0]) * c / (cols - 1);
       const s = Math.floor(((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2) * SEG) % SEG;
       let rad = o.r[s] + off;
-      if (prev && cling) rad = Math.max(rad, prev[c] * .985); // cloth hangs from the widest point, it doesn't cling (unless it's cut to fit)
+      if (prev && cling) rad = Math.max(rad, prev[c] * shrink); // cloth hangs from the widest point, it doesn't cling (unless it's cut to fit)
       cur.push(rad);
       const fold = folds * .6 * t * (Math.sin(a * 7 + seed) * .7 + Math.sin(a * 13 + seed * 2) * .3);
       const R = rad + flare * t * t + fold;
@@ -518,7 +528,7 @@ const LOOKS = {
   // Nikias, the groom, in white with a myrtle wreath.
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
-  thea: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); else gown(p, B, body, 0xe8a83a, 0xf6e2b0, {wreath: true}); }}, // a bride too: the same liquid silk, in saffron
+  thea: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); else columnGown(p, B, body, 0xe0a63c, {wreath: true, sheer: 0xf6efe2}); }}, // a bride too: the same liquid silk, in saffron
   // Eurydice on her wedding day: alive, in saffron, with a myrtle wreath
   eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {wreath: true}); else gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true}); }},
   // the same, standing, for the meadow: a full-length chiton, and a skirt for when she falls
@@ -627,6 +637,40 @@ function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
   // gold cuffs where the sleeves end
   if (p.wrist) for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.TorusGeometry(.04, .008, 8, 24), gold), lw = new THREE.Vector3(), hw = new THREE.Vector3(); p.root.updateMatrixWorld(true); p.bones["lowerarm_" + side].getWorldPosition(lw); p.bones["hand_" + side].getWorldPosition(hw);
     const dir = hw.clone().sub(lw).normalize(); c.position.copy(hw).addScaledVector(dir, .03); /* a gold edge on the bell of the sleeve */ c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
+  if (wreath) wreathOn(p, {flowers: true});
+}
+// Covered couture for the realistic women, after the board: a column of liquid silk in fine pleats, a high boat neck,
+// fitted long sleeves, a broad gold belt, gold at the throat and wrists. (The realistic bodies wear modern clothes
+// underneath and have no bare skin to show, so the gown covers the shoulders and arms, cut close and smoothed
+// so nothing of the clothes underneath shows through its shape.)
+function columnGown(p, B, body, color, {wreath = false, sheer} = {}) {
+  const silkM = drapeCloth(color, "liquid"), skirtM = silkM.clone(); skirtM.normalScale = new THREE.Vector2(.22, .22); /* (soft pleats: at full strength they zigzagged) */
+  const plainM = silkM.clone(); plainM.normalMap = null; /* (the sleeves: pleats ran across them in stripes) */
+  const torso = d => TORSO.test(d);
+  // the bodice: smooth rings round the body's outline, up to a high boat neck (copied from the body's surface, it
+  // showed the lapels and the belt bow of the jacket underneath)
+  put(p, drape(body, {from: 1.5, to: .98, mat: silkM, off: .004, flare: 0, folds: 0, step: .015, cling: false, free: true, soft: 14,
+    include: d => torso(d) || d === "neck_01", weightsAt: boneWeights(B, (x, y) => y > 1.42 ? [["spine_03", .6], ["neck_01", .4]] : y > 1.2 ? [["spine_03", 1]] : y > 1.08 ? [["spine_02", 1]] : [["spine_01", .6], ["pelvis", .4]])}));
+  // the sleeves and shoulders: fitted, from the arms' own shape, slimmed and smoothed, to the wrist
+  put(p, wrap(body, (x, y, z, d) => (ARMS.test(d) || d === "clavicle_l" || d === "clavicle_r") && y > 1.0,
+    {mat: plainM, exact: true, off: .002, smooth: 22, clip: `abs(b.x) > .11 && abs(b.x) < ${(WRIST + .008).toFixed(3)}`}));
+  // the skirt: a column from the hips to the floor that never narrows, a little train behind, soft pleats
+  const skirt = SEATED ? drape(body, {from: 1.07, to: .6, mat: skirtM, flare: .04, folds: 0, weightsAt: skirtWeights(B, .8)})
+    : drape(body, {from: 1.07, to: .6, mat: skirtM, off: .012, flare: .09, folds: .006, step: .03, shrink: 1, soft: 8, weightsAt: skirtWeights(B, .5), hem: a => Math.max(0, -Math.sin(a)) * .07});
+  put(p, skirt);
+  if (SEATED) seatedFall(p, B, body, skirtM);
+  // a sheer overlayer falling from the shoulders behind, if she wears one
+  if (sheer && !SEATED) put(p, drape(body, {from: 1.42, to: .14, arc: [Math.PI * 1.15, Math.PI * 1.85], mat: silk(sheer, {folds: true, sheer: .45}), off: .03, flare: .14, folds: .02, free: true, shrink: 1, soft: 6,
+    include: torso, weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+  // the belt: a broad band of gold where the bodice meets the skirt (it hides the join)
+  put(p, drape(body, {from: 1.1, to: .99, mat: gold, off: .03, flare: 0, folds: 0, step: .011, cling: false, free: true, soft: 10, include: torso, weightsAt: boneWeights(B, [["spine_01", .5], ["pelvis", .5]])}));
+  // a gold collar round the top of the boat neck, and gold cuffs at the wrists
+  { const s = p.bones.neck_01.getWorldPosition(new THREE.Vector3()), e = p.bones.Head.getWorldPosition(new THREE.Vector3()), k = p.root.scale.x || 1, col = new THREE.Group();
+    for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2, b = new THREE.Mesh(new THREE.SphereGeometry(.006 * k, 8, 6), gold); b.position.set(Math.cos(a) * .072 * k, 0, Math.sin(a) * .066 * k); col.add(b); }
+    p.root.add(col); col.position.copy(s).lerp(e, .05); col.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), e.clone().sub(s).normalize()); col.updateMatrixWorld(true); p.bones.neck_01.attach(col); }
+  for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.034, .033, .026, 24, 1, true), gold), lw = p.bones["lowerarm_" + side].getWorldPosition(new THREE.Vector3()), hw = p.bones["hand_" + side].getWorldPosition(new THREE.Vector3());
+    const dir = hw.clone().sub(lw).normalize(); p.root.add(c); c.position.copy(hw).addScaledVector(dir, .008); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
   if (wreath) wreathOn(p, {flowers: true});
 }
 // Eurydice's wedding dress: ivory silk in fine pleats with a liquid sheen, draped like a sari over one shoulder.
