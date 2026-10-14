@@ -8,12 +8,19 @@ import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 const NAMES = {"DEF-Pelvis": "Bip01_Pelvis", "DEF-Spine1": "Bip01_Spine", "DEF-Spine2": "Bip01_Spine1", "DEF-Spine3": "Bip01_Spine2", "DEF-Neck": "Bip01_Neck", "DEF-Head": "Bip01_Head"};
 for (const s of "LR") Object.assign(NAMES, {[`DEF-Clavicle.${s}`]: `Bip01_${s}_Clavicle`, [`DEF-Upperarm1.${s}`]: `Bip01_${s}_UpperArm`, [`DEF-Forearm1.${s}`]: `Bip01_${s}_Forearm`,
   [`DEF-Hand.${s}`]: `Bip01_${s}_Hand`, [`DEF-Thigh1.${s}`]: `Bip01_${s}_Thigh`, [`DEF-Shin1.${s}`]: `Bip01_${s}_Calf`, [`DEF-Foot.${s}`]: `Bip01_${s}_Foot`, [`DEF-Toe.${s}`]: `Bip01_${s}_Toe0`});
+// MakeHuman's game-engine skeleton (MPFB) -> Rocketbox; its fingers take the film rig's names, so they count as the hand
+const MH = {pelvis: "Bip01_Pelvis", spine_01: "Bip01_Spine", spine_02: "Bip01_Spine1", spine_03: "Bip01_Spine2", neck_01: "Bip01_Neck", head: "Bip01_Head"};
+for (const [s, S] of [["l", "L"], ["r", "R"]]) {
+  Object.assign(MH, {[`clavicle_${s}`]: `Bip01_${S}_Clavicle`, [`upperarm_${s}`]: `Bip01_${S}_UpperArm`, [`lowerarm_${s}`]: `Bip01_${S}_Forearm`, [`hand_${s}`]: `Bip01_${S}_Hand`,
+    [`thigh_${s}`]: `Bip01_${S}_Thigh`, [`calf_${s}`]: `Bip01_${S}_Calf`, [`foot_${s}`]: `Bip01_${S}_Foot`, [`ball_${s}`]: `Bip01_${S}_Toe0`});
+  for (const f of ["thumb", "index", "middle", "ring", "pinky"]) for (const i of [1, 2, 3]) MH[`${f}_0${i}_${s}`] = `DEF-${f[0].toUpperCase() + f.slice(1)}${i}${S}`; /* (as the loader writes the film rig's: no dot) */
+}
 const HEADY = /head|eye|brow|lash|gum|teeth|tongue|hair/i; // drawn with the head (hidden from your own eyes in first person)
 
 // Once per character file: rename the bones, sort the materials into skin and head.
-export function prepareToon(g) {
+export function prepareToon(g, names = NAMES) {
   const sane = n => THREE.PropertyBinding.sanitizeNodeName(n);
-  const to = Object.fromEntries(Object.entries(NAMES).map(([a, b]) => [sane(a), b]));
+  const to = Object.fromEntries(Object.entries(names).map(([a, b]) => [sane(a), b]));
   g.scene.traverse(o => {
     if (o.isBone && to[o.name]) o.name = to[o.name];
     if (!o.isMesh) return;
@@ -42,6 +49,24 @@ export function prepareToon(g) {
   g.scene.userData.toon = true;
   return g;
 }
+// A realistic bare body made with MPFB (MakeHuman, CC0): the same renaming, then materials that read as skin and hair.
+// It wears no clothes of its own, so the game's garments are its only cover.
+export function prepareBare(g) {
+  prepareToon(g, MH);
+  g.scene.userData.bare = true;
+  g.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const m = o.material;
+    if (/skin_body/.test(m.name)) { // skin: soft and a little translucent at the edges (a warm sheen where it turns from the light), never glossy
+      const s = new THREE.MeshPhysicalMaterial({name: m.name, map: m.map, roughness: .58, specularIntensity: .45, specularColor: new THREE.Color(0xffe8dc),
+        sheen: .35, sheenRoughness: .55, sheenColor: new THREE.Color(0xff9a7a)});
+      s.userData = {...m.userData}; o.material = s;
+    } else if (/hair/.test(m.name)) { Object.assign(m, {transparent: false, depthWrite: true, alphaTest: .45, roughness: .42}); m.userData.hair = true; o.castShadow = true; } /* (exported as blended, which also turned off its depth: the scalp drew over it) */
+    else if (/brow|lash/.test(m.name)) Object.assign(m, {transparent: true, depthWrite: false, alphaTest: .05});
+    else if (/eyes/.test(m.name)) Object.assign(m, {roughness: .08});
+  });
+  return g;
+}
 
 /* ---------- motion ---------- */
 // Each pair: the Rocketbox bone and ours (same name now), and the next bone down the limb on each, so each bone's
@@ -54,7 +79,7 @@ const frame = (f, s) => { f = f.clone().normalize(); const u = new THREE.Vector3
   return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(f, v, u)); };
 const BAKED = new WeakMap();
 // Play every clip on an invisible Rocketbox skeleton and record, frame by frame, how our bones must turn to match.
-export function toonClips(asset, rbAnims, clips) {
+export function toonClips(asset, rbAnims, clips, {real = false} = {}) {
   const key = rbAnims.scene; let cache = BAKED.get(asset); if (!cache) BAKED.set(asset, cache = new Map());
   if (cache.has(key)) return cache.get(key);
   const src = SkeletonUtils.clone(rbAnims.scene), dst = SkeletonUtils.clone(asset.scene);
@@ -64,7 +89,9 @@ export function toonClips(asset, rbAnims, clips) {
   const pairs = CHAIN.map(([n, next, side]) => {
     const S = by(src, n), D = by(dst, n); if (!S || !D) return null;
     let C = new THREE.Quaternion();
-    if (next) {
+    // (a realistic body stands as Rocketbox's people do: its trunk takes only the motion, not Rocketbox's bone directions,
+    // or its natural curve of the back is straightened by tipping the pelvis forward, and the belly goes out with it)
+    if (next && !(real && /^Bip01_(Pelvis|Spine\d?|Neck|Head)$/.test(n))) {
       const [ns, nd] = Array.isArray(next) ? next : [next, next], A = by(src, ns), B = by(dst, nd);
       if (A && B) {
         const dS = wp(A).sub(wp(S)).normalize(), dD = wp(B).sub(wp(D)).normalize();
@@ -79,7 +106,7 @@ export function toonClips(asset, rbAnims, clips) {
   const k = leg(dst, "Bip01_L_Thigh", "Bip01_L_Foot") / leg(src, "Bip01_L_Thigh", "Bip01_L_Foot"), hipS0 = wp(hipS), hipD0 = wp(hipD), hipRest = hipD.position.clone();
   const mixer = new THREE.AnimationMixer(src), out = {}, want = new THREE.Quaternion(), pw = new THREE.Quaternion();
   // how far a hand must stay from the face: the head's own size (cartoon heads are big)
-  let faceR = .16; { const hb = by(dst, "Bip01_Head"), nb = by(dst, "Bip01_Neck"); if (hb && nb) faceR = Math.max(.27, wp(hb).distanceTo(wp(nb)) * 2.8); }
+  let faceR = .16; { const hb = by(dst, "Bip01_Head"), nb = by(dst, "Bip01_Neck"); if (hb && nb) faceR = real ? wp(hb).distanceTo(wp(nb)) * 1.6 : Math.max(.27, wp(hb).distanceTo(wp(nb)) * 2.8); } /* (a realistic head: about its own size) */
   for (const [name, clip] of Object.entries(clips)) {
     const FPS = 30, n = Math.max(2, Math.round(clip.duration * FPS) + 1), times = new Float32Array(n);
     const Q = pairs.map(() => new Float32Array(n * 4)), H = new Float32Array(n * 3);

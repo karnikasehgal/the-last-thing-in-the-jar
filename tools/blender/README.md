@@ -14,3 +14,12 @@ survive export. Tiled (UDIM) skin textures are written next to the export as bak
 attaches them to the matching body.100N materials.
 
 Credit when used: "Rain Rig (CC) Blender Foundation | studio.blender.org" (likewise for Snow).
+
+## A bare realistic body (MPFB, MakeHuman CC0)
+
+    $B -b --python make_thea.py -- thea_raw.glb     # MPFB extension enabled; MakeHuman system assets and Skins 01 installed
+    node pack_bare.mjs thea_raw.glb ../../public/play/assets/bare/thea.glb   # WebP textures, meshopt
+
+make_thea.py builds Thea (body shape, skin, eyes, brows, lashes, teeth, tongue, bob hair swept off her eye, game-engine
+skeleton) and adds blink and mouth shape keys made from MakeHuman's expression units, named as the Rocketbox faces are.
+The game loads it with ?bare (prepareBare in toon.js); Credit: "MakeHuman (CC0, made with MPFB)".

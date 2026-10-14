@@ -20,7 +20,7 @@ import { PROPS, rockify, place } from "./props.js";
 import { groundHeight } from "./meadow.js";
 import { makeHound, animateHound, rigHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
-import { prepareToon } from "./toon.js";
+import { prepareToon, prepareBare } from "./toon.js";
 import { buildFarBank, FAR } from "./farbank.js";
 import { placeTrinkets, showFound, openCodex, save } from "./lore.js";
 import { lyreInit, pluck } from "./music.js";
@@ -665,6 +665,8 @@ const ASSETS = {}, CLIPS = {};
 const TOON_F = ["persephone", "eurydice", "aunt", "thea", "dancer"];
 const CARTOON = new URLSearchParams(location.search).has("toon");
 const TOON_V = 4; // bump when a character file changes, so no browser keeps an old one
+// /play/?bare: Thea as a realistic bare body (MakeHuman, CC0) dressed only in the game's own gown, for the owner to judge
+const BARE = new URLSearchParams(location.search).has("bare");
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
@@ -677,14 +679,16 @@ async function loadAssets(progress) {
     list.push("toon/rain", "toon/snow", "toon/chiton_short");
   }
   list.push("toon/cerberus", ...PROPS.map(n => "props/" + n));
+  if (BARE) list.push("bare/thea");
   let done = 0;
-  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_")] = await gltf.loadAsync(`assets/${n}.glb${n.startsWith("toon/") ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
+  await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_").replace("bare/", "bare_")] = await gltf.loadAsync(`assets/${n}.glb${/^(toon|bare)\//.test(n) ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
   if (CARTOON) {
     prepareToon(ASSETS.toon_rain); prepareToon(ASSETS.toon_snow); prepareToon(ASSETS.toon_chiton_short); // (the tunic's bones renamed as the body's are)
     for (const n of REAL) ASSETS["rb_" + n] = TOON_F.includes(n) ? ASSETS.toon_rain : ASSETS.toon_snow;
     for (let i = 0; i < 9; i++) ASSETS["crowd_f" + i] = ASSETS.toon_rain;
     for (let i = 0; i < 10; i++) ASSETS["crowd_m" + i] = ASSETS.toon_snow;
   }
+  if (BARE) ASSETS.rb_thea = prepareBare(ASSETS.bare_thea);
   for (const a of ASSETS.anims.animations) CLIPS[a.name] = a;
   dressWorld();
   rigHound(hound, ASSETS.toon_cerberus); // the real dog takes over from the puppet
