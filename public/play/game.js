@@ -743,6 +743,12 @@ function paintGoal() { const l = goal().label; $("#goal").innerHTML = `<small>wh
 /* ---------- conversations: spoken out loud, with the camera on whoever is talking ---------- */
 const voiceEl = $("#voice"), storyEl = $("#story");
 let skipLine = null, choicePick = null, talkingTo = null;
+/* a hidden tab goes quiet, and the line being spoken waits until you're back */
+document.addEventListener("visibilitychange", () => {
+  if (!actx) return;
+  if (document.hidden) { actx.suspend(); voiceEl.pause(); $("#clip").pause(); }
+  else { actx.resume(); if (voiceEl.currentTime > 0 && !voiceEl.ended) voiceEl.play().catch(() => {}); const c = $("#clip"); if (c.currentSrc && c.currentTime > 0 && !c.ended) c.play().catch(() => {}); }
+});
 const camShot = {active: false, pos: new THREE.Vector3(), look: new THREE.Vector3()};
 function frameOn(p, side = 1) { // over-the-shoulder close-up
   shot.cur = null;
