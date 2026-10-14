@@ -150,7 +150,7 @@ function skinned(geo, mat, body) {
 
 /* ---------- garments ---------- */
 // Cut part of the body's own surface, push it out along the normals, and keep its skinning.
-function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3, exact = false}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
+function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, smooth = LONG ? 16 : 3, exact = false, shape}) { // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show; shape(P, i): a last say over each cloth vertex // realistic bodies: smoothed enough that the jacket underneath (lapels, seams) doesn't show
   const B = study(body), ix = B.g.index.array, tri = [];
   if (LONG && clip && !exact && !/1\.65/.test(clip)) clip = `${NECKLINE} && abs(b.x) < ${WRIST.toFixed(3)} && (b.y > .95 || abs(b.x) > .3)`; // (hands hang below the waist line: keep the sleeves whole) // cover everything modern (the hood keeps its own shape)
   if (clip) { mat = clipped(mat, clip, B); mat.userData.own = true; } // (a clipped material belongs to this one body)
@@ -186,6 +186,7 @@ function wrap(body, keep, {off = LONG ? .02 : .016, mat, bulge = () => 0, clip, 
   // and sleeves never sink into the arms they cover (the torso is left free, so a jacket's lapels underneath don't show through)
   for (let i = 0; i < nV; i++) { const k = i * 7; if (BP[k + 6] < 0) continue; const d = (P[i * 3] - BP[k]) * BP[k + 3] + (P[i * 3 + 1] - BP[k + 1]) * BP[k + 4] + (P[i * 3 + 2] - BP[k + 2]) * BP[k + 5], want = BP[k + 6] * .8;
     if (d < want) for (let a = 0; a < 3; a++) P[i * 3 + a] += BP[k + 3 + a] * (want - d); }
+  if (shape) for (let i = 0; i < nV; i++) shape(P, i * 3);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   geo.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2));
@@ -528,7 +529,7 @@ const LOOKS = {
   // Nikias, the groom, in white with a myrtle wreath.
   nikias: {dress(p, B, body) { greek(p, B, body, 0xf2ede2, 0xf2ede2, {wreath: true}); }},
   // Thea, the bride: saffron, a veil, a wreath.
-  thea: {body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); else columnGown(p, B, body, 0xe0a63c, {wreath: true, sheer: 0xf6efe2}); }}, // a bride too: the same liquid silk, in saffron
+  thea: {body: "female", dress(p, B, body) { if (p.bare) theaGown(p, B, body); else if (p.toon) weddingDrape(p, B, body, {color: 0xe8b04a, wreath: true}); else columnGown(p, B, body, 0xe0a63c, {wreath: true, sheer: 0xf6efe2}); }}, // a bride too: the same liquid silk, in saffron
   // Eurydice on her wedding day: alive, in saffron, with a myrtle wreath
   eurydice_alive: {as: "eurydice", body: "female", dress(p, B, body) { if (p.toon) weddingDrape(p, B, body, {wreath: true}); else gown(p, B, body, 0xf2ead8, 0xe8c87a, {wreath: true}); }},
   // the same, standing, for the meadow: a full-length chiton, and a skirt for when she falls
@@ -672,6 +673,98 @@ function columnGown(p, B, body, color, {wreath = false, sheer} = {}) {
     const dir = hw.clone().sub(lw).normalize(); p.root.add(c); c.position.copy(hw).addScaledVector(dir, .008); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
   for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
   if (wreath) wreathOn(p, {flowers: true});
+}
+// Thea's wedding gown, on her bare body (after the board: dark theatrical couture, Grecian one-shoulder draping): saffron-
+// gold liquid silk over the left shoulder only, the neckline falling across the breast to under the right arm, the right
+// shoulder, both arms and the upper back bare; a bodice cut close to her own shape over the bust and waist, a fine gold
+// cord at the waist, and a column of fine pleats from there to the floor. Gold: a snake coiled round the right arm, cuffs,
+// a collar of beads, drops at the ears; the myrtle wreath.
+// (Heights are the tailor's, measured on her: neck 1.47, shoulders 1.37, bust 1.24, waist 1.06, hips .95, floor 0.)
+const THEA_LINE = "(1.30 + .6 * (b.x + .16))"; // the neckline: high over the left shoulder, down across the chest to under the right arm
+// The front of a fitted bodice as cut cloth lies: her front as a height field, its hollows filled (between and under the
+// breasts, the navel) and then softened, so the silk shows her shape and none of her detail.
+function bodiceFront(B, {x0 = -.16, x1 = .16, y0 = .96, y1 = 1.44, h = .005, close = 10, blur = 4} = {}) {
+  const nx = Math.round((x1 - x0) / h) + 1, ny = Math.round((y1 - y0) / h) + 1, Z = new Float32Array(nx * ny).fill(-1);
+  for (let i = 0; i < B.N; i++) { const x = B.P[i * 3], y = B.P[i * 3 + 1], z = B.P[i * 3 + 2]; if (z < 0 || !TORSO.test(B.dom[i])) continue;
+    const cx = Math.round((x - x0) / h), cy = Math.round((y - y0) / h); if (cx < 0 || cy < 0 || cx >= nx || cy >= ny) continue; Z[cy * nx + cx] = Math.max(Z[cy * nx + cx], z); }
+  for (let pass = 0; pass < 20; pass++) for (let cy = 0; cy < ny; cy++) for (let cx = 0; cx < nx; cx++) if (Z[cy * nx + cx] < 0) { /* (cells no vertex fell in) */
+    let m = -1; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = cx + dx, Y = cy + dy; if (X >= 0 && Y >= 0 && X < nx && Y < ny) m = Math.max(m, Z[Y * nx + X]); } Z[cy * nx + cx] = m; }
+  const pass = (src, r, f, axis) => { const out = new Float32Array(src.length); for (let cy = 0; cy < ny; cy++) for (let cx = 0; cx < nx; cx++) { let v = f === "max" ? -9 : f === "min" ? 9 : 0, wsum = 0;
+    for (let k = -r; k <= r; k++) { const X = axis ? cx : THREE.MathUtils.clamp(cx + k, 0, nx - 1), Y = axis ? THREE.MathUtils.clamp(cy + k, 0, ny - 1) : cy, z = src[Y * nx + X];
+      if (f === "max") v = Math.max(v, z); else if (f === "min") v = Math.min(v, z); else { const w = Math.exp(-k * k / (2 * (r / 2) ** 2)); v += z * w; wsum += w; } }
+    out[cy * nx + cx] = f === "blur" ? v / wsum : v; } return out; };
+  let F = pass(pass(Z, close, "max", 0), close, "max", 1); F = pass(pass(F, close, "min", 0), close, "min", 1); F = pass(pass(F, blur * 2, "blur", 0), blur * 2, "blur", 1);
+  return (x, y) => { const fx = THREE.MathUtils.clamp((x - x0) / h, 0, nx - 1.001), fy = THREE.MathUtils.clamp((y - y0) / h, 0, ny - 1.001), ix = fx | 0, iy = fy | 0, u = fx - ix, v = fy - iy;
+    return (F[iy * nx + ix] * (1 - u) + F[iy * nx + ix + 1] * u) * (1 - v) + (F[(iy + 1) * nx + ix] * (1 - u) + F[(iy + 1) * nx + ix + 1] * u) * v; };
+}
+// A band on the top edge of a drape (cols vertices to a ring): from a little above it to part of the way to the next ring
+// down, standing just proud of the cloth, with the cloth's own skinning.
+function hemBand(src, mat, cols, {up = .005, down = .5, out = .004} = {}) {
+  const g = src.geometry, pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, P = [], SI = [], SW = [], UV = [], I = [];
+  const c = new THREE.Vector3(); for (let k = 0; k < cols; k++) c.add(new THREE.Vector3().fromBufferAttribute(pos, k)); c.divideScalar(cols);
+  for (const [row, f] of [[0, -up], [1, down]]) for (let k = 0; k < cols; k++) {
+    const a = new THREE.Vector3().fromBufferAttribute(pos, k), b = new THREE.Vector3().fromBufferAttribute(pos, cols + k), v = row ? a.clone().lerp(b, f) : a.clone().add(new THREE.Vector3(0, -f, 0));
+    const r = new THREE.Vector3(v.x - c.x, 0, v.z - c.z).setLength(out); v.add(r); P.push(v.x, v.y, v.z); UV.push(k / cols * 8, row);
+    const j = row ? cols + k : k; for (let q = 0; q < 4; q++) { SI.push(si.getComponent(j, q)); SW.push(sw.getComponent(j, q)); }
+  }
+  for (let k = 0; k < cols; k++) { const a = k, b = (k + 1) % cols; I.push(a, b, cols + a, b, cols + b, cols + a); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(UV, 2));
+  geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(SI, 4)); geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(SW, 4));
+  geo.setIndex(I); geo.computeVertexNormals();
+  const m = new THREE.SkinnedMesh(geo, mat); m.userData = {...src.userData}; m.bind(src.skeleton, src.bindMatrix); m.frustumCulled = false; return m;
+}
+function theaGown(p, B, body) {
+  const silkM = drapeCloth(0xdf9d34, "liquid"), bodiceM = silkM.clone(); Object.assign(bodiceM, {clearcoat: .15, roughness: .36, normalScale: new THREE.Vector2(.25, .25)}); /* (less gloss: it read as latex) */
+  const front = bodiceFront(B), ss = THREE.MathUtils.smoothstep, T = n => p.bones[n].getWorldPosition(new THREE.Vector3()).applyMatrix4(body.userData.toNorm);
+  // the bodice, cut from her own surface over the left shoulder, its front laid as cut cloth lies; the skin under it isn't
+  // drawn, so nothing can show through
+  const bodice = wrap(body, (x, y, z, d) => y > .97 && y < 1.52 && (TORSO.test(d) || d === "clavicle_l" || (d === "upperarm_l" && x < .21) || (d === "upperarm_r" && x > -.17)),
+    {mat: bodiceM, exact: true, off: .007, smooth: 8, clip: `b.y < ${THEA_LINE} && b.y < 1.5 && b.y > 1.035 && b.x < .19`,
+      shape: (P, i) => { const x = P[i], y = P[i + 1], z = P[i + 2], f = front(x, y) + .008;
+        const w = (1 - ss(Math.abs(x), .1, .16)) * ss(y, 1.1, 1.16) * (1 - ss(f - z, .03, .055)); /* (the front only, fading out toward the sides, never pulled far: the waist below follows her) */
+        if (w > 0) P[i + 2] = z + (f - z) * w; }});
+  // soft pleats running with the neckline, from the left shoulder down across her, as the silk is gathered
+  { const g = bodice.geometry, pos = g.attributes.position, uv = g.attributes.uv, v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(body.userData.toNorm); uv.setXY(i, (v.y - .6 * v.x) * 4.6, (v.x + .6 * v.y) * 4.6); } }
+  put(p, bodice);
+  p.hide = `vT > .5 && vB.y > 1.04 && vB.y < ${THEA_LINE.replace(/b\.x/g, "vB.x")} - .025 && vB.y < 1.47 && vB.x < .17`;
+  // the column: from the waist over the hips, then straight down to the floor in fine pleats (seated, it follows the legs)
+  // (its top moves as her waist does, so it never opens away from the bodice as she sways)
+  const waist = (sw, t0) => (x, y, z, t) => mixWeights(borrowWeights(B, x, y, z, i => TORSO.test(B.dom[i]) || /^thigh_/.test(B.dom[i])), sw(x, y, z, t), ss(t, 0, t0));
+  const skirt = SEATED ? drape(body, {from: 1.08, to: .46, mat: silkM, off: .014, flare: .04, folds: 0, free: true, weightsAt: waist(skirtWeights(B, .8), .25)})
+    : drape(body, {from: 1.08, to: .012, mat: silkM, off: .007, flare: .08, folds: .004, step: .03, shrink: .994, soft: 3, free: true, weightsAt: waist(skirtWeights(B, .5), .25),
+      include: d => TORSO.test(d) || /^thigh_/.test(d)}); /* (drawn round her hips, then held at their width: it never follows the legs in) */
+  // a column falls straight from the waist in front: it doesn't round out over her belly (her legs and hips under it aren't drawn)
+  if (!SEATED) { const g = skirt.geometry, pos = g.attributes.position, v = new THREE.Vector3(), toN = body.userData.toNorm, fromN = body.userData.fromNorm; let zf = -1;
+    for (let k = 0; k < 56; k++) { v.fromBufferAttribute(pos, k).applyMatrix4(toN); zf = Math.max(zf, v.z); }
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(toN); const cap = zf + .006 + (1.08 - v.y) * .05; if (v.z > cap) { v.z = cap + (v.z - cap) * .15; v.applyMatrix4(fromN); pos.setXYZ(i, v.x, v.y, v.z); } }
+    g.computeVertexNormals(); }
+  put(p, skirt);
+  if (SEATED) seatedFall(p, B, body, silkM);
+  // a fine gold cord where the bodice meets the skirt, laid round the skirt's own top edge
+  put(p, hemBand(skirt, gold, 56, {up: .01, down: .35, out: .007}));
+  // the gold, measured on her: a collar of beads round the base of her neck, a snake round the right arm, cuffs, drops at the ears
+  const around = (y, test) => { let rx = 0, z0 = 9, z1 = -9; for (let i = 0; i < B.N; i++) if (Math.abs(B.P[i * 3 + 1] - y) < .006 && test(B.dom[i])) { rx = Math.max(rx, Math.abs(B.P[i * 3])); z0 = Math.min(z0, B.P[i * 3 + 2]); z1 = Math.max(z1, B.P[i * 3 + 2]); } return {rx, rz: (z1 - z0) / 2, cz: (z1 + z0) / 2}; };
+  { const y = 1.475, n = around(y, d => d === "neck_01"), col = new THREE.Group();
+    for (const [row, dy, r, k] of [[0, 0, .0045, 40], [1, -.009, .004, 44]]) for (let i = 0; i < k; i++) { const a = (i + row * .5) / k * Math.PI * 2, b = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), gold);
+      b.position.set(Math.cos(a) * (n.rx + .007 + row * .005), dy, Math.sin(a) * (n.rz + .008 + row * .006)); col.add(b); }
+    mount(p, "neck_01", col, new THREE.Vector3(0, y, n.cz), [.18, 0, 0]); }
+  { const s = p.bones.upperarm_r.getWorldPosition(new THREE.Vector3()), e = p.bones.lowerarm_r.getWorldPosition(new THREE.Vector3());
+    const a = armlet(); p.root.add(a); a.position.copy(s).lerp(e, .5); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), e.clone().sub(s).normalize());
+    /* (sized to her arm there: the arm's own thickness, measured round the bone) */
+    const S = T("upperarm_r"), E = T("lowerarm_r"), ax = E.clone().sub(S).normalize(), m = S.clone().lerp(E, .5), q = new THREE.Vector3(), rs = [];
+    for (let i = 0; i < B.N; i++) if (B.dom[i] === "upperarm_r") { q.set(B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2]).sub(m); const along = q.dot(ax); if (Math.abs(along) < .012) rs.push(q.addScaledVector(ax, -along).length()); }
+    rs.sort((u, v) => u - v); a.scale.setScalar(((rs[Math.floor(rs.length * .6)] || .035) + .002) / .042); a.updateMatrixWorld(true); p.bones.upperarm_r.attach(a); }
+  for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.03, .029, .03, 24, 1, true), gold), lw = p.bones["lowerarm_" + side].getWorldPosition(new THREE.Vector3()), hw = p.bones["hand_" + side].getWorldPosition(new THREE.Vector3());
+    const dir = hw.clone().sub(lw).normalize(); p.root.add(c); c.position.copy(hw).addScaledVector(dir, -.03); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); c.updateMatrixWorld(true); p.bones["lowerarm_" + side].attach(c); }
+  { let ear = 0; for (let i = 0; i < B.N; i++) if (B.dom[i] === "Head" && B.P[i * 3 + 1] > 1.58 && B.P[i * 3 + 1] < 1.72) ear = Math.max(ear, Math.abs(B.P[i * 3]));
+    for (const sx of [-1, 1]) { let lobe = null; for (let i = 0; i < B.N; i++) if (B.dom[i] === "Head" && B.P[i * 3] * sx > ear - .014 && B.P[i * 3 + 1] > 1.55 && (!lobe || B.P[i * 3 + 1] < lobe[1])) lobe = [B.P[i * 3], B.P[i * 3 + 1], B.P[i * 3 + 2]];
+      if (!lobe) continue; const e = new THREE.Mesh(new THREE.SphereGeometry(.0042, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0036, 8, 6), gold); d.scale.y = 1.6; d.position.y = -.011; e.add(d); e.userData.fitted = true;
+      mount(p, "Head", e, new THREE.Vector3(lobe[0] - sx * .004, lobe[1] - .004, lobe[2])); } }
+  wreathOn(p, {flowers: true});
+  // under the column the legs are never seen: not drawn, they can't push through it walking or sitting
+  if (p.cover) p.cover.value.set(.1, 1.05);
 }
 // Eurydice's wedding dress: ivory silk in fine pleats with a liquid sheen, draped like a sari over one shoulder.
 // A one-shoulder bodice; a pleated sash crossing from the left shoulder to the right hip; the midriff bare; a skirt slung
@@ -1016,9 +1109,9 @@ function makeFace(root) {
 }
 function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, female: fem}) {
   const female = fem ?? (FEMALE.has(id) || look.body === "female");
-  const src = asset || ASSETS["rb_" + id], toon = !!src.scene.userData.toon;
+  const src = asset || ASSETS["rb_" + id], toon = !!src.scene.userData.toon, bare = !!src.scene.userData.bare; // bare: a realistic body with real skin, nothing underneath
   const root = SkeletonUtils.clone(src.scene);
-  if (toon) tintToon(root, toonLook(look.id || id));
+  if (toon && !bare) tintToon(root, toonLook(look.id || id));
   root.updateMatrixWorld(true);
   const bones = {}; root.traverse(o => { if (o.isBone) { bones[o.name] = o; if (UNALIAS[o.name]) bones[UNALIAS[o.name]] = o; } });
   // stand them up in the tailor's space: facing +z, scaled so the head sits where the tailor expects it
@@ -1028,7 +1121,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   const k = head.y / 1.6;
   const norm = new THREE.Matrix4().makeScale(1, 1 / k, 1).multiply(new THREE.Matrix4().makeRotationY(-turn));
   const skins = []; root.traverse(o => { if (o.isSkinnedMesh) { o.frustumCulled = false; skins.push(o); } });
-  const bodyParts = skins.filter(o => !/opacity/i.test([].concat(o.material)[0].name));
+  const bodyParts = skins.filter(o => bare ? /_body/.test(o.material.name) : !/opacity/i.test([].concat(o.material)[0].name)); // (a bare body: the skin alone, not the hair and eyes)
   // one merged body for the tailor, read exactly as it is drawn at rest (skinning applied), in the tailor's space
   const common = bodyParts[0].skeleton.bones, P = [], UV = [], SI = [], SW = [], I = []; let base = 0;
   const v = new THREE.Vector3();
@@ -1049,6 +1142,10 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
       if (!g.attributes.aHand) { const hb = o.skeleton.bones.map(b => /Hand|Finger|^DEF-(Thumb|Index|Middle|Ring|Pinky)\d/.test(b.name)), si = g.attributes.skinIndex, sw = g.attributes.skinWeight, h = new Float32Array(n);
         for (let i = 0; i < n; i++) for (let c = 0; c < 4; c++) if (hb[comp(si, i, c)]) h[i] += comp(sw, i, c);
         g.setAttribute("aHand", new THREE.BufferAttribute(h, 1)); }
+      // a bare body: how much each vertex belongs to the trunk, so a bodice can hide the skin it covers (and the arms beside it stay)
+      if (bare && !g.attributes.aTorso) { const tb = o.skeleton.bones.map(b => /^Bip01_(Pelvis|Spine\d?|Neck|[LR]_Clavicle)$/.test(b.name)), si = g.attributes.skinIndex, sw = g.attributes.skinWeight, h = new Float32Array(n);
+        for (let i = 0; i < n; i++) for (let c = 0; c < 4; c++) if (tb[comp(si, i, c)]) h[i] += comp(sw, i, c);
+        g.setAttribute("aTorso", new THREE.BufferAttribute(h, 1)); }
       off += n; } }
   const merged = new THREE.BufferGeometry();
   merged.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
@@ -1060,7 +1157,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   tailor.skeleton = skel; tailor.bindMatrix = new THREE.Matrix4();
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const hand = n => w(n).applyMatrix4(norm), wrist = Math.min(Math.abs(hand("Bip01_L_Hand").x), Math.abs(hand("Bip01_R_Hand").x)) + .012; // the sleeves end at the wrist joint
-  const person = {root, bones, body: ref, norm: {k, turn}, female, wrist, toon};
+  const person = {root, bones, body: ref, norm: {k, turn}, female, wrist, toon, bare};
   if (toon) { // a cartoon head is bigger and higher than the realistic one hats and crowns were placed for: move them up and size them to it
     const hb = w("Bip01_Head").applyMatrix4(norm), box = new THREE.Box3(), top = new THREE.Box3(), v = new THREE.Vector3();
     const eyes = new THREE.Box3();
@@ -1068,7 +1165,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
     if (!eyes.isEmpty()) person.eyes = eyes;
     for (const o of skins) if (o.userData.head && /head|hair/i.test(o.name)) { const hair = /hair/i.test(o.name), pos = o.geometry.attributes.position; /* (cartoon hair has volume: hats sit on it, sized to the head) */
       for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld).applyMatrix4(norm); top.expandByPoint(v); if (!hair) box.expandByPoint(v); (person.headPts ||= []).push(v.x, v.y, v.z); } }
-    person.hat = {dy: top.max.y - hb.y - .223 - .05, s: (box.max.z - box.min.z) / .247 * 1.08}; // (measured on the realistic heads; front to back, since ears make width a poor guide)
+    person.hat = {dy: top.max.y - hb.y - .223 - .05, s: bare ? 1 : (box.max.z - box.min.z) / .247 * 1.08}; // (measured on the realistic heads; front to back, since ears make width a poor guide) (a bare body's face is part of its skin: a realistic head)
   }
   // the real clothes underneath: not drawn where the Greek ones cover them; below the hem, leather
   const low = seated ? .58 : .1, fp = {value: 0}, hh = {value: 0};
@@ -1079,23 +1176,25 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
       if (m.userData.skinTone) skinShader(sh, m); // (an animated character's own skin colour)
       sh.uniforms.uFP = fp; sh.uniforms.uHH = hh; sh.uniforms.uCover = person.cover;
       sh.fragmentShader = "uniform float uFP; uniform float uHH; uniform vec2 uCover;\n" + sh.fragmentShader;
-      sh.vertexShader = "attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvB = aBind; vH = aHand;");
-      sh.fragmentShader = "varying vec3 vB; varying float vH;\n" + sh.fragmentShader.replace("void main() {", `void main() {
+      sh.vertexShader = `attribute vec3 aBind; attribute float aHand; varying vec3 vB; varying float vH; ${bare ? "attribute float aTorso; varying float vT;" : ""}\n` + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>\nvB = aBind; vH = aHand; ${bare ? "vT = aTorso;" : ""}`);
+      sh.fragmentShader = `varying vec3 vB; varying float vH; ${bare ? "varying float vT;" : ""}\n` + sh.fragmentShader.replace("void main() {", `void main() {
+        ${bare && person.hide ? `if (vH < .6 && (${person.hide})) discard;` : ""}
         ${toon ? "" : `if (vH < .6 && abs(vB.x) < .72 && vB.y > ${low.toFixed(2)} && vB.y < 1.5 && (vB.y > .95 || abs(vB.x) > .28)) discard;`}
         ${toon ? "" : "if (vB.y > 1.46 && abs(vB.x) < .22) discard;"}
         if (vH < .6 && abs(vB.x) < .2 && vB.y > uCover.x && vB.y < uCover.y) discard; // (thighs under a robe: sitting, they pushed through it)
         if (uFP > .5 && vB.y > 1.2) discard;
         if (uHH > .5 && vH > .3) discard;
         ${toon ? "" : `if (abs(vB.x) < ${(wrist - .004).toFixed(3)} && vB.y > ${low.toFixed(2)} && vB.y < 1.5) discard;`}`).replace("#include <map_fragment>", `#include <map_fragment>
-        ${toon ? "" : `if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`}`);
+        ${toon ? "" : `if (vB.y < ${low.toFixed(2)} && abs(vB.x) < .6) { float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); diffuseColor.rgb = vec3(.26,.17,.11) * (.55 + l * .9); }`}
+        ${bare ? "diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(map, vMapUv, 3.).rgb, .38);" : ""}`); /* (bare skin: the freckles softened a little toward the skin's own tone; full strength, they read as a rash) */
     };
-    m.customProgramCacheKey = () => "rbbody" + low + wrist.toFixed(3) + toon;
+    m.customProgramCacheKey = () => "rbbody" + low + wrist.toFixed(3) + toon + (bare ? person.hide : "");
     o.material = m;
   }
   // dress: long sleeves, long hems, a high neckline, so nothing modern shows
   // (an animated man's chin hangs lower than the realistic neckline: a round neck just under it)
   const neck = toon && !female ? "b.y < 1.5 && !(b.z > .0 && pow(b.x / .075, 2.) + pow((b.y - 1.5) / .05, 2.) < 1.)" : NECKLINE_HIGH;
-  LONG = true; WRIST = wrist + .055; SEATED = seated; NECKLINE = neck; const keepF = [FNECK, FUPPER]; FNECK = neck; FUPPER = UPPER;
+  LONG = !bare; WRIST = wrist + .055; /* (bare skin has nothing underneath to cover: cut as close as the cloth is drawn) */ SEATED = seated; NECKLINE = neck; const keepF = [FNECK, FUPPER]; FNECK = neck; FUPPER = UPPER;
   TOONDRESS = toon;
   person.clothAsset = toon && !female && !seated ? ASSETS.toon_chiton_short : null; // (seated, the knees came through its skirt: a seated settling is still to come)
   try { look.dress(person, study(tailor), tailor); } finally { TOONDRESS = false; LONG = false; WRIST = .675; SEATED = false; NECKLINE = NECKLINE_LOW; [FNECK, FUPPER] = keepF; }
@@ -1131,7 +1230,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   shareSkeletons(root);
   if (look.ghost) root.traverse(o => { if (o.isMesh) { o.material = [].concat(o.material).map(m => ghostly(m, o.userData.garment ? .9 : .5)); if (o.material.length === 1) o.material = o.material[0]; o.renderOrder = o.userData.garment ? 3 : 2; } });
   root.scale.setScalar(scale);
-  const clips = toon ? toonClips(src, ASSETS["rb_anims_" + (female ? "f" : "m")], rbClips(ASSETS, female)) : rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
+  const clips = toon ? toonClips(src, ASSETS["rb_anims_" + (female ? "f" : "m")], rbClips(ASSETS, female), {real: bare}) : rbClips(ASSETS, female), mixer = new THREE.AnimationMixer(root);
   if (toon) { const swing = hairSprings(root), tick = mixer.update.bind(mixer); mixer.update = dt => { tick(dt); swing(dt); return mixer; }; } // hair settles after the body moves
   person.expr = makeFace(root); person.clips = clips;
   Object.assign(person, {mixer, action: null, current: null, speaking: false, play(name, fade = .35) {
@@ -1146,7 +1245,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   // Snow, the animated man, was drawn with a long neck; ours sits the head lower on the shoulders. Done after the
   // clothes are fitted (they and the body share the same rest pose), so everything above the neck moves down together.
   if (toon && !female) { const h = bones.Head; h.position.multiplyScalar(.62); h.updateMatrixWorld(true); }
-  if (toon && SHAPE[id]) shapeBody(root, bones, SHAPE[id], seated);
+  if (toon && !bare && SHAPE[id]) shapeBody(root, bones, SHAPE[id], seated); // (a bare body was built to her own shape)
   scene.add(root);
   return person;
 }
