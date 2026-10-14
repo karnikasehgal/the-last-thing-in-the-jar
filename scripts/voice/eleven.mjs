@@ -37,7 +37,7 @@ for (const l of lines) {
   const file = join(out, `${l.id}.m4a`);
   if (existsSync(file) && !force) continue;
   const voice = VOICES[l.who]; if (!voice) { console.warn("no voice for", l.who, l.id); continue; }
-  const text = (l.how ? `[${l.how}] ` : "") + l.text; // the direction as an audio tag
+  const text = (l.how ? `[${l.how}] ` : "") + (l.say ?? l.text); // the direction as an audio tag; `say` respells names the voice gets wrong
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, {
     method: "POST", headers: {"xi-api-key": key, "content-type": "application/json"},
     body: JSON.stringify({text, model_id: "eleven_v4", voice_settings: {stability: .4, similarity_boost: .8, style: .45, use_speaker_boost: true}})});

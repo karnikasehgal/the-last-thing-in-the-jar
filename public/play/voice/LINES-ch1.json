@@ -1,0 +1,577 @@
+[
+ {
+  "id": "w_i1",
+  "who": "mikon",
+  "text": "My name is Mikon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got.",
+  "how": "warm, proud storyteller; easy smile on 'the best I've got'",
+  "say": "My name is Meekon. I sell salt fish at the harbour in Corinth. Have done for twenty-two years. Tonight my cousin Thea is getting married, and I've brought the best I've got."
+ },
+ {
+  "id": "w_l0",
+  "who": "lykon",
+  "text": "Mikon! Over here, I saved you a seat. Wait. Is that fish? You brought fish to a wedding?",
+  "how": "delighted wave, then a double take; scandalised on 'fish'",
+  "note": "Stress 'fish' and 'wedding'.",
+  "say": "Meekon! Over here, I saved you a seat. Wait. Is that fish? You brought fish to a wedding?"
+ },
+ {
+  "id": "w_m0",
+  "who": "mikon",
+  "text": "Salt fish from Lechaion. The good kind. It's a present.",
+  "how": "proud, slightly defensive, holding the basket up",
+  "say": "Salt fish from Lekayon. The good kind. It's a present."
+ },
+ {
+  "id": "w_a0",
+  "who": "kleio",
+  "text": "Give that to me before the bride smells it. Sit down, Mikon, have some wine, and try to enjoy yourself for once.",
+  "how": "bossy aunt snatching the basket; exasperated but fond",
+  "say": "Give that to me before the bride smells it. Sit down, Meekon, have some wine, and try to enjoy yourself for once."
+ },
+ {
+  "id": "w_d1",
+  "who": "demeas",
+  "text": "Friends! Friends, quiet, please. I'll be brief. I won't be brief. To Thea and Nikias! May the gods give you long lives, a full house, and more children than this family has goats!",
+  "how": "booming toast, a bit tipsy; big laugh on 'goats'",
+  "note": "Beat after 'I'll be brief.' so 'I won't be brief' lands as a self-correction."
+ },
+ {
+  "id": "w_a1",
+  "who": "kleio",
+  "text": "Demeas, sit down before you fall into the lamb again.",
+  "how": "dry, sharp aside; affectionate scolding",
+  "note": "Stress 'again'."
+ },
+ {
+  "id": "w_d2",
+  "who": "demeas",
+  "text": "That was one time, Kleio, and the lamb started it.",
+  "how": "mock wounded dignity; deadpan on 'the lamb started it'"
+ },
+ {
+  "id": "w_m1",
+  "who": "mikon",
+  "text": "Lykon. Lykon. Have you heard the one about the goat who wandered into the temple of Zeus?",
+  "how": "eager stage whisper, nudging, can't wait to tell it"
+ },
+ {
+  "id": "w_l1",
+  "who": "lykon",
+  "text": "Mikon, it's your cousin's wedding. Not the goat one. Anything but the goat one.",
+  "how": "pleading, half laughing, half begging",
+  "note": "Stress 'Anything'.",
+  "say": "Meekon, it's your cousin's wedding. Not the goat one. Anything but the goat one."
+ },
+ {
+  "id": "w_m2",
+  "who": "mikon",
+  "text": "So the goat walks right up to the altar, and the priest looks at the goat, and the goat looks at the priest, and the priest says...",
+  "how": "gleeful, building the joke, slowing for the punchline"
+ },
+ {
+  "id": "w_m3",
+  "who": "mikon",
+  "text": "Ha! No, wait, wait, this is the good part, this is the...",
+  "how": "laughing, mouth full, cut off mid-word"
+ },
+ {
+  "id": "w_l2",
+  "who": "lykon",
+  "text": "Mikon? Mikon, are you all right? You've gone a very strange colour.",
+  "how": "laugh fading into worry, then real alarm",
+  "say": "Meekon? Meekon, are you all right? You've gone a very strange colour."
+ },
+ {
+  "id": "w_a2",
+  "who": "kleio",
+  "text": "He's choking! Somebody hit him on the back! Not like that, Demeas, harder!",
+  "how": "panicking, shouting orders; furious on 'harder'"
+ },
+ {
+  "id": "w_n1",
+  "who": "nikias",
+  "text": "I've got him, I've got him! Breathe, cousin, just breathe!",
+  "how": "straining, breathless, forcing himself to stay calm"
+ },
+ {
+  "id": "w_t1",
+  "who": "thea",
+  "text": "Mikon, don't you dare. Not today! It's my wedding!",
+  "how": "frightened, scolding through tears; voice cracks on 'wedding'",
+  "say": "Meekon, don't you dare. Not today! It's my wedding!"
+ },
+ {
+  "id": "w_a5",
+  "who": "kleio",
+  "text": "Mikon? Mikon, look at me. Stay with us. Somebody get water!",
+  "how": "close and desperate, then shouting over her shoulder",
+  "note": "Heard through Mikon's fading ears; keep it intimate, not shrill.",
+  "say": "Meekon? Meekon, look at me. Stay with us. Somebody get water!"
+ },
+ {
+  "id": "w_t3",
+  "who": "thea",
+  "text": "Mikon, please. Please.",
+  "how": "whispered, breaking, begging",
+  "say": "Meekon, please. Please."
+ },
+ {
+  "id": "w_vo1",
+  "who": "mikon",
+  "text": "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.",
+  "how": "quiet, wistful narration, slowing as the voices fade"
+ },
+ {
+  "id": "w_a3",
+  "who": "kleio",
+  "text": "Did anybody put the coin in his mouth? For the ferryman?",
+  "how": "hushed, at a wake; a sudden worried thought"
+ },
+ {
+  "id": "w_d3",
+  "who": "demeas",
+  "text": "I thought you did.",
+  "how": "flat, guilty, a beat too late"
+ },
+ {
+  "id": "w_a4",
+  "who": "kleio",
+  "text": "I was doing the lamb!",
+  "how": "indignant whisper-shout, defensive"
+ },
+ {
+  "id": "w_d4",
+  "who": "demeas",
+  "text": "Well, the lamb's going cold now. He'd want us to eat. He loved lamb, the poor man.",
+  "how": "awkward, changing the subject; sincere on 'the poor man'",
+  "note": "The joke is that he is already thinking about dinner."
+ },
+ {
+  "id": "w_t2",
+  "who": "thea",
+  "text": "He never even finished the joke. I wanted to know what the priest said.",
+  "how": "sad little laugh through tears; wistful"
+ },
+ {
+  "id": "w_vo2",
+  "who": "mikon",
+  "text": "Nobody put a coin under my tongue for the ferryman. They were grieving, and they were busy, and nobody thought of it.",
+  "how": "rueful, gentle narration, no blame in it"
+ },
+ {
+  "id": "w_m4",
+  "who": "mikon",
+  "text": "Oh. Oh, no. Is that a river? Why is it glowing?",
+  "how": "groggy, waking; dread rising into bewilderment"
+ },
+ {
+  "id": "v4_h1",
+  "who": "hermes",
+  "text": "Easy. Easy, sit up slowly. You'll feel cold for a while. That passes.",
+  "how": "gentle, calm, a practised bedside manner"
+ },
+ {
+  "id": "v4_m1",
+  "who": "mikon",
+  "text": "Where... The wedding. I was at the wedding. Thea was about to dance.",
+  "how": "confused, piecing it together, drifting"
+ },
+ {
+  "id": "v4_h2",
+  "who": "hermes",
+  "text": "You were. And then you laughed with an olive in your mouth. I'm sorry, Mikon. You died at your cousin's wedding.",
+  "how": "kind and careful; soft apology, then plain truth",
+  "say": "You were. And then you laughed with an olive in your mouth. I'm sorry, Meekon. You died at your cousin's wedding."
+ },
+ {
+  "id": "v4_m2",
+  "who": "mikon",
+  "text": "I died. At a wedding. In front of everyone.",
+  "how": "stunned, then mortified on 'in front of everyone'"
+ },
+ {
+  "id": "v4_h3",
+  "who": "hermes",
+  "text": "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb.",
+  "how": "consoling, then dry; deadpan on 'the lamb'"
+ },
+ {
+  "id": "v4_m3",
+  "who": "mikon",
+  "text": "Who are you?",
+  "how": "wary, quiet"
+ },
+ {
+  "id": "v5_h4",
+  "who": "hermes",
+  "text": "Hermes. I walk the dead down here. You're my third today, and I'm already late for the fourth.",
+  "how": "warm but brisk, a busy man; rueful on 'already late'"
+ },
+ {
+  "id": "v5_m4",
+  "who": "mikon",
+  "text": "Down where? What is this place? What am I supposed to do?",
+  "how": "dazed, questions tumbling out faster and faster"
+ },
+ {
+  "id": "v5_h5",
+  "who": "hermes",
+  "text": "All very good questions. I'd love to answer them. I'd also love a day off.",
+  "how": "dry, kind smile; deadpan on 'a day off'"
+ },
+ {
+  "id": "v5_h6",
+  "who": "hermes",
+  "text": "See the sailor by the water, mending a net? That's Elpenor. He's been here longer than the sand. He'll tell you how it all works.",
+  "how": "pointing, brisk, reassuring; fond tease on 'the sand'"
+ },
+ {
+  "id": "v5_m5",
+  "who": "mikon",
+  "text": "You're leaving? Just like that?",
+  "how": "small, hurt, disbelieving"
+ },
+ {
+  "id": "v5_h7",
+  "who": "hermes",
+  "text": "Just like that. Somewhere up there, a man is trying to pat a lion. Good luck, Mikon. I mean it. And from now on, chew.",
+  "how": "walking off, calling back; sincere, then a wink on 'chew'",
+  "note": "Stress 'mean'. Small pause before 'And from now on, chew.'",
+  "say": "Just like that. Somewhere up there, a man is trying to pat a lion. Good luck, Meekon. I mean it. And from now on, chew."
+ },
+ {
+  "id": "v2_i5",
+  "who": "mikon",
+  "text": "Everyone you've ever heard of came through here. Heroes, kings, a man with a lyre. Nobody wrote down the people who were already waiting.",
+  "how": "reflective narration; quiet respect for ordinary people"
+ },
+ {
+  "id": "v2_i6",
+  "who": "mikon",
+  "text": "This is the story of one of them.",
+  "how": "soft and simple, a small smile"
+ },
+ {
+  "id": "v5_e1",
+  "who": "elpenor",
+  "text": "Careful, you're standing on my net. No, it's fine, it's seen worse. I'm Elpenor. I rowed for Odysseus. Well, near Odysseus. There were a lot of us.",
+  "how": "young, wry, friendly; self-mocking correction on 'near Odysseus'",
+  "note": "Stress 'near'."
+ },
+ {
+  "id": "v2_m4",
+  "who": "mikon",
+  "text": "Mikon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here.",
+  "how": "rueful, self-mocking, a wry shrug",
+  "say": "Meekon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here."
+ },
+ {
+  "id": "v2_e2",
+  "who": "elpenor",
+  "text": "That's a good one. Mine's worse. We were staying at Circe's house, and I'd had too much wine, so I went up on the roof to sleep where it was cool. In the morning I heard everyone leaving, jumped up in a hurry, and forgot about the ladder.",
+  "how": "cheerfully competitive storyteller; deadpan on 'the ladder'",
+  "note": "Pause before 'and forgot about the ladder.'"
+ },
+ {
+  "id": "v2_m5",
+  "who": "mikon",
+  "text": "I don't suppose you've seen a coin lying around anywhere?",
+  "how": "hopeful, trying to sound casual",
+  "note": "Choice 1: Ask about a coin."
+ },
+ {
+  "id": "v2_m6",
+  "who": "mikon",
+  "text": "When I get across, I'll find a way to get you out of here too.",
+  "how": "earnest, simple, a real promise",
+  "note": "Choice 2: Promise to get him out."
+ },
+ {
+  "id": "v2_e5",
+  "who": "elpenor",
+  "text": "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person.",
+  "how": "caught off guard, touched, embarrassed",
+  "note": "Choice 2. Halting start; stress 'in person'."
+ },
+ {
+  "id": "v2_m7",
+  "who": "mikon",
+  "text": "That might be the saddest thing I've ever heard.",
+  "how": "sincere sympathy, fighting a smile",
+  "note": "Choice 3: Say how sad that is."
+ },
+ {
+  "id": "v2_e6",
+  "who": "elpenor",
+  "text": "Thank you. I tell it slightly differently at parties.",
+  "how": "gracious, then dry; deadpan on 'at parties'",
+  "note": "Choice 3."
+ },
+ {
+  "id": "v4_e0",
+  "who": "elpenor",
+  "text": "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.",
+  "how": "gossipy, half admiring, conspiratorial; quick",
+  "note": "Plays if Mikon met Hermes (always, after the opening film). Stress 'backwards'."
+ },
+ {
+  "id": "v5_e2",
+  "who": "elpenor",
+  "text": "And let me guess. He pointed at me and ran. He always leaves the speech to me. Fine. Here's how it works.",
+  "how": "amused, long-suffering; theatrical sigh before 'Fine'",
+  "note": "Plays if Mikon met Hermes."
+ },
+ {
+  "id": "v5_e2b",
+  "who": "elpenor",
+  "text": "Right. Nobody's given you the speech yet. Here's how it works.",
+  "how": "matter-of-fact, kind, settling in to explain",
+  "note": "Alternative to v4_e0 and v5_e2; only when Hermes was skipped (?nointro)."
+ },
+ {
+  "id": "v5_e3",
+  "who": "elpenor",
+  "text": "That's the Styx. That's the ferry. The cheerful one on board is Charon. One coin a passenger, no exceptions. Your family were meant to put one under your tongue.",
+  "how": "tour-guide patter; heavy sarcasm on 'cheerful'",
+  "note": "Stress 'cheerful'."
+ },
+ {
+  "id": "v5_m6",
+  "who": "mikon",
+  "text": "They forgot.",
+  "how": "flat, quiet, a little wounded"
+ },
+ {
+  "id": "v5_e4",
+  "who": "elpenor",
+  "text": "Everyone on this beach has a family that forgot. No coin, you wait a hundred years. I've seen people beg him, bribe him, cry at him. He just flicks water at them.",
+  "how": "gentle, then dry; deadpan on the last line"
+ },
+ {
+  "id": "v5_m7",
+  "who": "mikon",
+  "text": "How long have you been waiting?",
+  "how": "careful, curious"
+ },
+ {
+  "id": "v5_e5",
+  "who": "elpenor",
+  "text": "Long enough to take up a hobby. Nets. Strange thing to make on a river with no fish in it, but it keeps the hands busy.",
+  "how": "wry, lifting the net; sadness under the joke"
+ },
+ {
+  "id": "v5_m8",
+  "who": "mikon",
+  "text": "So it's a hundred years, or nothing?",
+  "how": "sinking, almost a whisper"
+ },
+ {
+  "id": "v5_e6",
+  "who": "elpenor",
+  "text": "Well. There is one other way. It's a terrible idea, so naturally I've thought about it a lot.",
+  "how": "leaning in, conspiratorial; grins at a bad plan",
+  "note": "Stress 'terrible' and 'naturally'."
+ },
+ {
+  "id": "v2_e3",
+  "who": "elpenor",
+  "text": "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.",
+  "how": "lower, ominous; grim little joke at the end"
+ },
+ {
+  "id": "v2_e4",
+  "who": "elpenor",
+  "text": "You can't just walk in and pick it up. He'll smell it the second it moves. You'd have to put him to sleep first.",
+  "how": "practical warning, ticking off the steps",
+  "note": "Stress 'sleep'."
+ },
+ {
+  "id": "v2_e7",
+  "who": "elpenor",
+  "text": "There's a honey cake on the altar in the temple. Somebody left it as an offering years ago, and it hasn't gone stale, because nothing does down here. No dog alive can say no to honey cake. Throw it close to him, and he'll be out like a lamp.",
+  "how": "brightening, selling the plan; confident finish",
+  "note": "'lamp', not 'lamb': keep the p crisp."
+ },
+ {
+  "id": "v2_e8",
+  "who": "elpenor",
+  "text": "Then grab the coin and run for the river. He won't follow you into the water. And Mikon, if you make it across, tell Odysseus he still owes me a funeral.",
+  "how": "urgent, then wistful; dry joke about Odysseus",
+  "say": "Then grab the coin and run for the river. He won't follow you into the water. And Meekon, if you make it across, tell Odysseus he still owes me a funeral."
+ },
+ {
+  "id": "v2_t1",
+  "who": "theseus",
+  "text": "Stop right there. Whatever you do, don't sit down.",
+  "how": "commanding bark, an urgent warning"
+ },
+ {
+  "id": "v2_p1",
+  "who": "pirithous",
+  "text": "He's serious. Look at us. This is what sitting down gets you.",
+  "how": "brash but rueful, gesturing at himself"
+ },
+ {
+  "id": "v2_m8",
+  "who": "mikon",
+  "text": "Are the two of you stuck to those chairs?",
+  "how": "incredulous, peering closer"
+ },
+ {
+  "id": "v2_t2",
+  "who": "theseus",
+  "text": "Theseus, son of Aegeus, king of Athens, killer of the Minotaur. Currently attached to a rock.",
+  "how": "grand heroic titles, then deflating flat",
+  "note": "Big build through 'Minotaur', then flat on 'Currently attached to a rock.'"
+ },
+ {
+  "id": "v2_p2",
+  "who": "pirithous",
+  "text": "And I'm Pirithous, king of the Lapiths, and this was my idea, which he will tell you about if you stay longer than a minute.",
+  "how": "boastful, then sheepish, rushing the confession",
+  "say": "And I'm Pirith-oh-us, king of the Lapiths, and this was my idea, which he will tell you about if you stay longer than a minute."
+ },
+ {
+  "id": "v2_t3",
+  "who": "theseus",
+  "text": "We came down here to carry off the queen of the dead. Hades was very polite about it. He said we must be tired after such a long journey, and he offered us a seat.",
+  "how": "bitter, aggrieved; sarcastic on 'very polite'"
+ },
+ {
+  "id": "v2_p3",
+  "who": "pirithous",
+  "text": "And we sat. And that was four years ago.",
+  "how": "small, sheepish; flat on 'four years ago'"
+ },
+ {
+  "id": "v2_t4",
+  "who": "theseus",
+  "text": "Honey cake. Throw him one and he sleeps like a baby. Three babies, technically.",
+  "how": "veteran's tip; dry on 'three babies'",
+  "note": "Choice 1: Ask about the dog."
+ },
+ {
+  "id": "v2_p4",
+  "who": "pirithous",
+  "text": "The Sibyl did it, apparently, for that Trojan fellow. Everybody does it. Everybody except us. We just sat down.",
+  "how": "envious grumble sliding into self-pity",
+  "note": "Choice 1. Stress 'except us'."
+ },
+ {
+  "id": "v2_m9",
+  "who": "mikon",
+  "text": "Hold still. I'll pull on three. One, two...",
+  "how": "determined, bracing, counting with effort",
+  "note": "Choice 2: Pull them free."
+ },
+ {
+  "id": "v2_p5",
+  "who": "pirithous",
+  "text": "No, no, no, stop! It's fused, I'm part chair now, I can feel it in my spine!",
+  "how": "screaming panic, babbling, in pain",
+  "note": "Choice 2. This wakes the dog."
+ },
+ {
+  "id": "v2_m10",
+  "who": "mikon",
+  "text": "You're heroes. You'll work something out.",
+  "how": "breezy, backing away, falsely encouraging",
+  "note": "Choice 3: Leave them to it."
+ },
+ {
+  "id": "v2_t5",
+  "who": "theseus",
+  "text": "That's exactly what we said four years ago.",
+  "how": "bone dry, flat",
+  "note": "Choice 3. Stress 'exactly'."
+ },
+ {
+  "id": "v2_p6",
+  "who": "pirithous",
+  "text": "Guys? Guys, come back.",
+  "how": "plaintive, calling after him, abandoned",
+  "note": "Choice 3."
+ },
+ {
+  "id": "v2_c1",
+  "who": "charon",
+  "text": "Coin.",
+  "how": "flat, cold, final; one word",
+  "note": "Plays twice: with or without a coin."
+ },
+ {
+  "id": "v2_m11",
+  "who": "mikon",
+  "text": "I'm working on it. I don't suppose there's any chance of, you know, an I.O.U.?",
+  "how": "sheepish, hopeful wheedling",
+  "note": "No coin yet."
+ },
+ {
+  "id": "v2_c3",
+  "who": "charon",
+  "text": "A hundred years on the bank, or one coin in my hand. Those are the two ways onto this boat. There has never been a third.",
+  "how": "slow, grave, immovable; final on 'never'",
+  "note": "No coin yet. Stress 'never'."
+ },
+ {
+  "id": "v2_m12",
+  "who": "mikon",
+  "text": "I've got one. I've actually got one.",
+  "how": "breathless, giddy disbelief",
+  "note": "With the coin. Stress 'actually'."
+ },
+ {
+  "id": "v2_c4",
+  "who": "charon",
+  "text": "Then get in. Sit in the middle, keep your hands inside, and don't look at the water too long. Some of them look back.",
+  "how": "gruff instructions; ominous drop on 'look back'"
+ },
+ {
+  "id": "v2_m13",
+  "who": "mikon",
+  "text": "Wait. There's a kid on the bank. He hasn't got a coin either. He's been sitting there since before I arrived.",
+  "how": "hesitant, troubled, conscience catching up"
+ },
+ {
+  "id": "v2_m14",
+  "who": "mikon",
+  "text": "Sorry, kid. I'll wave.",
+  "how": "awkward, guilty, a small wave",
+  "note": "Choice 1: Get in."
+ },
+ {
+  "id": "v2_c5",
+  "who": "charon",
+  "text": "It doesn't work like that. One coin, one passenger.",
+  "how": "stern, by the rules",
+  "note": "Choice 2: Give the kid your coin."
+ },
+ {
+  "id": "v2_m15",
+  "who": "mikon",
+  "text": "Then I'll wait with him. I've apparently got a hundred years to spare, and it turns out I'm good at waiting.",
+  "how": "quietly stubborn, warm, a little proud",
+  "note": "Choice 2."
+ },
+ {
+  "id": "v2_c6",
+  "who": "charon",
+  "text": "Both of you, then. Get in. If anybody asks, you paid.",
+  "how": "grudging and gruff; wry softness on 'you paid'",
+  "note": "Choice 2."
+ },
+ {
+  "id": "v2_m16",
+  "who": "mikon",
+  "text": "Actually, you know what? I've got a good spot now. I think I'll stay a while.",
+  "how": "relaxed, content, settling in",
+  "note": "Choice 3: Stay on the bank."
+ },
+ {
+  "id": "v2_m17",
+  "who": "mikon",
+  "text": "Could be worse.",
+  "how": "contented sigh, small smile",
+  "note": "Every ending."
+ }
+]
