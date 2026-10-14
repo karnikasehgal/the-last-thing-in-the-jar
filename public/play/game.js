@@ -646,8 +646,24 @@ const sound = {
     const b = actx.createBuffer(2, actx.sampleRate * 4, actx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let last = 0; for (let i = 0; i < d.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; } }
     const n = actx.createBufferSource(); n.buffer = b; n.loop = true;
-    const f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 480; f.Q.value = .6;
-    this.river = actx.createGain(); this.river.gain.value = .3; n.connect(f).connect(this.river).connect(master); n.start();
+    // the river: no steady hiss. Slow waves wash in and draw back, darker as they go, with small laps at the edge between.
+    this.river = actx.createGain(); this.river.gain.value = .3; this.river.connect(master);
+    const wash = actx.createBiquadFilter(); wash.type = "lowpass"; wash.frequency.value = 240; wash.Q.value = .4;
+    const swell = actx.createGain(); swell.gain.value = .04; n.connect(wash).connect(swell).connect(this.river); n.start();
+    const lap = at => { const x = this.noise(.5), bf = actx.createBiquadFilter(), g = actx.createGain();
+      bf.type = "bandpass"; bf.frequency.value = 260 + Math.random() * 260; bf.Q.value = 1.4;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.05 + Math.random() * .05, at + .05); g.gain.setTargetAtTime(0, at + .06, .09);
+      x.connect(bf).connect(g).connect(this.river); x.start(at); x.stop(at + .5); };
+    const wave = () => {
+      const t = actx.currentTime, up = 1.6 + Math.random() * 1.4, down = 2.6 + Math.random() * 2.4;
+      swell.gain.cancelScheduledValues(t); swell.gain.setValueAtTime(swell.gain.value, t);
+      swell.gain.linearRampToValueAtTime(.3 + Math.random() * .35, t + up); swell.gain.setTargetAtTime(.04, t + up, down / 3);
+      wash.frequency.cancelScheduledValues(t); wash.frequency.setValueAtTime(wash.frequency.value, t);
+      wash.frequency.linearRampToValueAtTime(700 + Math.random() * 500, t + up); wash.frequency.setTargetAtTime(200, t + up, down / 3);
+      for (let i = 0, k = Math.floor(Math.random() * 3); i < k; i++) lap(t + up + .4 + Math.random() * down);
+      setTimeout(wave, (up + down + Math.random() * 1.5) * 1000);
+    };
+    wave();
     const vsrc = actx.createMediaElementSource($("#voice"));
     this.voiceMeter = actx.createAnalyser(); this.voiceMeter.fftSize = 512; vsrc.connect(this.voiceMeter); this.voiceBuf = new Float32Array(512);
     const room = actx.createConvolver(), len = actx.sampleRate * 1.8, ir = actx.createBuffer(2, len, actx.sampleRate);
@@ -677,8 +693,8 @@ const sound = {
     if (!actx) return;
     if (!on) { this.partyStop?.(); this.partyStop = null; return; }
     const out = actx.createGain(); out.gain.value = .0; out.connect(master); out.gain.linearRampToValueAtTime(.5, actx.currentTime + 2);
-    const n = this.noise(4); n.loop = true; const f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 520; f.Q.value = .5;
-    const am = actx.createGain(); am.gain.value = .12; const lfo = actx.createOscillator(); lfo.frequency.value = 1.7; const lg = actx.createGain(); lg.gain.value = .07; lfo.connect(lg).connect(am.gain); lfo.start();
+    const n = this.noise(4); n.loop = true; const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 380; f.Q.value = .3; /* a murmur, not static */
+    const am = actx.createGain(); am.gain.value = .07; const lfo = actx.createOscillator(); lfo.frequency.value = 1.7; const lg = actx.createGain(); lg.gain.value = .07; lfo.connect(lg).connect(am.gain); lfo.start();
     n.connect(f).connect(am).connect(out); n.start();
     const tune = [62, 64, 65, 67, 69, 67, 65, 64, 62, 60, 62, 64, 65, 64, 62, 62], beat = .32; let k = 0, stop = false;
     const note = () => { if (stop) return; const at = actx.currentTime + .02, fq = 440 * Math.pow(2, (tune[k % tune.length] - 69) / 12);
@@ -1189,7 +1205,7 @@ function tick(now) {
   const arch = wedding?.g.userData.arch; if (arch) arch.visible = camera.position.distanceTo(wedding.g.localToWorld(arch.userData.center.clone())) > 3.4;
   sceneLight();
   if (!LITE) shadows(now);
-  if (sound.river) sound.river.gain.value = .2 + Math.max(0, 1.2 - Math.abs(me.pos.z - SHORE) / 14);
+  if (sound.river) sound.river.gain.value = .12 + Math.max(0, .7 - Math.abs(me.pos.z - SHORE) / 16);
   PLAYER?.fpCut?.();
   for (const f of poses) f(now);
   composer.render();
