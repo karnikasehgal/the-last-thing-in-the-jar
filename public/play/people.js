@@ -921,6 +921,25 @@ function rbClips(ASSETS, female) {
     }
     out[c.name] = k;
   }
+  // Calmer talk. The only seated motion with gestures in the library is a "thoughtful" one, a hand raised to the chin
+  // and held there: every seated character talked with a hand at their face or in their hair, for most of the loop.
+  // Seated on a bench, they now breathe as they sit and gesture with the arms of the standing talk; at a table, the
+  // hands stay on the table and only the head and neck move with the talk. The standing talk is cut before its one
+  // hand-to-head moment. Every cut is eased back to its first pose over the last second, so the loop never jumps.
+  const ARMS = n => /^Bip01_[LR]_(Clavicle|UpperArm|Forearm|Hand|Finger)/.test(n), HEADS = n => /^Bip01_(Neck|Head)\./.test(n);
+  const ease = (t, D) => { if (!t.name.endsWith(".quaternion")) return t; const v = t.values, T = t.times, n = T.length;
+    for (let i = 0; i < n; i++) { const u = (T[i] - (D - 1)) / 1; if (u <= 0) continue; const w = Math.min(1, u); THREE.Quaternion.slerpFlat(v, i * 4, v, i * 4, v, 0, w * w * (3 - 2 * w)); }
+    return t; };
+  const cut = (t, D) => { const c = t.clone(); c.trim(0, D); return c; };
+  const overlay = (name, base, from, take, D = Math.min(base.duration, from.duration)) => {
+    if (!base || !from) return; const k = base.clone(); k.name = name; k.duration = D;
+    k.tracks = [...base.tracks.filter(t => !take(t.name)).map(t => ease(cut(t, D), D)), ...from.tracks.filter(t => take(t.name)).map(t => ease(cut(t, D), D))];
+    out[name] = k; };
+  const talk = out.talk, sit = out.sit, table = out.sittable;
+  overlay("sittalk", sit, talk, ARMS);
+  overlay("sittabletalk", table, talk, HEADS);
+  overlay("sittablethink", table, talk, HEADS);
+  if (talk && talk.duration > 21) { const k = talk.clone(); k.duration = 20.5; k.tracks = k.tracks.map(t => ease(cut(t, 20.5), 20.5)); out.talk = k; }
   return RBCLIPS[key] = out;
 }
 const VISEMES = ["AA_VI_10_aa", "AA_VI_11_E", "AA_VI_13_O", "AA_VI_12_I", "AA_VI_14_U", "AA_VI_01_PP", "AA_VI_07_SS", "AA_VI_02_FF"];
