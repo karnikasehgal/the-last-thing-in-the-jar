@@ -649,27 +649,7 @@ const sound = {
     master = actx.createGain(); master.gain.value = .9;
     this.muffle = actx.createBiquadFilter(); this.muffle.type = "lowpass"; this.muffle.frequency.value = 20000;
     master.connect(this.muffle).connect(actx.destination);
-    const b = actx.createBuffer(2, actx.sampleRate * 4, actx.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let last = 0; for (let i = 0; i < d.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; } }
-    const n = actx.createBufferSource(); n.buffer = b; n.loop = true;
-    // the river: no steady hiss. Slow waves wash in and draw back, darker as they go, with small laps at the edge between.
-    this.river = actx.createGain(); this.river.gain.value = .3; this.river.connect(master);
-    const wash = actx.createBiquadFilter(); wash.type = "lowpass"; wash.frequency.value = 240; wash.Q.value = .4;
-    const swell = actx.createGain(); swell.gain.value = .04; n.connect(wash).connect(swell).connect(this.river); n.start();
-    const lap = at => { const x = this.noise(.5), bf = actx.createBiquadFilter(), g = actx.createGain();
-      bf.type = "bandpass"; bf.frequency.value = 260 + Math.random() * 260; bf.Q.value = 1.4;
-      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.05 + Math.random() * .05, at + .05); g.gain.setTargetAtTime(0, at + .06, .09);
-      x.connect(bf).connect(g).connect(this.river); x.start(at); x.stop(at + .5); };
-    const wave = () => {
-      const t = actx.currentTime, up = 1.6 + Math.random() * 1.4, down = 2.6 + Math.random() * 2.4;
-      swell.gain.cancelScheduledValues(t); swell.gain.setValueAtTime(swell.gain.value, t);
-      swell.gain.linearRampToValueAtTime(.3 + Math.random() * .35, t + up); swell.gain.setTargetAtTime(.04, t + up, down / 3);
-      wash.frequency.cancelScheduledValues(t); wash.frequency.setValueAtTime(wash.frequency.value, t);
-      wash.frequency.linearRampToValueAtTime(700 + Math.random() * 500, t + up); wash.frequency.setTargetAtTime(200, t + up, down / 3);
-      for (let i = 0, k = Math.floor(Math.random() * 3); i < k; i++) lap(t + up + .4 + Math.random() * down);
-      setTimeout(wave, (up + down + Math.random() * 1.5) * 1000);
-    };
-    wave();
+    // (no synthesised river: made from noise, it could only ever hiss. A real recording can go here.)
     const vsrc = actx.createMediaElementSource($("#voice"));
     this.voiceMeter = actx.createAnalyser(); this.voiceMeter.fftSize = 512; vsrc.connect(this.voiceMeter); this.voiceBuf = new Float32Array(512);
     const room = actx.createConvolver(), len = actx.sampleRate * 1.8, ir = actx.createBuffer(2, len, actx.sampleRate);
@@ -748,7 +728,7 @@ const goal = () => chap.goal();
 function paintGoal() { const l = goal().label; $("#goal").innerHTML = `<small>what to do</small>${typeof l === "function" ? l() : l}`; }
 
 /* ---------- conversations: spoken out loud, with the camera on whoever is talking ---------- */
-const voiceEl = $("#voice"), storyEl = $("#story");
+const voiceEl = $("#voice");
 let skipLine = null, choicePick = null, talkingTo = null;
 /* a hidden tab goes quiet, and the line being spoken waits until you're back */
 document.addEventListener("visibilitychange", () => {
@@ -1214,7 +1194,6 @@ function tick(now) {
   const arch = wedding?.g.userData.arch; if (arch) arch.visible = camera.position.distanceTo(wedding.g.localToWorld(arch.userData.center.clone())) > 3.4;
   sceneLight();
   if (!LITE) shadows(now);
-  if (sound.river) sound.river.gain.value = camera.position.x > 200 || storyEl.classList.contains("on") ? 0 : .12 + Math.max(0, .7 - Math.abs(me.pos.z - SHORE) / 16); /* only at the river: silent at the weddings and over the storybook */
   PLAYER?.fpCut?.();
   for (const f of poses) f(now);
   composer.render();
