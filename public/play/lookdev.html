@@ -1,0 +1,167 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Look-dev turntable</title>
+<style>html,body{margin:0;height:100%;background:#202020;overflow:hidden}canvas{display:block;width:100%;height:100%}
+#cap{position:fixed;left:10px;bottom:10px;color:#e8e8e8;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.55);padding:6px 9px;white-space:pre;pointer-events:none}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<canvas id="c"></canvas><div id="cap">loading…</div>
+<script type="module">
+// Look-dev turntable: one character, built by the game's own code, on a grey cyclorama under two fixed lights, so
+// shots before and after an art change can be laid side by side.
+//   ?id=thea           who (any cast id; _alive/_bank/_meadow looks load the base file; crowd/f0 .. crowd/m9: a wedding guest, dressed as the crowd is)
+//   &bare=1            Thea as the bare MakeHuman body (prepareBare), else the Rocketbox file; &toon=1 the animated one
+//   &light=neutral     a studio three-point light, a neutral room for reflections, an 18% grey card and a colour checker
+//   &light=game        the wedding at night: warm candles low in front, a warm lamp above, a cool dim fill, fog
+//   &view=front|side|back|three-quarter|face|full, or degrees (90 shows her right side): the character turns, the camera and lights stay put
+//   &anim=idle  &seated=1  &talk=1   (anim: a clip name as the game uses it, e.g. Idle_Loop, or its own key, e.g. sittalk)
+//   &t=2.5             freeze the clip at 2.5 s: the mixer is paused, the frame drawn once, so shots repeat exactly
+//   &env=<Poly Haven HDR name in assets/env>   light the neutral setup from that HDR instead of the neutral room
+// window.__look exposes the person, the scene and pose(anim, t) / turn(view) / render() for tools/check_clipping.mjs.
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { makeCastMember, makeExtra } from "./people.js";
+import { prepareToon, prepareBare } from "./toon.js";
+import { hdri } from "./pbr.js";
+
+const q = new URLSearchParams(location.search), on = k => q.has(k) && q.get(k) !== "0";
+const ID = q.get("id") || "thea", BARE = on("bare"), TOON = on("toon"), SEATED = on("seated"), LIGHT = q.get("light") === "game" ? "game" : "neutral";
+const T = q.has("t") ? +q.get("t") : null;
+let VIEW = q.get("view") || "front", ANIM = q.get("anim") || (SEATED ? "sit" : "idle");
+const cap = document.getElementById("cap");
+let dirty = true, HELD = T; // dirty: something changed, draw again; HELD: the time the clip is held at (null: playing)
+
+// the renderer as the game sets it up (game.js): AgX, sRGB out, soft shadows; the game's exposure for its own light
+const r = new THREE.WebGLRenderer({canvas: document.getElementById("c"), antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance"});
+r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75)); r.setSize(innerWidth, innerHeight, false);
+r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.AgXToneMapping; r.toneMappingExposure = LIGHT === "game" ? 1.15 : 1;
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.localClippingEnabled = true;
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, .05, 200);
+const lin = v => new THREE.Color().setRGB(v, v, v, THREE.LinearSRGBColorSpace);
+
+// the cyclorama: a floor that curves up into a wall all the way round, so every view has the same seamless grey behind
+{ const R = 7, c = 1.6, H = 7, pts = [new THREE.Vector2(0, 0), new THREE.Vector2(R - c, 0)];
+  for (let i = 1; i <= 12; i++) { const a = i / 12 * Math.PI / 2; pts.push(new THREE.Vector2(R - c + Math.sin(a) * c, c - Math.cos(a) * c)); }
+  pts.push(new THREE.Vector2(R, H));
+  const cyc = new THREE.Mesh(new THREE.LatheGeometry(pts, 96), new THREE.MeshStandardMaterial({color: lin(LIGHT === "game" ? .1 : .1), roughness: 1, side: THREE.DoubleSide}));
+  cyc.receiveShadow = true; scene.add(cyc); }
+
+// the references, facing the camera beside the character: an 18% grey card and the 24 patches of a colour checker
+// (the published sRGB values of the X-Rite ColorChecker Classic, read as sRGB)
+const CHECKER = [0x735244, 0xc29682, 0x627a9d, 0x576c43, 0x8580b1, 0x67bdaa, 0xd67e2c, 0x505ba6, 0xc15a63, 0x5e3c6c, 0x9dbc40, 0xe0a32e,
+  0x383d96, 0x469449, 0xaf363c, 0xe7c71f, 0xbb5695, 0x0885a1, 0xf3f3f2, 0xc8c8c8, 0xa0a0a0, 0x7a7a79, 0x555555, 0x343434];
+const chart = new THREE.Group(); scene.add(chart);
+{ const flat = color => new THREE.MeshStandardMaterial({color, roughness: .95, metalness: 0});
+  const card = new THREE.Mesh(new THREE.PlaneGeometry(.2, .26), flat(lin(.18))); card.position.set(0, .2, 0); chart.add(card);
+  const s = .042, back = new THREE.Mesh(new THREE.PlaneGeometry(6 * s + .02, 4 * s + .02), flat(0x111111)); back.position.set(0, -.07, -.001); chart.add(back);
+  CHECKER.forEach((hex, i) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(s * .86, s * .86), flat(hex)); p.position.set(((i % 6) - 2.5) * s, -.07 + (1.5 - (i / 6 | 0)) * s, 0); chart.add(p); }); }
+
+// the light
+const rig = new THREE.Group(); scene.add(rig);
+if (LIGHT === "neutral") {
+  scene.background = lin(.05);
+  // key, fill and rim: daylight-white, the key high and to camera left, the fill low and opposite, the rim behind
+  const key = new THREE.DirectionalLight(0xffffff, 2.8); key.position.set(-2.6, 4.2, 4); key.castShadow = true;
+  const fill = new THREE.DirectionalLight(0xffffff, .8); fill.position.set(3.5, 1.6, 3);
+  const rim = new THREE.DirectionalLight(0xffffff, 2.2); rim.position.set(1.5, 3.5, -4.5);
+  for (const l of [key, fill, rim]) { l.target.position.set(0, 1, 0); rig.add(l, l.target); }
+  Object.assign(key.shadow.camera, {left: -1.5, right: 1.5, top: 2.2, bottom: -.3, near: .5, far: 12}); key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -.0004; key.shadow.normalBias = .02;
+  // reflections from a neutral grey studio (the HDRs we have are all warm interiors, coloured skies or a sunrise)
+  if (q.get("env")) scene.environment = await hdri(r, q.get("env"), 1);
+  else scene.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), .04).texture;
+  scene.environmentIntensity = .35;
+} else {
+  // the wedding at night (wedding.js and game.js): candles on the tables at arm's length, warm lamps on poles above,
+  // the cold night sky as the only fill, a little warm haze, and the dim cathedral HDR the game lights the night with
+  scene.background = new THREE.Color(0x05060b); scene.fog = new THREE.FogExp2(0x1a140f, .016);
+  const P = (c, p, d, x, y, z, shadow) => { const l = new THREE.PointLight(c, p, d, 1.6); l.position.set(x, y, z); if (shadow) { l.castShadow = true; l.shadow.mapSize.set(1024, 1024); l.shadow.bias = -.002; } rig.add(l); return l; };
+  P(0xffb060, 4.5, 6.5, -.9, 1.15, 1.1, true); P(0xffb060, 3.2, 6, 1.1, .9, .9); P(0xff9a4a, 10, 12, .6, 2.6, -1.8); P(0xffa850, 2.2, 3.5, -.4, .5, 1.2);
+  rig.add(new THREE.HemisphereLight(0x2c3a5c, 0x1c140e, .22));
+  scene.environment = await hdri(r, "small_cathedral", .06, [.8, .8, 1]);
+}
+
+// the character, as the lab and the game load them
+const gl = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder), ASSETS = {};
+const base = ID.replace(/_(bank|alive|meadow)$/, ""), files = ["rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx"], EXTRA = /^crowd\/[fm]\d+$/.test(ID);
+if (EXTRA) files.push(ID); else if (BARE) files.push("bare/thea"); else if (TOON) files.push("toon/rain", "toon/snow", "toon/chiton_short"); else files.push("rb/" + base);
+await Promise.all(files.map(async n => { ASSETS[n.replace("/", "_")] = await gl.loadAsync(`assets/${n}.glb`); }));
+if (BARE) ASSETS["rb_" + base] = prepareBare(ASSETS.bare_thea);
+if (TOON) { for (const k of ["toon_rain", "toon_snow", "toon_chiton_short"]) prepareToon(ASSETS[k]); ASSETS["rb_" + base] = ["persephone", "eurydice", "aunt", "thea", "dancer"].includes(base) ? ASSETS.toon_rain : ASSETS.toon_snow; }
+const person = EXTRA ? makeExtra(ASSETS[ID.replace("/", "_")], {ASSETS, scene, seated: SEATED, female: ID.includes("/f"), colors: [0x8a5a7a, 0xd8c8b0, 0xe8e0d0]})
+  : makeCastMember(ID, {ASSETS, CLIPS: {}, scene, seated: SEATED});
+const table = new THREE.Group(); scene.add(table); table.add(person.root); // the turntable: views turn the character, not the light
+person.root.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+person.speaking = on("talk");
+
+// a plain block to sit on, put under the hips once she sits
+const stool = new THREE.Mesh(new THREE.BoxGeometry(.5, 1, .45), new THREE.MeshStandardMaterial({color: lin(.08), roughness: .9})); stool.visible = false; stool.castShadow = stool.receiveShadow = true; table.add(stool);
+
+const bone = n => person.root.getObjectByName(n), wp = o => o.getWorldPosition(new THREE.Vector3());
+const ANGLE = {front: 0, "three-quarter": -Math.PI / 4, side: -Math.PI / 2, back: Math.PI, face: 0, full: -Math.PI / 8};
+let frame = null; // where the head and feet are at rest, measured once (the framing must not follow the clip)
+function measure() {
+  table.rotation.y = 0; table.updateMatrixWorld(true);
+  const head = wp(bone("Bip01_Head")), pelvis = wp(bone("Bip01_Pelvis")), v = new THREE.Vector3(); let top = head.y;
+  person.root.traverse(o => { if (!o.isSkinnedMesh) return; const n = o.geometry.attributes.position.count; for (let i = 0; i < n; i += 5) { o.getVertexPosition(i, v); top = Math.max(top, v.applyMatrix4(o.matrixWorld).y); } });
+  frame = {head, pelvis, top: top + .03};
+}
+function turn(view = VIEW) {
+  VIEW = ANGLE[view] !== undefined || isFinite(view) ? String(view) : "front"; table.rotation.y = ANGLE[VIEW] ?? -THREE.MathUtils.degToRad(+VIEW); table.updateMatrixWorld(true);
+  const f = frame, tan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+  if (VIEW === "face") { const y = f.head.y + .04, d = .19 / tan; cam.position.set(0, y + .02, d + f.head.z); cam.lookAt(0, y, f.head.z); }
+  else { const wide = VIEW === "full" ? 1.5 : 1.12, h = f.top * wide, y = f.top * .5 - .03 + (VIEW === "full" ? .05 : 0), d = h / 2 / tan;
+    cam.position.set(0, y + (VIEW === "full" ? .45 : .08), d); cam.lookAt(0, y, 0); }
+  cam.updateMatrixWorld(true);
+  // the card and checker: to camera right, at mid-frame, sized to the shot
+  const d = cam.position.length(), k = VIEW === "face" ? .32 : d / 4.4, right = new THREE.Vector3(1, 0, 0);
+  const halfW = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.aspect * (VIEW === "face" ? cam.position.z - f.head.z : d);
+  chart.scale.setScalar(k); chart.position.copy(VIEW === "face" ? new THREE.Vector3(0, f.head.y - .02, f.head.z) : new THREE.Vector3(0, f.top * .42, .25)).addScaledVector(right, halfW * .62);
+  chart.lookAt(cam.position.x, chart.position.y, cam.position.z);
+  dirty = true;
+}
+// the clip at a given time, held there (time: null lets it play)
+function pose(anim = ANIM, t = T) {
+  ANIM = anim; HELD = t; person.current = null; person.mixer.stopAllAction(); person.play(anim, 0);
+  const a = person.action; if (a) { a.stopFading(); a.setEffectiveWeight(1); a.time = t ?? 0; }
+  person.mixer.update(0); person.root.updateMatrixWorld(true);
+  stool.visible = SEATED; if (SEATED) { const p = wp(bone("Bip01_Pelvis")); table.worldToLocal(p); stool.scale.y = Math.max(.1, p.y - .12); stool.position.set(p.x, stool.scale.y / 2, p.z + .06); }
+  dirty = true;
+}
+function clipName() { const c = person.clips || {}, map = {Idle_Loop: "idle", Idle_Talking_Loop: "talk", Sitting_Idle_Loop: "sit", Sitting_Talking_Loop: "sittalk", Walk_Loop: "walk"}; const k = map[ANIM] || ANIM; return c[k] ? k : k + " (missing: idle)"; }
+// what the character costs: triangles and textures of its own meshes, whatever the camera sees
+function stats() {
+  let tris = 0, garment = 0, meshes = 0; const tex = new Map();
+  person.root.traverse(o => { if (!o.isMesh || !o.visible) return; meshes++; const g = o.geometry, n = (g.index ? g.index.count : g.attributes.position.count) / 3; tris += n; if (o.userData.garment || !o.isSkinnedMesh) garment += n; /* (the body: its own skinned meshes; the rest is clothes, gold and flowers) */
+    for (const m of [].concat(o.material)) for (const v of Object.values(m)) if (v && v.isTexture && v.image) tex.set(v.uuid, [v.image.width || 0, v.image.height || 0, v.name || ""]); });
+  return {tris, garment, body: tris - garment, meshes, textures: [...tex.values()]};
+}
+function caption() {
+  const i = r.info.render, s = stats();
+  cap.textContent = `${ID}${BARE ? " (bare)" : TOON ? " (toon)" : ""}${SEATED ? " seated" : ""}  anim ${clipName()}  t ${HELD === null ? "live " + (person.action?.time ?? 0).toFixed(2) : HELD.toFixed(2)} s\nview ${VIEW}  light ${LIGHT}\n` +
+    `frame: ${i.triangles.toLocaleString()} tris, ${i.calls} draw calls\ncharacter: ${s.tris.toLocaleString()} tris (body ${s.body.toLocaleString()}, clothes and ornaments ${s.garment.toLocaleString()}), ${s.meshes} meshes, ${s.textures.length} textures`;
+}
+// red points over chosen world positions (the clipping check marks the cloth that went inside the body)
+let marks = null;
+function mark(xyz, color = 0xff1010) {
+  if (marks) { scene.remove(marks); marks.geometry.dispose(); marks = null; }
+  if (xyz?.length) { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(xyz, 3));
+    marks = new THREE.Points(g, new THREE.PointsMaterial({color, size: 5, sizeAttenuation: false, depthTest: false, toneMapped: false})); marks.renderOrder = 99; scene.add(marks); }
+  dirty = true;
+}
+function render() { r.render(scene, cam); caption(); dirty = false; }
+
+measure(); pose(); turn();
+addEventListener("resize", () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; turn(VIEW); });
+const clock = new THREE.Clock();
+// frozen (?t): drawn only when something changes, so a still costs nothing; otherwise it plays
+(function loop() {
+  const dt = Math.min(clock.getDelta(), .05);
+  if (HELD === null) { person.mixer.update(dt); person.expr?.update(performance.now(), person.speaking, 0); dirty = true; }
+  if (dirty) render();
+  requestAnimationFrame(loop);
+})();
+window.__look = {THREE, r, scene, cam, person, table, ASSETS, pose, turn, render, mark, stats, ready: true, opts: {id: ID, bare: BARE, toon: TOON, seated: SEATED, light: LIGHT}};
+</script>
