@@ -1,0 +1,23 @@
+[
+  {"id": "s01", "img": "s01", "file": "film/ch1/stills/s01.jpg", "lines": ["w_i1"], "move": [1.06, 1.16, 0, 2], "water": true, "candles": true, "choke": false, "party": true},
+  {"id": "s02", "img": "s02", "file": "film/ch1/stills/s02.jpg", "lines": ["w_l0"], "move": [1.1, 1.03, 3, 0], "water": true, "candles": true, "choke": false, "party": false},
+  {"id": "s03", "img": "s03", "file": "film/ch1/stills/s03.jpg", "lines": ["w_m0"], "move": [1.03, 1.12, 0, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s04", "img": "s04", "file": "film/ch1/stills/s04.jpg", "lines": ["w_a0"], "move": [1.1, 1.04, -3, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s05", "img": "s05", "file": "film/ch1/stills/s05.jpg", "lines": ["w_d1", "w_a1", "w_d2"], "move": [1.04, 1.14, 0, -2], "water": true, "candles": true, "choke": false, "party": true},
+  {"id": "s06", "img": "s06", "file": "film/ch1/stills/s06.jpg", "lines": ["w_m1", "w_l1"], "move": [1.12, 1.05, -3, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s07", "img": "s07", "file": "film/ch1/stills/s07.jpg", "lines": ["w_m2"], "move": [1.02, 1.15, 0, 1], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s08", "img": "s08", "file": "film/ch1/stills/s08.jpg", "lines": [], "move": [1.03, 1.1, 0, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s09", "img": "s09", "file": "film/ch1/stills/s09.jpg", "lines": ["w_m3"], "move": [1.04, 1.1, 0, -1], "water": false, "candles": true, "choke": false, "party": true},
+  {"id": "s10", "img": "s10", "file": "film/ch1/stills/s10.jpg", "lines": ["w_l2"], "move": [1.03, 1.18, 0, 0], "water": false, "candles": true, "choke": true, "party": false},
+  {"id": "s11", "img": "s11", "file": "film/ch1/stills/s11.jpg", "lines": ["w_a2", "w_n1", "w_t1"], "move": [1.12, 1.04, 2, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s12", "img": "s12", "file": "film/ch1/stills/s12.jpg", "lines": ["w_a5", "w_t3"], "move": [1.06, 1.12, -2, 1], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s13", "img": "s13", "file": "film/ch1/stills/s13.jpg", "lines": ["w_vo1"], "move": [1.15, 1.02, 0, 0], "water": true, "candles": true, "choke": false, "party": false},
+  {"id": "s14", "img": "s14", "file": "film/ch1/stills/s14.jpg", "lines": ["w_a3", "w_d3", "w_a4", "w_d4"], "move": [1.04, 1.14, 0, 2], "water": true, "candles": true, "choke": false, "party": false},
+  {"id": "s15", "img": "s15", "file": "film/ch1/stills/s15.jpg", "lines": ["w_t2"], "move": [1.02, 1.1, 0, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s16", "img": "s16", "file": "film/ch1/stills/s16.jpg", "lines": ["w_vo2"], "move": [1.2, 1.02, 0, 0], "water": false, "candles": true, "choke": false, "party": false},
+  {"id": "s17", "img": "s17", "file": "film/ch1/stills/s17.jpg", "lines": ["w_m4"], "move": [1.1, 1.02, 0, 0], "water": true, "candles": false, "choke": false, "party": false},
+  {"id": "s18", "img": "s18", "file": "film/ch1/stills/s18.jpg", "lines": ["v4_h1", "v4_m1", "v4_h2", "v4_m2", "v4_h3", "v4_m3", "v5_h4", "v5_m4", "v5_h5"], "move": [1.03, 1.12, 0, 0], "water": true, "candles": false, "choke": false, "party": false},
+  {"id": "s17", "img": "s17", "file": "film/ch1/stills/s17.jpg", "lines": ["v5_h6"], "move": [1.04, 1.18, 3, 0], "water": true, "candles": false, "choke": false, "party": false},
+  {"id": "s18", "img": "s18", "file": "film/ch1/stills/s18.jpg", "lines": ["v5_m5", "v5_h7"], "move": [1.12, 1.03, -2, 0], "water": true, "candles": false, "choke": false, "party": false},
+  {"id": "s17", "img": "s17", "file": "film/ch1/stills/s17.jpg", "lines": ["v2_i5", "v2_i6"], "move": [1.3, 1.0, 0, -2], "water": true, "candles": false, "choke": false, "party": false}
+]
