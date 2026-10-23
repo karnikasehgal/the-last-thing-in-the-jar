@@ -219,6 +219,8 @@ function route(request, env) {
     if (FILM_ONLY.test(url.pathname)) return notFound();
   }
   if (url.hostname === FILM_HOST && url.pathname.startsWith("/play/")) return notFound();
+  // placeholder portraits are for testing on this machine only (wrangler dev), even if a deploy happens to carry them
+  if (url.pathname.includes("/portraits/_placeholder/") && !["::1", "127.0.0.1"].includes(request.headers.get("cf-connecting-ip"))) return notFound();
   return env.ASSETS.fetch(request);
 }
 

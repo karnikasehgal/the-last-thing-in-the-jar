@@ -5,6 +5,7 @@ node_modules/
 .claude/
 public/_voices/
 public/play/_lab/
+public/play/portraits/_placeholder/
 voice-test/
 look-test/
 paintings-in/

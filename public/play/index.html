@@ -71,6 +71,24 @@ body.talking .bars::before,body.talking .bars::after{height:12.5vh}
 @media (max-width:760px){.choices{flex-direction:column;gap:2px;height:auto;min-height:12.5vh;padding:8px 16px;background:#000}.choices button{white-space:normal}}
 .skiphint{position:fixed;right:22px;bottom:calc(12.5vh + 10px);z-index:9;font-family:var(--fell);font-style:italic;font-size:14px;color:var(--faint);opacity:0}
 body.talking .skiphint{opacity:1}
+/* painted portraits (?portraits): the speaker's painting beside the picture, left for whoever you're talking to, right
+   for you; it melts into the scene at its edges, a thin gold rule and the name beneath. Clear of the subtitles and choices. */
+#portraits{position:fixed;inset:0;z-index:8;pointer-events:none;--ph:min(54vh,520px)}
+#portraits .pt{position:absolute;top:calc(12.5vh + 26px);height:var(--ph);width:calc(var(--ph) * .8);opacity:0;transform:translateX(var(--from));transition:opacity .55s ease,transform .7s cubic-bezier(.2,.7,.2,1),filter .55s ease}
+#portraits .l{left:3vw;--from:-16px}#portraits .r{right:3vw;--from:16px}
+#portraits.on .pt.seen{opacity:.34;transform:none;filter:saturate(.45) brightness(.75)}
+#portraits.on .pt.now{opacity:1;filter:none}
+#portraits img{display:block;width:100%;height:calc(100% - 44px);object-fit:cover;transition:opacity .18s ease;
+  -webkit-mask-image:radial-gradient(closest-side at 50% 46%,#000 55%,rgba(0,0,0,.5) 80%,transparent 100%);mask-image:radial-gradient(closest-side at 50% 46%,#000 55%,rgba(0,0,0,.5) 80%,transparent 100%)}
+#portraits img:not([src]){visibility:hidden}
+#portraits figcaption{font-family:var(--fell);font-size:clamp(17px,1.6vw,22px);text-align:center;color:var(--cream);letter-spacing:.03em;text-shadow:0 1px 10px #000;transition:opacity .18s ease}
+#portraits figcaption::before{content:"";display:block;height:1px;margin:2px 22% 7px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.8}
+#portraits .swap img,#portraits .swap figcaption{opacity:0}
+body.portrayed #namecard{left:calc(3vw + var(--ph,min(54vh,520px)) * .8 + 28px)}
+@media (max-width:760px){#portraits{--ph:min(28vh,230px)}#portraits .pt{top:calc(12.5vh + 10px)}#portraits.on .pt.seen:not(.now){opacity:0}
+  body.portrayed #namecard{left:6vw;top:calc(12.5vh + min(28vh,230px) + 22px)}}
+@media (max-height:500px) and (min-width:761px){#portraits{--ph:40vh}#portraits .pt{top:calc(12.5vh + 10px)}}
+@media (prefers-reduced-motion:reduce){#portraits .pt{transform:none!important;transition:opacity .25s ease}#portraits img,#portraits figcaption{transition:none}}
 
 /* the start: a plan of the House of Hades, and a bill for the chosen chapter */
 #start{padding:0;background:#0c0a0b;display:none;align-items:stretch;justify-content:stretch;text-align:left}
@@ -325,6 +343,7 @@ body.clipping #clip{display:block}
 </div>
 
 <div id="namecard"><b></b><span></span></div>
+<div id="portraits" aria-hidden="true"><figure class="pt l"><img alt=""><figcaption></figcaption></figure><figure class="pt r"><img alt=""><figcaption></figcaption></figure></div>
 <div class="sub" id="sub"><b></b><span></span></div>
 <button class="mapbtn" id="mapBtn" hidden>map (M)</button>
 <button class="codexbtn" id="codexBtn">codex (C)</button>
