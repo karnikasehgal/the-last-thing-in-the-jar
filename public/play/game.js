@@ -84,8 +84,9 @@ function unblock(on) {
   const now = performance.now();
   if (now - peopleT > 1000) { peopleT = now; people = []; scene.traverse(o => { if (o.children?.some(c => c.isSkinnedMesh && /^GEO-/.test(c.name) || c.isGroup && c.children[0]?.isSkinnedMesh && /^GEO-/.test(c.name))) people.push(o); }); }
   const cam = camera.getWorldPosition(new THREE.Vector3()), look = camShot.look, line = look.clone().sub(cam), len = line.length(); line.normalize();
-  const h = new THREE.Vector3();
+  const h = new THREE.Vector3(), mine = PORTRAITS && shot.cur && shot.cur === two.id ? PLAYER?.root : null; // (in a two-shot, you're meant to be in the way)
   for (const r of people) {
+    if (mine) { let o = r; while (o && o !== mine) o = o.parent; if (o) continue; }
     const head = r.getObjectByName("Bip01_Head"); if (!head) continue;
     head.getWorldPosition(h); const t = h.clone().sub(cam).dot(line);
     const block = t > .15 && t < len - .45 && h.clone().sub(cam).addScaledVector(line, -t).length() < .3;
@@ -945,12 +946,73 @@ const CUTS = {
   chairs: {pos: V(56, 2.2, 4.5), look: V(56, 1.3, -1)}
 };
 function cutTo(name) { shot.cur = null; const c = CUTS[name]; camShot.pos.copy(c.pos); camShot.look.copy(c.look); camShot.active = true; camShot.snap = true; }
+/* ---------- painted portraits (?portraits): the 3D camera holds back, a painting carries the close-up ---------- */
+// While two people talk the camera keeps a wide two-shot from behind you, and a painting of whoever is speaking sits
+// beside the picture: theirs on the left, yours on the right. Paintings are portraits/<who>-<expression>.jpg (who as in
+// NPC and line(), e.g. hermes, mikon); a line's expression comes from PORTRAIT_EXPR, else "neutral". Someone with no
+// painting at all keeps the 3D close-up for that line. ?portraits=placeholder reads portraits/_placeholder/ instead
+// (cards made by tools/placeholder_portraits.mjs, never shipped). The films never use any of this.
+const PQ = new URLSearchParams(location.search).get("portraits");
+const PORTRAITS = PQ !== null, PORTRAIT_DIR = PQ === "placeholder" ? "portraits/_placeholder/" : "portraits/";
+const PORTRAIT_EXPR = { // line id: expression (neutral, amused, sad, stern, surprised, worried)
+  v4_h2: "sad", v4_h3: "amused", v5_h5: "amused", v5_h7: "amused",
+  v4_m1: "worried", v4_m2: "surprised", v5_m5: "surprised", v2_m7: "sad", v2_m12: "amused", v2_m13: "worried",
+  v2_e2: "amused", v2_e5: "surprised", v2_e6: "amused", v5_e6: "amused", v2_e3: "worried",
+  v2_t1: "stern", v2_t5: "sad", v2_p5: "worried", v2_p6: "sad",
+  v2_c1: "stern", v2_c3: "stern", v2_c5: "stern"
+};
+const portraitOk = new Map(); // src: a promise of whether it loads, asked once (the load also warms the cache)
+function portraitHas(src) {
+  if (!portraitOk.has(src)) portraitOk.set(src, new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = src; }));
+  return portraitOk.get(src);
+}
+async function portraitFor(who, id) { // the painting for this line, or null; never holds a line up for more than half a second
+  const src = e => `${PORTRAIT_DIR}${who}-${e}.jpg`, late = new Promise(r => setTimeout(() => r(false), 500)), e = PORTRAIT_EXPR[id];
+  if (e && await Promise.race([portraitHas(src(e)), late])) return src(e);
+  return await Promise.race([portraitHas(src("neutral")), late]) ? src("neutral") : null;
+}
+const stillCam = matchMedia("(prefers-reduced-motion: reduce)");
+const two = {id: null, key: null};
+function twoShot(p) { // over your left shoulder, far enough back that both of you are small, drifting slowly in
+  if (shot.cur && shot.cur === two.id && two.key === p) return;
+  const H = q => (q.bones?.Head || q.root).getWorldPosition(new THREE.Vector3());
+  const near = Object.values(NPC).filter(q => q !== p && q !== PLAYER && q.root.visible && flat(q.root.position).distanceTo(flat(p.root.position)) < 3.5); // Pirithous, beside Theseus
+  const them = [p, ...near].map(H).reduce((a, b) => a.add(b)).divideScalar(1 + near.length);
+  const mine = flat(me.pos), d = flat(them).sub(mine), dist = Math.max(.8, d.length()); d.normalize();
+  me.yaw = Math.atan2(-d.x, -d.z); me.pitch = -.04; // you turn to face them (your body faces where you look)
+  const left = V(d.z, 0, -d.x), eye = fpPos.y, narrow = Math.max(0, 1 - camera.aspect); // a phone held upright: further back, closer in behind you
+  const A = mine.clone().addScaledVector(d, -2.5 - narrow * 2.2).addScaledVector(left, 1.15 - narrow * .7).setY(eye + .38);
+  const L = mine.clone().addScaledVector(d, dist * (.55 - narrow * .4)).setY((eye + them.y) / 2 - .12);
+  const t0 = performance.now(), id = {}; two.id = shot.cur = id; two.key = p;
+  camShot.pos.copy(A); camShot.look.copy(L); camShot.active = true; camShot.snap = true;
+  (function go() { if (shot.cur !== id || !talking) return; if (!stillCam.matches) { const t = performance.now() - t0, u = Math.min(1, t / 18000);
+    camShot.pos.copy(A).addScaledVector(d, u * u * (3 - 2 * u) * .55).addScaledVector(left, Math.sin(t / 6000) * .08); } requestAnimationFrame(go); })();
+}
+const ptBox = $("#portraits");
+function showPortrait(side, name, src) { // side ".l" (whoever you're talking to) or ".r" (you)
+  const f = ptBox.querySelector(side), img = f.querySelector("img"), cap = f.querySelector("figcaption");
+  ptBox.classList.add("on"); document.body.classList.add("portrayed");
+  ptBox.querySelector(side === ".l" ? ".r" : ".l").classList.remove("now");
+  const set = () => { img.src = src; cap.textContent = name; f.classList.remove("swap"); };
+  if (img.getAttribute("src") === src) set();
+  else if (!f.classList.contains("seen")) set(); // first time on: it fades and slides in
+  else { const k = f.swapT = {}; f.classList.add("swap"); setTimeout(() => f.swapT === k && set(), stillCam.matches ? 0 : 180); } // someone new on the same side, or a new face: a quick crossfade
+  f.classList.add("now", "seen");
+}
+function hidePortraits() {
+  if (!PORTRAITS) return;
+  ptBox.classList.remove("on"); document.body.classList.remove("portrayed");
+  ptBox.querySelectorAll(".pt").forEach(f => f.classList.remove("now", "seen", "swap"));
+}
 async function line(who, id, text, cut) {
   const p = NPC[who], heard = cut === "voice" || cut === "vo"; // "voice": heard, not seen; "vo": narration, clear of the world's sound
+  const pt = PORTRAITS && !heard && !staging && !document.body.classList.contains("cinema") && (talkingTo || p) ? await portraitFor(who, id) : null;
   sound.narration(cut === "vo");
   $("#sub b").textContent = p ? p.name : chap.player;
   $("#sub span").textContent = text; $("#sub").classList.add("on");
-  if (heard) {} else if (cut) cutTo(cut); else if (p) frameOn(p, 1); else if (talkingTo) frameOn(talkingTo, -1);
+  if (heard) {} else if (pt) { if (cut) cutTo(cut); else twoShot(talkingTo || p); } // with a painting: a place still cuts away, a face doesn't
+  else if (cut) cutTo(cut); else if (p) frameOn(p, 1); else if (talkingTo) frameOn(talkingTo, -1);
+  if (pt) showPortrait(p && p !== PLAYER ? ".l" : ".r", p ? p.name : chap.player, pt); else hidePortraits();
   if (p && !heard) p.play(p.talk);
   if (p) p.speaking = true;
   voiceEl.src = `voice/${id}.m4a`;
@@ -1005,7 +1067,8 @@ const WAKE = [
   ["mikon", "v5_m5", "You're leaving? Just like that?"],
   ["hermes", "v5_h7", "Just like that. Somewhere up there, a man is trying to pat a lion. Good luck, Mikon. I mean it. And from now on, chew."]
 ];
-function beginTalk(p, id) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; $("#toast").classList.remove("on"); clearTimeout(toastT); nameCard(id); }
+function beginTalk(p, id) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; $("#toast").classList.remove("on"); clearTimeout(toastT); nameCard(id);
+  if (PORTRAITS) for (const w of [id, chap.player.toLowerCase()]) portraitHas(`${PORTRAIT_DIR}${w}-neutral.jpg`); } // ask early, so the first line doesn't wait
 async function conversation(id) {
   beginTalk(NPC[id], id);
   const say = (who, lid, text, cut) => line(who, lid, text, cut);
@@ -1074,7 +1137,7 @@ async function conversation(id) {
   endTalk();
 }
 function endTalk() {
-  talking = false; camShot.active = false; talkingTo = null;
+  talking = false; camShot.active = false; talkingTo = null; hidePortraits();
   document.body.classList.remove("talking"); $("#sub").classList.remove("on"); $("#choices").classList.remove("on");
   paintGoal();
   if (playing && !ended) grabMouse();
