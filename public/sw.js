@@ -1,6 +1,6 @@
 // Keeps the heavy, unchanging files (paintings, models, voices) on the device after the first visit,
 // so the film and the game load fast. Pages and code always come fresh from the network when online.
-const CACHE = "coin-v60";
+const CACHE = "coin-v61";
 const HEAVY = [/^\/img\//, /^\/audio\//, /^\/play\/assets\//, /^\/play\/voice\//, /^\/icons\//];
 
 self.addEventListener("install", () => self.skipWaiting());
