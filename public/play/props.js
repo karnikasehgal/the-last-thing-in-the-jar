@@ -9,6 +9,9 @@ export const PROPS = ["namaqualand_boulder_02", "namaqualand_boulder_04", "rock_
   // for the wedding table and courtyard: brass goblets and candelabra, carved wooden plates, pomegranates, a clay jug, potted plants, a tree
   "brass_goblets", "carved_wooden_plate", "brass_candleholders", "food_pomegranate_01", "ceramic_vase_04", "potted_plant_02", "tree_small_02"];
 const ROCKS = ["namaqualand_boulder_02", "namaqualand_boulder_04", "rock_07", "boulder_01", "rock_moss_set_01"];
+// Light copies of the scanned rocks' shapes (1,500 to 3,000 triangles instead of 5,000 to 57,000; made in Blender with a
+// Decimate modifier), worn with the original textures: at the distances rocks are seen they look the same.
+export const LOW = ["boulder_01", "coast_rocks_02", "namaqualand_boulder_02", "namaqualand_boulder_04", "rock_07", "rock_moss_set_01"];
 
 // one model, centred on its middle, with its radius measured, ready to clone ("set#item" takes one piece of a set)
 const prepped = {};
@@ -17,7 +20,8 @@ function prep(A, name) {
   const [file, part] = name.split("#"), whole = A["props_" + file]?.scene; if (!whole) return null;
   const src = part ? whole.getObjectByName(part) : whole; if (!src) return null;
   const g = src.clone(true); g.position.set(0, 0, 0); g.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
-  g.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+  const low = []; A["props_lo/" + file]?.scene.traverse(o => { if (o.isMesh) low.push(o.geometry); });
+  let k = 0; g.traverse(o => { if (o.isMesh) { if (!part && low[k]) o.geometry = low[k]; k++; o.castShadow = o.receiveShadow = true; } });
   const wrap = new THREE.Group(); g.position.sub(c); wrap.add(g);
   return prepped[name] = {wrap, r: Math.max(size.x, size.y, size.z) / 2, h: size.y, base: box.min.y - c.y};
 }

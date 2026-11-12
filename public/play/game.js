@@ -16,7 +16,7 @@ import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { pbr, hdri, skyPhoto } from "./pbr.js";
 import { buildTemple } from "./temple.js";
-import { PROPS, rockify, place } from "./props.js";
+import { PROPS, LOW, rockify, place } from "./props.js";
 import { groundHeight } from "./meadow.js";
 import { makeHound, animateHound, rigHound } from "./hound.js";
 import { makeCastMember, oar, mount, hold, makeExtra, cloneExtra } from "./people.js";
@@ -691,7 +691,7 @@ async function loadAssets(progress) {
     for (const n of list.filter(n => n.startsWith("crowd/"))) list.splice(list.indexOf(n), 1);
     list.push("toon/rain", "toon/snow", "toon/chiton_short");
   }
-  list.push("toon/cerberus", ...PROPS.map(n => "props/" + n));
+  list.push("toon/cerberus", ...PROPS.map(n => "props/" + n), ...LOW.map(n => "props/lo/" + n));
   if (BARE) list.push("bare/thea");
   let done = 0;
   await Promise.all(list.map(async n => { ASSETS[n.replace("rb/", "rb_").replace("crowd/", "crowd_").replace("toon/", "toon_").replace("props/", "props_").replace("bare/", "bare_")] = await gltf.loadAsync(`assets/${n}.glb${/^(toon|bare)\//.test(n) ? "?v=" + TOON_V : ""}`); progress(++done / list.length); }));
