@@ -175,7 +175,7 @@ const lens = null;
 // light values: every lamp and candle was clipped flat and the mid-tones were crushed, which is what made the colours muddy.)
 composer.addPass(new OutputPass());
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
-function resize() { const pr = Math.max(.6, pixelRatio() * res.scale); renderer.setPixelRatio(pr); composer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+function resize() { const pr = Math.max(LITE ? 1 : .75, pixelRatio() * res.scale); /* (a phone's picture never drops below one pixel per screen point: softer reads as blurry) */ renderer.setPixelRatio(pr); composer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 addEventListener("resize", resize); resize();
 
 /* ---------- light ---------- */
@@ -1387,8 +1387,10 @@ function adaptRes(ms) {
   res.acc += ms; res.n++; if (res.acc < 700) return;
   const avg = res.acc / res.n; res.acc = res.n = 0;
   const was = res.scale;
-  if (avg > 19) res.scale = Math.max(.55, res.scale * (avg > 28 ? .8 : .9));
-  else if (avg < 14.5) res.scale = Math.min(1, res.scale * 1.06);
+  // (a 60 Hz screen never draws faster than 16.7 ms a frame, so "fast" means keeping up with it, and "slow" is a steady
+  // 45 fps or worse: in between, leave the picture alone so it doesn't flicker between sharp and soft)
+  if (avg > 22) res.scale = Math.max(.55, res.scale * (avg > 28 ? .8 : .9));
+  else if (avg < 17.5) res.scale = Math.min(1, res.scale * 1.06);
   if (Math.abs(was - res.scale) > .01) resize();
 }
 const ease = (k, dt) => 1 - Math.exp(-k * dt); // smoothing that feels the same at any frame rate
