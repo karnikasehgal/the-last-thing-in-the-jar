@@ -309,8 +309,9 @@ const water = new Water(new THREE.PlaneGeometry(240, 146), {
   sunColor: 0x9fc8d8, waterColor: 0x020d10, distortionScale: 1.1, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 67); scene.add(water);
-// the river's mirror redraws the whole scene: once every other frame is plenty, and never from the wedding
-{ const reflect = water.onBeforeRender; water.onBeforeRender = (...a) => { if ((frameNo & 1) && camera.position.x < 200) reflect.apply(water, a); }; }
+// the river's mirror redraws the whole scene: once every other frame is plenty, and never from the wedding. Never while
+// the soft-shadow pass is drawing (it paints every surface in diagnostic colours, and the mirror kept them: rainbow water)
+{ const reflect = water.onBeforeRender; water.onBeforeRender = (...a) => { if ((frameNo & 1) && !scene.overrideMaterial && camera.position.x < 200) reflect.apply(water, a); }; }
 // The river of the dead glows: dark glassy water that mirrors the torches, and waves that light up electric blue as
 // they roll in and break on the sand (as plankton does on a night beach), a bright line where each one runs up the
 // beach and slides back, and a glitter of sparks in the foam.
