@@ -680,6 +680,10 @@ const CARTOON = new URLSearchParams(location.search).has("toon");
 const TOON_V = 4; // bump when a character file changes, so no browser keeps an old one
 // /play/?bare: Thea as a realistic bare body (MakeHuman, CC0) dressed only in the game's own gown, for the owner to judge
 const BARE = new URLSearchParams(location.search).has("bare");
+// /play/?l1: the rebuilt level 1 (docs/PLAN-level1.md). Everything new for it hangs off this switch until it becomes the
+// real level; for now it only marks the page, so the normal game is untouched.
+const L1 = new URLSearchParams(location.search).has("l1");
+if (L1) document.documentElement.dataset.level = "l1";
 async function loadAssets(progress) {
   const list = ["head_male", "body_female", "hair_buns", "hair_beard", "hair_long", "hair_simpleparted", "hair_buzzed", "anims",
     ...REAL.map(n => "rb/" + n), "rb/anims_m", "rb/anims_f", "rb/anims_mx", "rb/anims_fx",
@@ -2373,4 +2377,4 @@ $("#tF").addEventListener("touchstart", e => { e.preventDefault(); lyreHeld = tr
 $("#tF").addEventListener("touchend", () => { lyreHeld = false; }); $("#tF").addEventListener("touchcancel", () => { lyreHeld = false; });
 
 // For testing only: /play/?debug exposes the game state in the console.
-if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses, get trinkets() { return trinkets; }, earnTrinket, get wedding() { return wedding; }, scene};
+if (new URLSearchParams(location.search).has("debug")) window.__game = {me, dog, NPC, camShot, THREE, G, get player() { return PLAYER; }, get chap() { return chap; }, get ride() { return ride; }, setLightsFar, crossRiver, FAR, PLACES, interact, conversation, pickCoin, wakeDog, camera, hound, renderer, composer, get playing() { return playing; }, playLyre, faceShot, poses, get trinkets() { return trinkets; }, earnTrinket, get wedding() { return wedding; }, scene, L1};
