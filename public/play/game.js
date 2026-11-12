@@ -61,6 +61,7 @@ const LITE = matchMedia("(pointer: coarse)").matches || (navigator.hardwareConcu
 const renderer = new THREE.WebGLRenderer({canvas, antialias: !LITE, powerPreference: "high-performance"});
 renderer.localClippingEnabled = true; // your own clothes are cut off just below your eyes in first person
 const pixelRatio = () => Math.max(1, Math.min(devicePixelRatio || 1, LITE ? 1.25 : 1.75)); // never below 1, or the picture shrinks into a corner
+const res = {scale: 1, acc: 0, n: 0}; // (the share of full resolution the frame rate allows: see adaptRes)
 renderer.setPixelRatio(pixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 // AgX keeps a colour's hue as it brightens (ACES turned firelit sand red and blue night sky purple)
@@ -68,6 +69,8 @@ renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.15;
 // soft shadows from each scene's key light: what grounds an animated film's characters in their world
 renderer.shadowMap.enabled = !LITE; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// (shadow maps are redrawn every other frame, not every frame: a moving shadow one frame late is invisible at 60 fps)
+renderer.shadowMap.autoUpdate = false;
 const scene = new THREE.Scene();
 // light from all around, faint and warm, so skin, silk and metal have something to reflect (a dim studio room)
 { const room = new RoomEnvironment(); room.traverse(o => { if (o.material?.color) o.material.color.multiply(new THREE.Color(.22, .19, .16)); });
@@ -172,7 +175,7 @@ const lens = null;
 // light values: every lamp and candle was clipped flat and the mid-tones were crushed, which is what made the colours muddy.)
 composer.addPass(new OutputPass());
 const paint = new ShaderPass(Painterly); composer.addPass(paint);
-function resize() { renderer.setPixelRatio(pixelRatio()); composer.setPixelRatio(pixelRatio()); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+function resize() { const pr = Math.max(.6, pixelRatio() * res.scale); renderer.setPixelRatio(pr); composer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 addEventListener("resize", resize); resize();
 
 /* ---------- light ---------- */
@@ -180,19 +183,26 @@ const sky = new THREE.HemisphereLight(0x9fb3c8, 0x2a1d12, 0.55); scene.add(sky);
 const moon = new THREE.DirectionalLight(0xbfd3ff, 0.9); moon.position.set(-40, 60, 80); scene.add(moon);
 // Every sun or moon in a scene casts soft shadows in a box that follows the camera; anything new in the scene learns to
 // cast and catch them (looked over once a second: people and props come and go with the story).
-let keyLights = [], lastLook = 0;
+let keyLights = [], lastLook = 0, frameNo = 0;
 function shadows(now) {
   if (now - lastLook > 1000) {
     lastLook = now; keyLights = [];
     scene.traverse(o => {
       if (o.isDirectionalLight) { keyLights.push(o); o.userData.dir ||= o.position.clone().sub(o.target.position).normalize(); if (!o.userData.rigged) { o.userData.rigged = true; /* (direction and shadow setup apart: a set may give its sun a direction of its own) */
-        o.castShadow = o.castShadow || o.intensity > .5; /* (a faint light, like the wedding's night moon, casts none) */ const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(2048, 2048); o.shadow.bias = -.0006; o.shadow.normalBias = .05; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
+        o.castShadow = o.castShadow || o.intensity > .5; /* (a faint light, like the wedding's night moon, casts none) */ const c = o.shadow.camera; c.left = c.bottom = -16; c.right = c.top = 16; c.near = 1; c.far = 160; o.shadow.mapSize.set(1024, 1024); o.shadow.bias = -.0006; o.shadow.normalBias = .05; o.shadow.radius = 3; c.updateProjectionMatrix(); if (!o.target.parent) scene.add(o.target); } }
       if (o.isMesh && !o.userData.shadowed) { o.userData.shadowed = true; o.receiveShadow = true;
         const m = [].concat(o.material)[0]; o.geometry.computeBoundingSphere?.(); const big = (o.geometry.boundingSphere?.radius || 0) * o.scale.x > 25;
-        o.castShadow = !big && !m?.transparent && !o.isPoints && !(o.isInstancedMesh && o.count > 200); } // (a meadow of grass blades would cost more than it shows)
+        // Only people, animals and things about their size cast shadows. Every wall, rock and column used to cast one
+        // too, and the scene was drawn again for each: millions of triangles a frame for shadows nobody looks at.
+        const small = (o.geometry.boundingSphere?.radius || 0) * o.scale.x < 4;
+        o.castShadow = (o.isSkinnedMesh || small) && !big && !m?.transparent && !o.isPoints && !o.isInstancedMesh;
+        // People were drawn even when off screen (in every shadow, reflection and the picture itself), because a bending
+        // arm can leave the mesh's resting bounds. A roomier bound lets them be skipped when out of view.
+        if (o.isSkinnedMesh && !o.frustumCulled && !o.userData.noCull) { o.computeBoundingSphere(); o.boundingSphere.radius *= 1.8; o.frustumCulled = true; } } // (a meadow of grass blades would cost more than it shows)
     });
   }
   const at = new THREE.Vector3(0, 0, -6).applyQuaternion(camera.quaternion).add(camera.getWorldPosition(new THREE.Vector3()));
+  if ((frameNo & 1) === 0) renderer.shadowMap.needsUpdate = true;
   for (const l of keyLights) if (l.visible) { // (a light inside a set lives in the set's coordinates)
     l.target.position.copy(at); l.target.parent?.worldToLocal(l.target.position);
     l.position.copy(at).addScaledVector(l.userData.dir, 70); l.parent?.worldToLocal(l.position); l.updateMatrixWorld(); l.target.updateMatrixWorld(); }
@@ -299,6 +309,8 @@ const water = new Water(new THREE.PlaneGeometry(240, 146), {
   sunColor: 0x9fc8d8, waterColor: 0x020d10, distortionScale: 1.1, fog: true
 });
 water.rotation.x = -Math.PI / 2; water.position.set(20, -.32, SHORE + 67); scene.add(water);
+// the river's mirror redraws the whole scene: once every other frame is plenty, and never from the wedding
+{ const reflect = water.onBeforeRender; water.onBeforeRender = (...a) => { if ((frameNo & 1) && camera.position.x < 200) reflect.apply(water, a); }; }
 // The river of the dead glows: dark glassy water that mirrors the torches, and waves that light up electric blue as
 // they roll in and break on the sand (as plankton does on a night beach), a bright line where each one runs up the
 // beach and slides back, and a glitter of sparks in the foam.
@@ -1369,8 +1381,19 @@ $("#found").addEventListener("click", () => $("#found").classList.remove("on"));
 /* ---------- the loop ---------- */
 let last = performance.now(), stepT = 0, wasWet = false, greeted = false;
 const fpPos = new THREE.Vector3();
+// Steady frame rate first, sharpness second: the picture's resolution follows the frame time, a little sharper while
+// frames come quickly and a little softer when they slow, so moving always feels smooth.
+function adaptRes(ms) {
+  res.acc += ms; res.n++; if (res.acc < 700) return;
+  const avg = res.acc / res.n; res.acc = res.n = 0;
+  const was = res.scale;
+  if (avg > 19) res.scale = Math.max(.55, res.scale * (avg > 28 ? .8 : .9));
+  else if (avg < 14.5) res.scale = Math.min(1, res.scale * 1.06);
+  if (Math.abs(was - res.scale) > .01) resize();
+}
+const ease = (k, dt) => 1 - Math.exp(-k * dt); // smoothing that feels the same at any frame rate
 function tick(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  const dt = Math.min(.05, (now - last) / 1000); adaptRes(now - last); last = now; frameNo++;
   if (ride) rideBoat(now);
   if (playing && !talking && !ride) {
     let fx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + touch.mx;
@@ -1428,14 +1451,14 @@ function tick(now) {
   fpPos.x -= Math.sin(me.yaw) * lean; fpPos.z -= Math.cos(me.yaw) * lean; fpPos.y -= lean * .35;
   if (camShot.active) {
     if (camShot.snap) { camera.position.copy(camShot.pos); camera.lookAt(camShot.look); camShot.snap = false; }
-    camera.position.lerp(camShot.pos, .12);
+    camera.position.lerp(camShot.pos, ease(7.5, dt));
     const m = new THREE.Matrix4().lookAt(camera.position, camShot.look, V(0, 1, 0));
-    camera.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(m), .15);
+    camera.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(m), ease(9, dt));
   } else {
     const far = camera.position.distanceTo(fpPos) > .3;
-    camera.position.lerp(fpPos, far ? .12 : 1);
+    camera.position.lerp(fpPos, far ? ease(7.5, dt) : ease(40, dt));
     camera.position.y += Math.sin(bob * 2) * .028; camera.position.x += Math.cos(bob) * .012 * Math.cos(me.yaw);
-    camera.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(me.pitch, me.yaw, Math.sin(bob) * .006, "YXZ")), far ? .15 : 1);
+    camera.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(me.pitch, me.yaw, Math.sin(bob) * .006, "YXZ")), far ? ease(9, dt) : ease(30, dt));
   }
   if (playing && NPC.hermes) {
     const g = goal().at(), d = flat(g).sub(flat(me.pos)); const ang = Math.atan2(-d.x, -d.z) - me.yaw;
