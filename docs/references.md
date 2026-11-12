@@ -291,3 +291,34 @@ None of the Madeleine Vionnet or Madame Grès (Alix) pieces at the Met Costume I
 - Madame Grès, Evening dress, fall/winter 1972 to 1973, silk, 2009.300.3386: https://www.metmuseum.org/art/collection/search/158316
 
 What to take from them, in general terms: Vionnet cut on the bias so silk clings and falls in soft, liquid folds that follow the body without darts; Grès pleated silk jersey by hand into fine, regular pleats gathered at the shoulders and waist, the closest modern equivalent of the Greek chiton. Together they are the bridge between the museum drapery above and the couture pins: Greek construction, couture fabric behaviour.
+
+---
+
+## Board update, 12 November 2026 (123 pins)
+
+The board grew from 51 to 123 pins after this art bible was written, and it is now a **public** board. These notes cover what the roughly 70 new pins add. They were written while viewing the board in the browser; nothing was saved. Pin links are `https://in.pinterest.com/pin/<id>/`. Where something below is a proposal for the game rather than a description of a pin, it says "Proposed".
+
+### What the new pins add
+1. **Red as light, not only as cloth.** A red door glowing alone in a black desert with a red trail leading to it ("The Red Door in the Abyss", 641481540722065771). A thin red beam falling into a dark cavern. A ring of red light hung in the dark. A man standing at the centre of a stone spiral maze lit red ("Spiral", 641481540722173784). Stairwells and old facades lit only red (641481540722157870, 641481540722302946). A painted gothic hall with a pool of red water between the columns ("Red Pool", 641481540722011729).
+2. **Red thread is now a main motif, not a footnote.** Whole rooms strung with red thread; framed paintings hanging in red threads (641481540722302981); red and white yarn (641481540722275602); red wire in a tangle on a white floor (641481540721990553); a figure inside a cube of red thread; a red room with branches hanging from the ceiling (Swarovski Crystal Worlds, 641481540721956559).
+3. **Candles at the scale of architecture.** Fields of candles on the floors of empty cathedrals and arcades (641481540722058604, 641481540722302973, 641481540722099359), candles under arches (641481540722048845), long rows of candles (641481540722302954, 641481540722302988), red candles against brick (641481540722302970), a candle animal running with red wax like blood (641481540722302984), a dress made of dripping candles (641481540721805709).
+4. **Vaults, cisterns, arches and stairs.** Romanesque and gothic interiors at night, column forests like a drowned cistern, a dark arch with light pouring through a doorway at the top of a stair (641481540722215377), a shadow between two pillars ("Medusa's shadow", 641481540722175219).
+5. **Marble that is breaking or veiled.** A classical bust splitting open to show a skull inside (641481540722302994), a veiled reclining statue (641481540722302967), carved hands (641481540722302962), a marble face on a table with pencils.
+6. **Creatures at a scale that dwarfs people.** A bat-winged dragon in chains ("The chained dragon", 641481540721954159), a person tiny in front of a giant creature (641481540721980871), long clawed hands, black claw gloves with rings, bats, a black cat, a flock of birds at night (641481540722003300).
+7. **Bodies as set pieces.** A tree made of human silhouettes ("Tree of bodies 2", 641481540721867916), a man standing on a pile of bodies, veiled dancers lit blue (641481540722302996), a winged performer on a dark stage (641481540722302944), a woman holding fire to her face (641481540722302947), a black-caped figure floating over a grey sea (641481540722026300), a crowd of black-hooded figures in a stone street.
+8. **Landmarks seen from far away.** A huge mesh citadel of stairs ("Celestial Citadels", 641481540722058610), a giant red sculpture on a beach (641481540722058603), the quarry banquet from above (641481540721953942).
+9. **Paper, ink and red pins.** Handwriting flowing off a page between two hands, a red pin on a written page (641481540722215405), a red pen on notes ("Got a little distracted", 641481540721980836).
+
+### What this changes in the game
+- **Hell gets its own key light: red.** The river bank keeps its cool shaft. Past the river, the one key light in a scene can be red (a red doorway, a red beam, a red ring), always a single source in near-black, never a red wash over everything. Proposed rule: never a red key and a cool key at equal strength in one frame.
+- **Red thread as the guide line.** Proposed: a red thread that leads the player through level 1 (Ariadne's thread, and the Fates' thread of a life that has just been cut). It replaces arrows and markers, it can tighten, snap or tangle when something happens, and it gives the House of Hades its red-thread rooms. This is the most direct way to get the "world reveals itself" feeling of bruno-simon.com without a HUD.
+- **The underworld's architecture is a drowned cathedral.** Column forests standing in black water, vaults, a stair climbing to a lit doorway as the goal you can see from the start. The Red Pool is the look for the far bank or the Gate.
+- **The Vestibule's figures** (Grief, Fear, Old Age and the rest from Virgil) proposed as veiled or splitting marble statues, like the bust with the skull inside.
+- **Virgil's elm of false dreams** proposed as a tree of bodies, using the "Tree of bodies" silhouette.
+- **Cerberus** takes his design language from the chained dragon and the giant creature: huge against the player, chained, mostly in shadow, seen in parts (claws, a head) before he is seen whole.
+- **Candles mark the path.** Rows of candles on the floor are the safe route; candles going out is the danger signal (it already happens at the turn to the funeral).
+- **The Codex** proposed as handwritten pages with red ink and red pins, not a clean menu.
+
+### Open questions for Karnika
+- The veiled dancers are lit **blue**. The art bible says no blue. Keep blue out, or allow it once (for example, for Eurydice)?
+- The board is public now. Was that on purpose?

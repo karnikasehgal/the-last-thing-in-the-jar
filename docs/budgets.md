@@ -14,20 +14,25 @@ any of the overhaul's changes, with the tools in `tools/` (see the end of this p
 
 ## Status against each budget
 
-| budget | now | status |
-|---|---|---|
-| wedding, laptop, 30 fps | 22.5 to 30.3 fps mean, 20 fps at the 5th percentile (three runs) | **over**: at best on the line, the slow frames well under |
-| river bank, laptop, 30 fps | 13.9 to 17.6 fps mean, 8.6 to 15 fps 5th percentile | **over** by about half |
-| wedding, phone (emulated), 30 fps | 14.1 fps mean, 10 fps 5th percentile | **over** |
-| river bank, phone (emulated), 30 fps | 23.1 fps mean, 20 fps 5th percentile | **over** |
-| main character under 35k triangles | Rocketbox cast 11k to 30k dressed (Thea 30.1k, Eurydice 27.3k); bare Thea 61.9k | **pass** for the Rocketbox cast; **bare Thea is 77% over** |
-| skin texture at most 2048 px | Rocketbox 1024 px; bare Thea 2048 px | **pass** |
-| main character under 4 MB | files 0.7 to 1.6 MB (bare Thea 1.0 MB) | **pass** as a download; once loaded, each takes 27 to 29 MB of GPU memory in uncompressed textures |
-| crowd extra under 12k triangles | 12.1k to 13.5k (men), 16.9k to 18.5k (women) dressed | **over**: every extra; the women's gowns and veils by about half |
-| crowd extra under 1.5 MB | 0.37 to 0.58 MB | **pass** |
-| first load under 60 MB | 72.8 MB before Enter is ready (73.8 MB with ?bare), 74.4 MB by the busiest moment of the wedding | **over** by about 13 MB |
+Updated 12 November 2026, after three changes: fewer shadow casters and culling off-screen people (1bbfc7a), light rock
+shapes (9fd7416), and a resolution floor (the picture's sharpness follows the frame rate but never drops below 0.75 of a
+pixel per screen point on the laptop, or 1 on a phone). Two runs each with `tools/perf.mjs`, same settings as the baseline
+below. The 21 October baseline is kept in the "was" column.
 
-Where the frame time goes: every frame draws the scene several times over (shadow maps, the river's reflection, ambient
+| budget | now (12 Nov) | was (21 Oct) | status |
+|---|---|---|---|
+| wedding, laptop, 30 fps | 53.4 to 59.8 fps mean, 29.9 to 59.5 fps 5th percentile; picture 2203 to 2520 px wide | 22.5 to 30.3 mean, 20 at the 5th percentile | **pass** |
+| river bank, laptop, 30 fps | 51.7 to 53.4 fps mean, 29.9 fps 5th percentile; picture 1749 to 1854 px wide (the game softened it to keep up) | 13.9 to 17.6 mean, 8.6 to 15 | **pass**, the slowest frames right on the line |
+| wedding, phone (emulated), 30 fps | 30.8 to 40.5 fps mean, 20 to 29.9 fps 5th percentile; 390 x 844 px | 14.1 mean, 10 | **on the line**: the mean passes, the slow frames don't yet |
+| river bank, phone (emulated), 30 fps | 46.4 to 46.8 fps mean, 29.9 fps 5th percentile; 390 x 844 px | 23.1 mean, 20 | **pass**, the slowest frames right on the line |
+| main character under 35k triangles | Rocketbox cast 11k to 30k dressed (Thea 30.1k, Eurydice 27.3k); bare Thea 61.9k | same | **pass** for the Rocketbox cast; **bare Thea is 77% over** |
+| skin texture at most 2048 px | Rocketbox 1024 px; bare Thea 2048 px | same | **pass** |
+| main character under 4 MB | files 0.7 to 1.6 MB (bare Thea 1.0 MB) | same | **pass** as a download; once loaded, each takes 27 to 29 MB of GPU memory in uncompressed textures |
+| crowd extra under 12k triangles | 12.1k to 13.5k (men), 16.9k to 18.5k (women) dressed | same | **over**: every extra; the women's gowns and veils by about half |
+| crowd extra under 1.5 MB | 0.37 to 0.58 MB | same | **pass** |
+| first load under 60 MB | 73.1 to 73.2 MB before Enter is ready, 74.7 MB by the busiest moment of the wedding (the light rock shapes add 0.4 MB) | 72.8 MB, 74.4 MB at the wedding | **over** by about 13 MB |
+
+Where the frame time went (21 October; mostly dealt with by the changes above): every frame drew the scene several times over (shadow maps, the river's reflection, ambient
 occlusion, bloom), which `renderer.info` adds up to 2,800 to 4,800 draw calls and 5 to 11 million triangles a frame on
 the laptop. That is the first place to look, before the characters: one Rocketbox guest is 12k to 18k triangles.
 Bare Thea on her own made no difference that rose above the noise between runs (wedding with and without ?bare: 15.1 and
