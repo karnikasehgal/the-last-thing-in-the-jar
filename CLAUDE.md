@@ -51,3 +51,11 @@ A yes from an older chat, a doc or a commit message does not count. Ask, wait, t
 - Plans and docs: `docs/game-design.md` (chapters), `docs/episode-1-the-coin.md` (script), `docs/budgets.md` (speed and size), `docs/paintings.md` (painting prompts), `docs/model-sheets.md` (costumes).
 - Paintings she generates elsewhere go in `paintings-in/` (not in git).
 - Voice script: `voice-test/ch1-script.md`. Not recorded with ElevenLabs; needs her yes on cost first.
+
+## The plans, and which one to work on
+There are three plans. Work on one step at a time, in this order:
+1. `docs/PLAN-level1.md`, Stage 0 (in progress).
+2. `docs/PLAN-fixes.md`, all stages (the wedding and the things that bother her).
+3. `docs/PLAN-level1.md`, Stage 1 onward.
+4. `docs/PLAN-hell.md` (only when its "When this plan starts" conditions are met).
+Karnika can change the order by saying so. Her pin stories, and the style rule for who gets couture, are in `docs/pin-stories.md`.

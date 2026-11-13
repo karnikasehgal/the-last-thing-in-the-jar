@@ -71,6 +71,35 @@ Next time, start by pasting `docs/STATUS.md` (or just say "read docs/STATUS.md")
 
 ---
 
+## 7. Tartarus (level 2): do the next step
+
+Use this only after level 1's Stage 0 gate is passed and `docs/pin-stories.md` exists (Claude in Chat writes it from your voice notes).
+
+```
+Read docs/PLAN-hell.md and check "When this plan starts". If the conditions aren't met, tell me which one is missing and stop. Otherwise find the first step that isn't ticked off, tell me in three plain sentences what you're about to do and how we'll know it worked, then do only that step, following CLAUDE.md. Tick it off with today's date and the numbers, update docs/STATUS.md, and stop.
+```
+
+---
+
+## THE ONE PROMPT (use this every time from now on)
+
+It works through all three plans in the right order, one step per paste. It replaces prompts 2 and 7.
+
+```
+Read CLAUDE.md (especially "The plans, and which one to work on"), docs/STATUS.md and docs/pin-stories.md. Find the next unticked step in the plan whose turn it is. Tell me in three plain sentences which plan and step it is, what you're about to do, and how we'll know it worked. Then do only that step, following CLAUDE.md: measure before and after, screenshot, commit as me, push. Tick it off with today's date and the numbers, update docs/STATUS.md, and stop.
+```
+
+## 8. Start the fixes (the wedding and the small things)
+
+Paste this once, now. Pasting it confirms the fix list; add anything missing on the blank line.
+
+```
+First commit the files Chat wrote today, as me: CLAUDE.md, docs/PLAN-fixes.md, docs/PLAN-hell.md, docs/PLAN-level1.md, docs/pin-stories.md and docs/claude-code-prompts.md. Check them against the repo and tell me anything that's wrong.
+Then read docs/PLAN-fixes.md. I confirm the fix list in section 3. Also add: ______ (leave blank if nothing). I want the wedding first: move docs/PLAN-fixes.md to the front of the order in CLAUDE.md. Then do Stage 0 only (measure, change nothing), update docs/STATUS.md, and stop.
+```
+
+---
+
 ## Things that always need your yes first
 Claude Code should stop and ask before any of these. If it doesn't, stop it.
 - Recording voices with ElevenLabs (costs credits). Ask it for the cost of the batch first.

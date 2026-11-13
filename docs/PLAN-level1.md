@@ -1,11 +1,12 @@
 # PLAN: The Coin, level 1 (the near bank of the Styx)
 
-**Version:** v1
+**Version:** v1.1
 **Date:** 2026-11-12
 **Status:** Approved on 2026-11-12 ("just do whatever you think feels right"). Karnika pastes prompt 2 from `docs/claude-code-prompts.md` to start each step.
 **Project folder:** `~/Documents/elpis`. Code writes progress to `docs/STATUS.md`. House rules are in `CLAUDE.md`. The art bible is `docs/references.md`.
 
 ### Change notes
+- v1.1 (2026-11-13): Test A3 now uses layered see-through veils on the shades (Karnika's pin story 1). The guide thread is Mikon's own life thread, cut by the Fates (story 5).
 - v1 (2026-11-12): First version. Every design choice below was made by Claude in Chat because Karnika asked it to decide. She can change any of them; record changes here.
 
 ---
@@ -64,7 +65,7 @@ The art bible `docs/references.md` holds the palette, light, materials and scene
 |---|---|---|---|
 | A1 | The river bank can be as dark as the board and still be easy to find your way in | Relight one area (the dock) behind `?l1`: one cool shaft from above, black water, candles, fog. Take 3 screenshots and measure the value split | 65 to 75 percent near-black, and in each screenshot the path and the dock are visible at a glance (Karnika looks and says yes) |
 | A2 | A glowing red thread can be drawn cheaply and reads clearly from far away | A thread 100 m long through the dock area that sways slightly and glows | Costs less than 2 fps on the laptop; visible from 50 m in a screenshot |
-| A3 | A crowd of hooded shades fits the speed budget | 40 shades with a simple hooded cloak (no faces, no hands) standing in the water, turning their heads toward the player | At least 30 fps on the laptop and on the emulated phone |
+| A3 | A crowd of hooded shades fits the speed budget | 40 shades in hooded cloaks made of layered sheer, see-through cloth (one to three layers, as in `docs/pin-stories.md` story 1; no faces, no hands) standing in the water, turning their heads toward the player | At least 30 fps on the laptop and on the emulated phone |
 | A4 | The current code can host a new level behind a flag without breaking the opening film and the current game | Write a one-page walkthrough of the current game with a screenshot per area, then add an empty `?l1` route | The normal game and the opening film play exactly as before |
 | A5 | Painted portraits and the 3D world feel like one world | Karnika drops one painted portrait into `paintings-in/`; show it next to its 3D scene in `/play/?portraits` | Karnika says they belong together. This test does not block Stage 1; it runs whenever her painting arrives |
 
