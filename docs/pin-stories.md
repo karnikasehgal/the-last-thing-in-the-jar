@@ -4,7 +4,7 @@ Karnika told these on 13 November 2026, as voice dictation in Chat. Her words co
 
 **The vibe she wants over everything:** "aesthetic and rebellious", fashion detailing, the texture and feeling of the board. Translucent, layered cloth. Even where a pin isn't perfect, take the vibe.
 
-**Style rule that comes out of this:** mortals (Mikon, his family, the ordinary dead) stay close to real Greek clothes, pushed toward the board. Gods, monsters and spirits (the Furies, Hecate, Nyx, Persephone, Hermes, the Fates) get full couture freedom: sharp tailoring, thigh-high boots, heels, sheer layers, metal. Every such choice is logged in `docs/accuracy.md` as "our styling".
+**Style rule (Karnika, 13 November 2026):** everyone gets the aesthetic couture feel: Mikon, his family, the guests, the ordinary dead, the gods, the monsters. No one is left in plain historical clothes. Greek shapes (drapes, pins, belts, veils, hoods) can be the starting point, but every outfit is styled like fashion: sharp tailoring, sheer layers, boots and heels where they suit, metal, fashion detailing. Rebellious, not museum. Every such choice is logged in `docs/accuracy.md` as "our styling".
 
 ---
 
@@ -50,9 +50,10 @@ Karnika told these on 13 November 2026, as voice dictation in Chat. Her words co
 **In the game (changes level 2):** the monster in Tartarus becomes **the Gorgon's head that Persephone keeps**, held up over the black pool by a tall veiled guardian. You can only look at it in the water's reflection. This is more accurate than a living Medusa in Tartarus.
 **Source:** ancient. At the end of *Odyssey* 11 (about lines 633 to 635), Odysseus flees in fear that Persephone will send up "the Gorgon's head" from Hades. Perseus beheads Medusa by looking at her reflection in his bronze shield (Ovid, *Metamorphoses* 4).
 
-## 9. "The lighting one"
-**She says:** "Do you see the lighting one? Maybe we can have that as a level."
-**Waiting for Karnika:** which pin? Candidates: the red door glowing in a dark desert ("The Red Door in the Abyss"), the man in the red-lit spiral ("Spiral"), the burst of red light streaks in the dark, or lightning. If she means lightning, that's Zeus, who doesn't belong in the underworld; the closest underworld idea is the river of fire, Phlegethon.
+## 9. The one filled with candles ("the lighting one")
+**She says:** "The lighting one. I think the one filled with candles. Maybe we can have that as a level." Taken to mean the empty cathedral with its floor covered in candles (641481540722058604, "between the desire and the spasm") and its sister pin, the room of columns and arches filled with candles (641481540722302973).
+**In the game:** it becomes the look of level 1's hub, the drowned cathedral at the dock: a hall of columns standing in black water, its floor covered in candles, where the three strands of thread begin. Candles are also the game's language of safety: lit means safe, going out means danger. Proposed for later, if she wants a whole candle level: the hall of Persephone, queen of the dead, lit by thousands of candles and torches.
+**Source:** our staging. Torches belong to the underworld goddesses: Hecate and Demeter carry them in the search for Persephone (*Homeric Hymn to Demeter*), and the Eleusinian Mysteries for Demeter and Persephone were held by torchlight.
 
 ---
 

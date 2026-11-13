@@ -42,6 +42,7 @@ A yes from an older chat, a doc or a commit message does not count. Ask, wait, t
 ## Art direction (short version; the full art bible is `docs/references.md`)
 - Dark theatrical couture. Black, blood red, ivory, silver, gold. Candles, single spotlights, haze, black reflective water.
 - Red fabric spilling over ruins, red-thread rooms, red light as a single source, veiled and hooded figures, couture gowns.
+- **Everyone** wears the couture look, mortals and the dead included (rule in `docs/pin-stories.md`).
 - **Not** bright, sunny or Pixar. If a screenshot looks fine in a well-lit room, it's too bright.
 - Read `docs/references.md` before any visual change, including the section "Board update, 12 November 2026".
 
@@ -53,9 +54,9 @@ A yes from an older chat, a doc or a commit message does not count. Ask, wait, t
 - Voice script: `voice-test/ch1-script.md`. Not recorded with ElevenLabs; needs her yes on cost first.
 
 ## The plans, and which one to work on
-There are three plans. Work on one step at a time, in this order:
-1. `docs/PLAN-level1.md`, Stage 0 (in progress).
-2. `docs/PLAN-fixes.md`, all stages (the wedding and the things that bother her).
+There are three plans. Work on one step at a time, in this order (Karnika put the wedding first on 13 November 2026):
+1. `docs/PLAN-fixes.md`, all stages (the wedding and the things that bother her).
+2. `docs/PLAN-level1.md`, the rest of Stage 0 (A4 is done; A1 to A3 remain).
 3. `docs/PLAN-level1.md`, Stage 1 onward.
 4. `docs/PLAN-hell.md` (only when its "When this plan starts" conditions are met).
 Karnika can change the order by saying so. Her pin stories, and the style rule for who gets couture, are in `docs/pin-stories.md`.

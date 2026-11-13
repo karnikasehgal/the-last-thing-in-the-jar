@@ -322,3 +322,7 @@ The board grew from 51 to 123 pins after this art bible was written, and it is n
 ### Open questions for Karnika
 - The veiled dancers are lit **blue**. The art bible says no blue. Keep blue out, or allow it once (for example, for Eurydice)?
 - The board is public now. Was that on purpose?
+
+
+### Override, 13 November 2026: everyone is couture
+Karnika's rule replaces the per-character costume rules above wherever they disagree: every character, mortals and the ordinary dead included, gets the aesthetic couture look. Greek construction (pinned drapes, belts, veils, hoods) is the starting shape, never the finish. See `docs/pin-stories.md`.

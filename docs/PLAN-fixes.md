@@ -27,7 +27,7 @@ Things she has said bother her, and where each one gets fixed:
 | F2 | The characters look bad up close | **This plan**, Stage 2 (framing and styling); painted close-ups once her paintings exist (`docs/PLAN-level1.md`, A5) |
 | F3 | Clothes that don't fit (cloth poking through bodies, wrong shapes) | **This plan**, Stage 2 |
 | F4 | The opening isn't interesting; it doesn't hook | **This plan**, Stage 3 |
-| F5 | The style isn't aesthetic or rebellious enough; she wants fashion detailing | **This plan**, Stage 4 (Hermes, the first god you meet), using the style rule in `docs/pin-stories.md` |
+| F5 | The style isn't aesthetic or rebellious enough; she wants fashion detailing | **This plan**, Stage 4 (Hermes, the first god you meet), using the style rule in `docs/pin-stories.md` (everyone gets the couture look) |
 | F6 | Hell doesn't look like hell (sunlit sandstone arcade, sunrise sea cave, glowing river) | `docs/PLAN-level1.md`, Stage 3 |
 | F7 | The first level is a straight line and too simple | `docs/PLAN-level1.md`, Stages 1 and 4 |
 | F8 | It doesn't feel playful or smooth like bruno-simon.com | `docs/PLAN-level1.md`, Stage 6 |
@@ -91,9 +91,9 @@ Code ticks each box with the date and numbers, and updates `docs/STATUS.md` at e
 - **Gate:** Karnika runs the test with three friends (Code prepares a one-page sheet).
 
 ### Stage 4: Fashion pass on Hermes (F5)
-- [ ] Restyle Hermes, the first god the player meets, by the style rule in `docs/pin-stories.md` (gods get couture freedom: sharp tailoring, sheer layers, silver, boots), keeping his winged hat and herald's staff so he's still recognisably Hermes.
+- [ ] Restyle Hermes, the first god the player meets, by the style rule in `docs/pin-stories.md` (everyone gets the couture look: sharp tailoring, sheer layers, silver, boots), keeping his winged hat and herald's staff so he's still recognisably Hermes.
 - **Acceptance:** before and after side by side; still at least 30 fps; Karnika approves.
-- **Gate:** Karnika approves. If she likes it, the same treatment goes to the other gods in later stages of the other plans.
+- **Gate:** Karnika approves. If she likes it, the same treatment goes to every character, mortals included, in later stages of the other plans.
 
 ## 10. Later list
 - Making the first load lighter (F9).
