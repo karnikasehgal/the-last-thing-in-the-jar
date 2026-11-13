@@ -66,9 +66,9 @@ Things she has said bother her, and where each one gets fixed:
 Code ticks each box with the date and numbers, and updates `docs/STATUS.md` at every gate.
 
 ### Stage 0: Measure the wedding as it is
-- [ ] Screenshots of the wedding at six fixed moments, side by side with the style frame, with the value split for each.
-- [ ] How long from pressing Enter to the moment the player can first move.
-- [ ] A clipping report (`tools/check_clipping.mjs`) for every character seen in the wedding, worst first.
+- [x] Screenshots of the wedding at six fixed moments, side by side with the style frame, with the value split for each. **Done 2026-11-13:** `docs/fixes/wedding-stage0.jpg`; dark 13 to 41% (style frame 39.5%, rule 45 to 55%); bright 0 to 0.5%.
+- [x] How long from pressing Enter to the moment the player can first move. **Done 2026-11-13:** 250 s from Begin (film about 160 s, then about 90 s with Hermes), plus the chapter card.
+- [x] A clipping report (`tools/check_clipping.mjs`) for every character seen in the wedding, worst first. **Done 2026-11-13** for the 8 named characters: Kleio 20 of 20 clips fail, Thea 5 of 20, Nikias 6 of 21, dancer 16 of 20, Mikon 15 of 21, Lykon 4 of 21, piper 1 of 21, Demeas 0. The 19 crowd extras aren't checked.
 - **Gate:** Karnika reads `docs/STATUS.md`. Nothing changes in this stage.
 
 ### Stage 1: Relight and rebuild the wedding (F1)

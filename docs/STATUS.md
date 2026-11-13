@@ -1,13 +1,51 @@
-# Status, 12 November 2026
+# Status, 13 November 2026
 
 ## Where things stand
-- **Plan:** `docs/PLAN-level1.md`, Stage 0. Step A4 is done (below). Next step: A1, relight the dock behind `?l1` and measure how dark it is.
-- **Speed (laptop, two runs, `tools/perf.mjs`):** river bank 54 to 55 fps, wedding 53 to 60 fps. Phone (emulated, measured earlier today): river bank 46 fps, wedding 31 to 41 fps with slow moments at 20. First load 73.2 MB (budget 60). Details in `docs/budgets.md`.
+- **Plan order (CLAUDE.md):** `docs/PLAN-fixes.md` first (the wedding), then the rest of `docs/PLAN-level1.md` Stage 0, then level 1 Stage 1 onward, then `docs/PLAN-hell.md`.
+- **Now:** `docs/PLAN-fixes.md` Stage 0 is done (below; nothing in the game changed). **Gate:** Karnika reads this page. Next step after her go: Stage 1, relight and rebuild the wedding behind `?fix`.
+- **Speed (laptop, two runs, 12 Nov):** river bank 54 to 55 fps, wedding 53 to 60 fps. Phone (emulated): river bank 46 fps, wedding 31 to 41 fps with slow moments at 20. First load 73.2 MB (budget 60). Details in `docs/budgets.md`.
 - **Cache version:** `coin-v66`.
-- **Branches not merged:** `cast-build` (bare 3D Thea and Mikon; they didn't reach their model sheets) and `clothes-agent` (cloth experiments). Both wait for the character overhaul in the plan's later list.
-- **Waiting for your yes:** fixing the small errors found in `CLAUDE.md`, `docs/references.md` and the plan (reported in chat today); approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
+- **Branches not merged:** `cast-build` (bare 3D Thea and Mikon) and `clothes-agent` (cloth experiments); both wait for the character overhaul in the later lists.
+- **Waiting for your yes:** fixing the small doc errors reported in chat; approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
 
-## Step A4: the current game, area by area
+## PLAN-fixes Stage 0: the wedding as it is (13 November 2026)
+Measured only; nothing changed. Film recorded from Begin with the random scenery seeded, a screenshot every 5 seconds (`look-test/`, laptop only).
+
+**Six moments next to the style frame:** `docs/fixes/wedding-stage0.jpg` (full size: `look-test/Wedding today vs style frame, six moments.jpg`). Value split measured on each frame without the black film bars: "dark" is at or below 10% brightness, "bright" at or above 80%.
+
+| Moment | Dark | Mid | Bright |
+|---|---|---|---|
+| 15 s, opening wide shot | 40.9% | 58.8% | 0.3% |
+| 30 s, Lykon saves a seat | 15.3% | 84.3% | 0.4% |
+| 50 s, Demeas's toast | 13.2% | 86.7% | 0.0% |
+| 80 s, the goat joke | 20.2% | 79.6% | 0.2% |
+| 110 s, the choking | 15.2% | 84.3% | 0.5% |
+| 140 s, the funeral | 23.4% | 76.3% | 0.4% |
+| **Target: style frame 1** | 39.5% | 60.5% | 0.0% |
+| Rule in `docs/references.md` | 45 to 55% | about 35% | about 10% |
+
+What it shows: five of the six moments are about a third as dark as the style frame; only the high wide shot comes close. The scene is a sunset courtyard of brick, sky and warm floor, not the candlelit quarry. **Note:** the approved style frame itself measures 39.5% dark and almost no bright pixels (0.6% even at a looser 60% line), so it doesn't meet the rule's numbers either. Before Stage 1, decide which one is the target: the picture you approved or the numbers. Recommended: the picture, with the rule changed to match it.
+
+**How long until the player can move:** the page is ready to press Enter about 9.5 s after opening; Enter to the chapter card's Begin is up to you (2 s in the test). From Begin, the player can first move after **250 seconds (4 minutes 10 seconds)**: the wedding film runs about 160 s (titles 0 to 15 s, the wedding 15 to 95 s, the choking 95 to 130 s, the funeral 130 to 160 s), then about 90 s of waking up with Hermes before control is handed over. Stage 3's limit is 90 seconds.
+
+**Clipping (cloth inside the body), the eight named wedding characters, worst first** (`tools/check_clipping.mjs`, 12 frames per animation; a clip fails when more than 0.5% of the visible cloth is over 5 mm inside the body at any frame):
+
+| Character | Clips failing | Worst clip (share over 5 mm) | At the table (the film's main pose) |
+|---|---|---|---|
+| Kleio | 20 of 20 | sitting and talking, 3.6% | fails |
+| Thea (bride) | 5 of 20 | at the table talking, 2.6% | fails (all 5 failures are seated) |
+| Nikias (groom) | 6 of 21 | coughing, 1.7% | fails when talking |
+| Dancing guest | 16 of 20 | sitting, 1.5% | fails |
+| Mikon | 15 of 21 | coughing, 1.0% | passes |
+| Lykon | 4 of 21 | coughing, 1.0% | fails when talking |
+| The piper | 1 of 21 | running, 0.5% | passes |
+| Demeas | 0 of 21 | (passes everything) | passes |
+
+Not checked: the 19 crowd extras (the tool takes one named character at a time). Reports are on the laptop only.
+
+---
+
+## Earlier: PLAN-level1 step A4, the current game, area by area (12 November 2026)
 Taken today at fixed camera spots with the random scenery seeded, so the same shots can be retaken after any change. Full-size originals are on the laptop only; the copies here are small.
 
 | # | Area | What happens there | Picture |
