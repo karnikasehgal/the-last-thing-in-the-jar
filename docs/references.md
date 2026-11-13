@@ -40,7 +40,7 @@ Night, stone and water, cut by a few hard sources of light. Most of every frame 
 **Value structure (the most important rule):**
 
 - **River bank and underworld:** 65 to 75 percent of the frame at or below 10 percent brightness. Mid-tones about 20 percent (stone, fog, cloaks). Highlights 5 percent or less, and only in three places: the light shaft, the water's reflection of it, and red cloth edges.
-- **Wedding in the quarry:** 45 to 55 percent near-black. Warm mid-tones (lit stone, faces, tables) about 35 percent. Highlights about 10 percent, almost all candle flames and their sparkle on the water.
+- **Wedding in the quarry:** about 40 percent near-black (35 to 50 is fine). Warm mid-tones (lit stone, faces, tables, the sheers) make up nearly all the rest. Highlights well under 1 percent, almost all candle flames and their sparkle on the water. *(Changed 13 November 2026 to match the approved style frame, which measures 39.5 percent near-black and almost no pixels at or above 80 percent brightness; Karnika chose the picture over the old numbers, 45 to 55 percent and about 10 percent highlights.)*
 - **White draped hall and garden aisle:** the exception. Only 15 to 25 percent near-black, mostly in corners and under benches. Most of the frame is ivory and sheer white in the middle values, so the black of the guests' clothes reads strongly against it.
 - **Never** a bright, evenly lit, sunny frame. If a screenshot looks fine in a well-lit room, it is too bright.
 
