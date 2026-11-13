@@ -1,11 +1,12 @@
 # PLAN: The Coin, level 1 (the near bank of the Styx)
 
-**Version:** v1.1
+**Version:** v1.2
 **Date:** 2026-11-12
 **Status:** Approved on 2026-11-12 ("just do whatever you think feels right"). Karnika pastes prompt 2 from `docs/claude-code-prompts.md` to start each step.
 **Project folder:** `~/Documents/elpis`. Code writes progress to `docs/STATUS.md`. House rules are in `CLAUDE.md`. The art bible is `docs/references.md`.
 
 ### Change notes
+- v1.2 (2026-11-13): The temple relight, the river and the river bank shades now happen in `docs/PLAN-fixes.md` (Stages 4 and 5); skip those boxes here if they're already done there. The wake scene is where the new cold open (`docs/PLAN-fixes.md` Stage 2) lands.
 - v1.1 (2026-11-13): Test A3 now uses layered see-through veils on the shades (Karnika's pin story 1). The guide thread is Mikon's own life thread, cut by the Fates (story 5).
 - v1 (2026-11-12): First version. Every design choice below was made by Claude in Chat because Karnika asked it to decide. She can change any of them; record changes here.
 

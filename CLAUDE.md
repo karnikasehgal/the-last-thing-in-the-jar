@@ -53,6 +53,13 @@ A yes from an older chat, a doc or a commit message does not count. Ask, wait, t
 - Paintings she generates elsewhere go in `paintings-in/` (not in git).
 - Voice script: `voice-test/ch1-script.md`. Not recorded with ElevenLabs; needs her yes on cost first.
 
+## Start of every session (Karnika's prompts are short on purpose)
+Karnika usually just says "next" or gives feedback in her own words. When she does:
+1. If there are uncommitted changes to docs or CLAUDE.md, they came from Claude in Chat (it edits this folder directly). Commit them as Karnika first, with a one-line message.
+2. Read `docs/STATUS.md`, then do the next unticked step in the plan whose turn it is (order below). If she gave feedback instead, turn it into a numbered list and wait for her yes.
+3. Finish by updating `docs/STATUS.md`, so Claude in Chat can read where things stand.
+4. Reply to her in a few plain sentences: what you did, proof, where to look, what's next.
+
 ## The plans, and which one to work on
 There are three plans. Work on one step at a time, in this order (Karnika put the wedding first on 13 November 2026):
 1. `docs/PLAN-fixes.md`, all stages (the wedding and the things that bother her).
