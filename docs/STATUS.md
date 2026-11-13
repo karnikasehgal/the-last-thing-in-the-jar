@@ -2,9 +2,9 @@
 
 ## Where things stand
 - **Plan order (CLAUDE.md):** `docs/PLAN-fixes.md` first (the wedding), then the rest of `docs/PLAN-level1.md` Stage 0, then level 1 Stage 1 onward, then `docs/PLAN-hell.md`.
-- **Now:** `docs/PLAN-fixes.md` Stage 1, first box, in progress behind `/play/?fix` (below). Still to do in that box: the black water down the middle. Then the second box (candles going out row by row at the funeral).
+- **Now:** `docs/PLAN-fixes.md` is now v2.2: the wedding and the choke become a film of Karnika's still images, the game opens on the choke, and work on the 3D wedding stopped. Next step: Stage 0, the full playthrough recorded with sound, listing every sound gap or clipped line. **Mistake on 13 Nov:** after v2.1 said to leave `fixwedding.js` untouched, Code added the black water channels to it (commit 581a525, behind `?fix` only; the normal game is unchanged). That commit also carried the new plan file under a wrong message ("first box done"). Waiting for Karnika: keep the water or take it out.
 - **Speed (laptop, two runs, 12 Nov):** river bank 54 to 55 fps, wedding 53 to 60 fps. Phone (emulated): river bank 46 fps, wedding 31 to 41 fps with slow moments at 20. First load 73.2 MB (budget 60). Details in `docs/budgets.md`.
-- **Cache version:** `coin-v67`. **Public site:** coin.klickbaitbyk.com updated to this version on 13 November 2026 with Karnika's yes (it was on `coin-v13`). Normal game: https://coin.klickbaitbyk.com/play/ · new wedding: https://coin.klickbaitbyk.com/play/?fix
+- **Cache version:** `coin-v68` on the laptop; the public site is `coin-v67` (no water). **Public site:** coin.klickbaitbyk.com updated to this version on 13 November 2026 with Karnika's yes (it was on `coin-v13`). Normal game: https://coin.klickbaitbyk.com/play/ · new wedding: https://coin.klickbaitbyk.com/play/?fix
 - **Branches not merged:** `cast-build` (bare 3D Thea and Mikon) and `clothes-agent` (cloth experiments); both wait for the character overhaul in the later lists.
 - **Waiting for your yes:** fixing the small doc errors reported in chat; approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
 
