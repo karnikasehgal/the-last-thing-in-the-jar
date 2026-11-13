@@ -28,6 +28,7 @@ import { trial } from "./trials.js";
 import { makeOrpheus } from "./orpheus.js";
 import { sandstoneTunnel, sunrise } from "./cave.js";
 import { buildWedding, W, SEATS, CROWD } from "./wedding.js";
+import { quarryNight } from "./fixwedding.js";
 
 const $ = s => document.querySelector(s);
 const LIB = "../img/lib/";
@@ -53,6 +54,8 @@ const onDock = p => Math.abs(p.x) < 1.5 && p.z > SHORE - .5 && p.z < 36;
 const inWater = p => p.z > SHORE && p.z < 40 && !onDock(p);
 const onFarDock = p => Math.abs(p.x) < 1.5 && p.z > FAR.dockFrom && p.z < FAR.shore + .5;
 let CH = 1; // which chapter is being played
+// /play/?fix: the fixes plan (docs/PLAN-fixes.md), switched on stage by stage until Karnika approves each one
+const FIX = new URLSearchParams(location.search).has("fix");
 
 /* ---------- renderer, camera, post-processing ---------- */
 const canvas = $("#view");
@@ -124,13 +127,16 @@ const AIR = {
   dusk: {fog: 0xd0a080, density: .002, top: 0x8eaad8, ground: 0x7a5640, fill: .6},
   funeral: {fog: 0x151826, density: .02, top: 0x5a6890, ground: 0x1a140e, fill: .45}
 };
+// (?fix: the quarry at night is lit by its candles alone; the sky's fill all but gone, a dark warm haze)
+if (FIX) { Object.assign(AIR.wedding, {fog: 0x0c0907, density: .028, top: 0x1c2232, fill: .07}); Object.assign(AIR.funeral, {fog: 0x090a0e, density: .03, fill: .1}); }
+const QUARRY_SKY = new THREE.Color(0x030304);
 const NIGHT_SKY = [0x9fb3c8, 0x2a1d12];
 function sceneLight() {
   const x = camera.getWorldPosition(new THREE.Vector3()).x, mood = wedding?.kind || "wedding";
   const want = ENV[x > 200 ? (mood === "day" || mood === "dusk" ? mood : "night") : "under"];
   if (want && scene.environment !== want) scene.environment = want;
   // the sky you see: the photograph for the place, once it's loaded (the painted skies stand in until then)
-  const bg = x > 200 ? SKY[mood === "day" || mood === "dusk" ? mood : "night"] : SKY.night;
+  const bg = FIX && x > 200 && (mood === "wedding" || mood === "funeral") ? QUARRY_SKY : x > 200 ? SKY[mood === "day" || mood === "dusk" ? mood : "night"] : SKY.night;
   if (bg && scene.background !== bg) { scene.background = bg; scene.backgroundIntensity = x > 200 ? (mood === "day" ? 1.25 : mood === "dusk" ? 1 : .32) : .55; /* (the wedding night: the stars faint over the candles) */ }
   starDome.visible = !SKY.night; if (wedding) wedding.sky.visible = !bg || x <= 200;
   moon.visible = x <= 200; // (the river's moon has no business lighting a wedding at sunset)
@@ -1666,6 +1672,7 @@ const fade = (to, ms) => new Promise(r => { const f = $("#fader"); f.style.trans
 const pause = ms => new Promise(r => setTimeout(r, ms));
 function setWeddingLights(on) {
   wedding?.lights.forEach(l => l.visible = on);
+  wedding?.quarry?.traverse(l => { if (l.isLight) l.visible = on && wedding.quarry.visible; }); // (?fix: the quarry's own lights)
   if (on) { nearLights.forEach(l => l.visible = false); farLights.forEach(l => l.visible = false); scene.fog.color.set(0x3a2a24); scene.fog.density = .018; sky.intensity = .8; }
   else { scene.fog.color.set(NIGHT); scene.fog.density = .021; setLightsFar(false); }
 }
@@ -1738,7 +1745,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   }
   if (!wedding && !skip) {
-    wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding();
+    wedding = buildWedding(scene, {noise, lite: LITE}); dressWedding(); if (FIX) quarryNight(wedding, {lite: LITE});
     const who = async (id, name, o) => { await breathe(); return Object.assign(G.cast(id, o), {name}); };
     guests = {
       demeas: await who("demeas", "Demeas"), kleio: await who("aunt", "Kleio", {seated: true}),

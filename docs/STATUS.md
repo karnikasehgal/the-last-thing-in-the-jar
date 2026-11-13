@@ -2,11 +2,20 @@
 
 ## Where things stand
 - **Plan order (CLAUDE.md):** `docs/PLAN-fixes.md` first (the wedding), then the rest of `docs/PLAN-level1.md` Stage 0, then level 1 Stage 1 onward, then `docs/PLAN-hell.md`.
-- **Now:** `docs/PLAN-fixes.md` Stage 0 is done (below; nothing in the game changed). **Gate:** Karnika reads this page. Next step after her go: Stage 1, relight and rebuild the wedding behind `?fix`.
+- **Now:** `docs/PLAN-fixes.md` Stage 1, first box, in progress behind `/play/?fix` (below). Still to do in that box: the black water down the middle. Then the second box (candles going out row by row at the funeral).
 - **Speed (laptop, two runs, 12 Nov):** river bank 54 to 55 fps, wedding 53 to 60 fps. Phone (emulated): river bank 46 fps, wedding 31 to 41 fps with slow moments at 20. First load 73.2 MB (budget 60). Details in `docs/budgets.md`.
-- **Cache version:** `coin-v66`.
+- **Cache version:** `coin-v67`.
 - **Branches not merged:** `cast-build` (bare 3D Thea and Mikon) and `clothes-agent` (cloth experiments); both wait for the character overhaul in the later lists.
 - **Waiting for your yes:** fixing the small doc errors reported in chat; approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
+
+## PLAN-fixes Stage 1, first box: the wedding at night in the quarry (13 November 2026, in progress)
+Behind `/play/?fix` only; the normal wedding is unchanged. New file `public/play/fixwedding.js` (about 80 lines) plus small hooks in `game.js`.
+- **Done:** night (the sky's light all but gone, a dark warm haze, a black sky); quarry walls rising 18 m round the courtyard, lined with rows of candles, with ten warm lights so the rock reads as stone (none on phones); ivory sheers swagged high overhead; one burgundy drape falling from the north face; a dark floor; the green garlands and painted band hidden; the broad torch light turned down so the candles make the pools of light.
+- **Not done yet:** the long channel of black water down the middle, the style frame's strongest feature. Today there are only the two short pools beside the high table.
+- **Darkness (share of the frame at or below 10% brightness), same six moments as Stage 0:** wide shot 64.6% (was 40.9%), Lykon 39.7% (15.3%), Demeas's toast 51.2% (13.2%), goat joke 45.6% (20.2%), choking 36.1% (15.2%), funeral 60.0% (23.4%). Style frame: 39.5%. The rule in `docs/references.md` now matches the style frame (about 40%, 35 to 50 fine), as Karnika chose.
+- **Speed, measured back to back:** laptop wedding 48 to 49 fps with `?fix`, 52 to 53 without (the game also softens the picture a little more with it). Emulated phone 24 to 25 fps with or without `?fix` at the same moment: the phone wedding was already under 30 there, so that is a problem of its own, not of this change. (12 November's 31 to 41 caught a different moment of the film.) First load unchanged, 73.2 MB.
+- **Side by side:** `docs/fixes/wedding-stage1-progress.jpg` (before, after, style frame at six moments; full size in `look-test/`).
+- **Still looks off:** the stone reads warm and blocky rather than rough grey rock; the guests' bright red and orange clothes (Stage 2).
 
 ## PLAN-fixes Stage 0: the wedding as it is (13 November 2026)
 Measured only; nothing changed. Film recorded from Begin with the random scenery seeded, a screenshot every 5 seconds (`look-test/`, laptop only).

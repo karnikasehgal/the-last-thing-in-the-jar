@@ -73,6 +73,7 @@ Code ticks each box with the date and numbers, and updates `docs/STATUS.md` at e
 
 ### Stage 1: Relight and rebuild the wedding (F1)
 - [ ] Night; the quarry walls; black water down the middle; candle clusters; ivory fabric in the upper third; one burgundy drape; haze; one cool shaft from a high opening.
+  - **Progress 2026-11-13 (behind `?fix`, not ticked yet):** done: night, quarry walls with rows of candles, ivory sheers in the upper third, one burgundy drape, dark haze, the cool shaft, a dark floor, garlands and painted band hidden. Not done: **black water down the middle** (only the two short pools by the high table). Dark share of the six moments 36 to 65% (style frame 39.5%; before 13 to 41%). Speed: laptop 48 to 49 fps with `?fix` against 52 to 53 without, measured back to back; emulated phone 24 to 25 fps with or without it at the same moment (the phone wedding was already under 30 there). Side by side: `docs/fixes/wedding-stage1-progress.jpg`.
 - [ ] The turn to the funeral: candles go out row by row, the red spreads.
 - **Acceptance:** B1 passes; the six shots pass the value rule; Karnika approves the side-by-side.
 - **Gate:** Karnika approves, then it becomes the normal wedding.
