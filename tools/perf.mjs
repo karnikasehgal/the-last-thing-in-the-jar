@@ -1,6 +1,6 @@
 // Performance baseline: opens the game in headless Chrome, plays to a scene, and measures 10 s of it.
 //
-// Usage (the dev server must be running, e.g. wrangler dev --port 8796):
+// Usage (the dev server must be running, e.g. wrangler dev --port 8796; --query "&fix" adds switches to the game's address):
 //   node tools/perf.mjs [--port 8796] [--out <dir>] [--only wedding,wedding-bare,bank,phone-wedding,phone-bank] [--wait 45] [--measure 10]
 // Scenes: wedding = /play/?chapter=1&debug, Enter, Begin, then the wedding film at its busiest (--wait seconds after Begin);
 //         bank = the same with &nointro: the river bank in play, a few seconds after Begin.
@@ -17,7 +17,7 @@ import { execFileSync } from "node:child_process";
 import { launch, sleep } from "./cdp.mjs";
 
 const argv = process.argv.slice(2), opt = (n, d) => { const i = argv.indexOf("--" + n); return i >= 0 ? argv[i + 1] : d; };
-const PORT = opt("port", 8796), OUT = path.resolve(opt("out", path.join(os.tmpdir(), "elpis-perf"))), WAIT = +opt("wait", 45), MEASURE = +opt("measure", 10);
+const QUERY = opt("query", ""), PORT = opt("port", 8796), OUT = path.resolve(opt("out", path.join(os.tmpdir(), "elpis-perf"))), WAIT = +opt("wait", 45), MEASURE = +opt("measure", 10);
 const RUNS = {
   "wedding": {scene: "wedding"}, "wedding-bare": {scene: "wedding", bare: true}, "bank": {scene: "bank"},
   "phone-wedding": {scene: "wedding", phone: true}, "phone-bank": {scene: "bank", phone: true}
@@ -62,7 +62,7 @@ async function run(name, {scene, bare = false, phone = false}) {
       await b.send("Emulation.setCPUThrottlingRate", {rate: 4});
     }
     const t0 = Date.now();
-    await b.goto(`http://localhost:${PORT}/play/?chapter=1&debug${bare ? "&bare" : ""}${scene === "bank" ? "&nointro" : ""}`, {timeout: 120000});
+    await b.goto(`http://localhost:${PORT}/play/?chapter=1&debug${bare ? "&bare" : ""}${scene === "bank" ? "&nointro" : ""}${QUERY}`, {timeout: 120000});
     await b.until(`!document.querySelector("#go").disabled`, {timeout: phone ? 300000 : 120000, every: 500});
     res.loadSeconds = +((Date.now() - t0) / 1000).toFixed(1); res.bytesAtReady = bytes; res.requestsAtReady = requests;
     res.gpu = await b.eval(`(() => { const c = document.createElement("canvas").getContext("webgl2"), e = c.getExtension("WEBGL_debug_renderer_info"); return e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : "?"; })()`);
