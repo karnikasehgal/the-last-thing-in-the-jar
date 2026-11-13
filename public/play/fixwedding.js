@@ -53,14 +53,41 @@ export function quarryNight(w, {lite = false} = {}) {
     g.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: 0x4a0a10, roughness: .55, side: THREE.DoubleSide}))); }
 
   // inside the courtyard: a dark floor that holds the candlelight, no garlands or painted band, broad light turned down
-  const quiet = [];
+  const quiet = []; let water = null;
   w.g.traverse(o => {
     if (!o.isMesh || g.getObjectById(o.id)) return;
     const c = o.material?.color?.getHex?.(), geo = o.geometry?.parameters || {};
     if (o.geometry?.type === "BoxGeometry" && geo.width === 36 && geo.depth === 28) quiet.push([o, "color", o.material.color.clone(), new THREE.Color(0x4a4038)]); // the paving
     else if (o.geometry?.type === "CylinderGeometry" && geo.radiusTop === 3.6) quiet.push([o, "color", o.material.color.clone(), new THREE.Color(0x5a5048)]); // the dance floor
     else if (c === 0x3d5a2a || c === 0x8a3a24 || (o.geometry?.type === "SphereGeometry" && geo.radius === .07)) quiet.push([o, "visible", true, false]); // myrtle, band, its flowers
+    else if (o.geometry?.type === "PlaneGeometry" && geo.width === 5.6 && geo.height === 1.3) { quiet.push([o, "visible", true, false]); water ||= o.material; } // the two short pools (the long channels replace them)
+    else if (o.geometry?.type === "BoxGeometry" && geo.width === .16 && geo.depth === 1.62) quiet.push([o, "visible", true, false]); // their end copings, which would cross the channels
   });
+  // The black water down the middle, as in the style frame: the two short pools beside the high table run on as two
+  // long channels, 13 m from near the dance floor toward the gate, edged in stone and lined with candles whose flames lie
+  // stretched on the water beneath them (a mirror would draw the whole crowded wedding again: too dear)
+  { const x0 = -3.5, x1 = 9.5, len = x1 - x0, xc = (x0 + x1) / 2; // (the servers' loop round the tables crosses z = ±2.7 at about x = -4.1 and 10.1: the water stops short of it)
+    water ||= new THREE.MeshPhysicalMaterial({color: 0x0b1416, roughness: .04, clearcoat: 1});
+    const stone = pbr("sandstone_blocks_05", {size: 1.2, tint: 0x8a7c6c});
+    const cs = [], fs = [];
+    for (const zc of [-2.7, 2.7]) {
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.3), water); pool.rotation.x = -Math.PI / 2; pool.position.set(xc, .012, zc); g.add(pool);
+      for (const [w2, d, x, z] of [[len + .3, .16, xc, zc - .73], [len + .3, .16, xc, zc + .73], [.16, 1.62, x0 - .08, zc], [.16, 1.62, x1 + .08, zc]]) {
+        const c = new THREE.Mesh(new THREE.BoxGeometry(w2, .07, d), stone); c.position.set(x, .035, z); g.add(c); }
+      for (let x = x0 + .3; x < x1; x += .45 + rnd() * .3) for (const e of [-.73, .73]) if (rnd() < .7) cs.push([x, .07, zc + e, .08 + rnd() * .16]); // on the copings
+      for (let x = x0 + .5; x < x1; x += 1 + rnd() * .6) fs.push([x, .02, zc + (rnd() - .5) * .8, .045]);                          // floating
+    }
+    const all = cs.concat(fs), wax = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 10), new THREE.MeshStandardMaterial({color: 0xf1e6d2, roughness: .55}), all.length);
+    const fire = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 6, 4), new THREE.MeshBasicMaterial({color: new THREE.Color(2.2, 1.4, .6)}), all.length);
+    // (the water is solid, so each flame's reflection is a soft warm glow lying on its surface, longest across the channel)
+    const glint = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(dot), transparent: true, opacity: .7, depthWrite: false, blending: THREE.AdditiveBlending, fog: false}), all.length);
+    all.forEach(([x, y, z, h], i) => {
+      wax.setMatrixAt(i, m4.compose(v.set(x, y + h / 2, z), q, s.set(.035, h, .035)));
+      fire.setMatrixAt(i, m4.compose(v.set(x, y + h + .025, z), q, s.set(.011, .028, .011)));
+      const onWater = i >= cs.length, dz = onWater ? 0 : Math.sign(z - (z > 0 ? 2.7 : -2.7)) * -.2; // (a coping candle's reflection lies just out on the water)
+      glint.setMatrixAt(i, m4.compose(v.set(x, .016, z + dz), q, s.set(onWater ? .12 : .1, 1, onWater ? .12 : .26)));
+    });
+    g.add(wax, fire, glint); }
   const dim = [];
   for (const l of w.lights) if (l.isPointLight && l.distance >= 12) dim.push([l, l.intensity]); // the courtyard's broad torch light (the candle lights are short-range)
 
