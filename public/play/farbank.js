@@ -45,8 +45,9 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
     const side = i % 3, r = 3 + Math.random() * 6;
     const m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), M.rock);
     const x = side === 0 ? -48 - Math.random() * 6 : side === 1 ? 48 + Math.random() * 6 : -45 + Math.random() * 90;
-    const z = side === 2 ? 146 + Math.random() * 6 : 66 + Math.random() * 80;
+    const z = side === 2 ? 142 + r + Math.random() * 6 : 66 + Math.random() * 80; // (behind the House: clear of its back wall)
     m.position.set(x, r * .4 + Math.random() * 6, z); m.rotation.set(Math.random(), Math.random(), Math.random()); m.scale.y = 1.6 + Math.random(); scene.add(m);
+    if (side === 2) m.rotation.x = m.rotation.z = 0; // (tilted, the stretched rock reached forward through the wall and hung over the thrones)
   }
   // a dark roof of rock over the far bank only: the river and the beach lie under the open, starry sky, and across the
   // water the land of the dead goes in under the cliff, into a cavern

@@ -155,6 +155,7 @@ export function makeOrpheus(G) {
   /* ---------- the walk out ---------- */
   function startWalk() {
     st.stage = 4; st.trail = [];
+    dog.asleep = true; // (the lyre is put away for the walk out, so an awake dog could only end it unfairly: a catch turns you round to face her)
     const e = NPC.eurydice; e.root.visible = true; e.root.position.set(FAR.throneFront.x, 0, FAR.throneFront.z + 1.8); e.play("Idle_Loop");
     for (let k = 0; k < 20; k++) st.trail.push(V(e.root.position.x, 0, e.root.position.z - k * .3 * 0)); // seed the trail where she stands
     st.trail.push(flat(me.pos));
@@ -281,7 +282,7 @@ export function makeOrpheus(G) {
     const d = flat(dog.pos).distanceTo(flat(me.pos));
     if (st.lyre && d < 24) dog.calm = Math.min(1, dog.calm + dt * (d < 12 ? .3 : .16));
     else dog.calm = Math.max(0, dog.calm - dt * .1);
-    if (dog.calm >= 1 && me.pos.z > FAR.gateZ + .5) {
+    if (dog.calm >= 1 || (dog.calm > .75 && me.pos.z > FAR.gateZ + .5)) { // (once calm, he sleeps; he used to wait for you to be through the gate at that very moment, and mostly never slept)
       dog.asleep = true; dog.mode = "sleep"; dog.speed = 0; $("#lyremeter").classList.remove("on"); G.paint.uniforms.danger.value = 0; $("#danger").classList.remove("on");
       G.save.meet("cerberus");
       voice("orpheus", "v2_o6", "There. Three heads, one lullaby. Sleep, dog."); G.paintGoal(); return;
@@ -305,7 +306,10 @@ export function makeOrpheus(G) {
     if (dog.mode === "hunt" && d < 1.9) G.caughtBy(() => { me.pos.copy(FAR.landing); me.yaw = Math.PI; dog.pos.copy(FAR.gateMouth); dog.calm = 0; });
   }
   function walkOut(dt, now) {
-    const e = NPC.eurydice, last = st.trail[st.trail.length - 1];
+    const e = NPC.eurydice;
+    // stepping back over your own steps takes them off the trail (folded back, it led her round in front of you)
+    if (!st.ride) while (st.trail.length > 2 && flat(me.pos).distanceTo(st.trail[st.trail.length - 2]) < .3) st.trail.pop();
+    const last = st.trail[st.trail.length - 1];
     if (!st.ride && flat(me.pos).distanceTo(last) > .3) st.trail.push(flat(me.pos));
     if (st.trail.length > 4000) st.trail.splice(0, 1000);
     if (!st.ride) {
@@ -328,7 +332,7 @@ export function makeOrpheus(G) {
     if (inView) { st.lookT += dt; if (st.lookT > .1) lookedBack(); } else st.lookT = 0;
     // things that happen on the way
     if (!st.fired.slow && me.pos.z < FAR.hallZ - 4 && st.side === "far") { st.fired.slow = true; voice("eurydice", "v2_oe3", "You're walking so fast. My foot still hurts, where it bit me."); }
-    if (!st.fired.stop && me.pos.z < FAR.gateZ - 2 && st.side === "far") { st.fired.stop = true; st.stepsOff = true; setTimeout(() => { voice("eurydice", "v2_oe2", "Orpheus? Are you still there? I can't hear you anymore.").then(() => setTimeout(() => st.stepsOff = false, 1500)); }, 1200); }
+    if (!st.fired.stop && me.pos.z < FAR.gateZ - 2 && st.side === "far") { st.fired.stop = true; st.stepsOff = true; setTimeout(() => { if (st.over) return; voice("eurydice", "v2_oe2", "Orpheus? Are you still there? I can't hear you anymore.").then(() => setTimeout(() => st.stepsOff = false, 1500)); }, 1200); }
     if (!st.fired.mikon && st.side === "near" && flat(NPC.mikon.pos).distanceTo(flat(me.pos)) < 8) { st.fired.mikon = true; voice("mikon", "v2_om2", "Mate. Mate. Don't turn around. Just keep walking. I'll tell you if anything weird happens. Everything's weird. Keep walking."); }
     if (!st.fired.light && st.side === "near" && me.pos.x < -34 && me.pos.z > 9 && me.pos.z < 17) { st.fired.light = true; theLight(); }
   }

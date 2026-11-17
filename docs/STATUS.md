@@ -1,12 +1,25 @@
-# Status, 13 November 2026
+# Status, 17 November 2026
 
 ## Where things stand
 - **Plan order (CLAUDE.md):** `docs/PLAN-fixes.md` first (the wedding), then the rest of `docs/PLAN-level1.md` Stage 0, then level 1 Stage 1 onward, then `docs/PLAN-hell.md`.
 - **Now:** `docs/PLAN-fixes.md` is now v2.2: the wedding and the choke become a film of Karnika's still images, the game opens on the choke, and work on the 3D wedding stopped. Next step: Stage 0, the full playthrough recorded with sound, listing every sound gap or clipped line. **Mistake on 13 Nov:** after v2.1 said to leave `fixwedding.js` untouched, Code added the black water channels to it (commit 581a525, behind `?fix` only; the normal game is unchanged). That commit also carried the new plan file under a wrong message ("first box done"). Waiting for Karnika: keep the water or take it out.
 - **Speed (laptop, two runs, 12 Nov):** river bank 54 to 55 fps, wedding 53 to 60 fps. Phone (emulated): river bank 46 fps, wedding 31 to 41 fps with slow moments at 20. First load 73.2 MB (budget 60). Details in `docs/budgets.md`.
-- **Cache version:** `coin-v68` on the laptop; the public site is `coin-v67` (no water). **Public site:** coin.klickbaitbyk.com updated to this version on 13 November 2026 with Karnika's yes (it was on `coin-v13`). Normal game: https://coin.klickbaitbyk.com/play/ · new wedding: https://coin.klickbaitbyk.com/play/?fix
+- **Cache version:** `coin-v69` on the laptop (Chapter II fixes, 17 Nov); the public site is `coin-v67` (no water, no Chapter II fixes). **Public site:** coin.klickbaitbyk.com updated to this version on 13 November 2026 with Karnika's yes (it was on `coin-v13`). Normal game: https://coin.klickbaitbyk.com/play/ · new wedding: https://coin.klickbaitbyk.com/play/?fix
 - **Branches not merged:** `cast-build` (bare 3D Thea and Mikon) and `clothes-agent` (cloth experiments); both wait for the character overhaul in the later lists.
 - **Waiting for your yes:** fixing the small doc errors reported in chat; approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
+
+## Chapter II, The Lyre: played through and fixed (17 November 2026, Karnika's request, outside the plan order)
+Played start to finish in a headless browser, walking, holding F, tapping the songs and pressing E like a player (`/play/?chapter=2`). The opening film runs 141 s before you can move; all 96 Chapter II voice lines have their audio; no page errors.
+**Fixed** (about 13 lines changed in `orpheus.js`, `game.js`, `farbank.js`; cache `coin-v69`):
+1. Cerberus never fell asleep: he slept only if his calm was full at the very moment you stepped through the gate, by which time your fingers had usually tired. The goal stayed "Get past Cerberus" all the way to Hades. Now he sleeps once calm (or once you're through the gate while he's nearly calm).
+2. Because of that, he attacked during the walk out with Eurydice, when the lyre is put away; being caught turns you round to face her, so you lost through no fault of your own. He is now asleep for the whole walk out.
+3. Backing up a step during the walk out (as anyone does after bumping into something) folded her trail back and brought her round in front of you: instant loss. Stepping back now rubs your steps off the trail; tested backing up 0.6 s and 1.5 s.
+4. Big black boulders behind the House of Hades came through its back wall and hung over the thrones. Moved back and stood upright.
+5. "Too deep. You can't swim" popped up when you bumped any wall or the hill on the far bank. Now only at the river.
+6. The film's dying close-up of Eurydice: Orpheus kneels in front of her, his head crossed the lens and was cut open, so her face looked like a hole. The shot is now from beside her, with both faces in view.
+7. Eurydice's "Are you still there?" played after "Goodbye, my love"; and a comment had hidden the line that shows Hymen's torch (it only mattered on a replay).
+**Proof:** both endings reached ("You didn't look back" and "You looked back"); `look-test/Chapter II before vs after (17 Nov fixes).jpg`.
+**Seen, not changed (for Karnika to decide):** the how-to map is pale cream and blue, labels sit on the drawings and "the way up" is cut off; the opening is a bright sunny wedding, far from the board; Sisyphus is half sunk into a black hill in near darkness; Charon's dock lantern sits in front of his face in his close-ups; a big glowing orb blooms in front of the camera on the dock; the House of Hades is a plain box and the meadow is bare; the dialogue choices are faint.
 
 ## PLAN-fixes Stage 1, first box: the wedding at night in the quarry (13 November 2026, in progress)
 Behind `/play/?fix` only; the normal wedding is unchanged. New file `public/play/fixwedding.js` (about 80 lines) plus small hooks in `game.js`.

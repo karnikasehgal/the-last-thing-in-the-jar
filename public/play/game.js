@@ -1420,7 +1420,7 @@ function tick(now) {
       const dx = (fx * c + fz * s) * speed * dt, dz = (-fx * s + fz * c) * speed * dt;
       if (!solid(me.pos.x + dx, me.pos.z)) me.pos.x += dx;
       if (!solid(me.pos.x, me.pos.z + dz)) me.pos.z += dz;
-      else if (me.pos.z + dz > DEEP - .5) toast("Too deep. You can't swim either.", 1500);
+      else if (me.pos.z < 40 && me.pos.z + dz > DEEP - .5) toast("Too deep. You can't swim either.", 1500);
       stepT -= dt; if (stepT <= 0) { sound.step(wet ? "water" : onDock(me.pos) || onFarDock(me.pos) ? "wood" : me.pos.z > FAR.hallZ ? "marble" : me.pos.z > BEACH && me.pos.z < 40 ? "sand" : "stone"); if (speed > 5) sound.breath(); stepT = wet ? .7 : (speed > 5 ? .3 : .45); }
     }
     if (wet && !wasWet) { sound.splash(); me.splashed++; paintStats(); if (dog.mode === "hunt") toast("It won't follow you into the river."); }
@@ -2057,7 +2057,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
   // the wedding, in daylight
   stage(PLAYER, SEATS.mikon); PLAYER.play("sittable", 0); stage(eury, SEATS.lykon); eury.play("sittable", 0);
   stage(hymen, [-3.35, 0, Math.PI / 2]); hymen.play("Idle_Loop", 0); friend.root.visible = false;
-  orph.torch.position.copy(wpos(-3.2, .72, .38)); // at his right hand orph.torch.visible = true; orph.smoke.visible = true;
+  orph.torch.position.copy(wpos(-3.2, .72, .38)); orph.torch.visible = true; orph.smoke.visible = true; // at his right hand
   // Hymen keeps his right hand on the torch's shaft
   const hymenHolds = () => { if (!hymen.root.visible || !orph.torch.visible) return; hymen.root.updateMatrixWorld(true);
     const ch = new THREE.Vector3(); hymen.bones.spine_03.getWorldPosition(ch);
@@ -2126,7 +2126,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
       const m = a.clone().lerp(b, .5), d = b.clone().sub(a).setY(0).normalize(), side = V(-d.z, 0, d.x);
       shot.cur = null; camShot.active = true; camShot.snap = true; camShot.pos.copy(m).addScaledVector(side, 1.35).add(V(0, .08, 0)); camShot.look.copy(m).add(V(0, -.08, 0)); }
     await say("orpheus", "x_o2", "Eurydice! Eurydice, I'm here, I'm here. Look at me.");
-    faceShot(eury, {side: -.2, dist: .75, up: .08, ms: 9000}); eury.expr.hold = {AK_03_BrowInnerUp: .4, AK_44_MouthSmileLeft: .25, AK_45_MouthSmileRight: .25};
+    faceShot(eury, {side: -.7, dist: .5, up: .08, drift: .06, ms: 9000}); eury.expr.hold = {AK_03_BrowInnerUp: .4, AK_44_MouthSmileLeft: .25, AK_45_MouthSmileRight: .25}; // (more from beside her: from the front, he kneels in the way, and his head came across the lens and was cut open)
     await say("eury", "x_e5", "It's all right. It doesn't hurt anymore. Play me the swallows. I want to hear how it ends.");
     { const t3 = performance.now(); (function close() { const u = Math.min(1, (performance.now() - t3) / 2500); eury.expr.hold = {AK_09_EyeBlinkLeft: u, AK_10_EyeBlinkRight: u}; if (u < 1) requestAnimationFrame(close); })(); }
     await pause(2800); await fade("black", 2000);
