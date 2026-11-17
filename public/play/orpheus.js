@@ -54,6 +54,7 @@ export function makeOrpheus(G) {
         for (const [s, k] of [["l", 1], ["r", -1]]) { const t = c.clone().add(new THREE.Vector3(0, .25, 0)).addScaledVector(toMe, .95).addScaledVector(side, k * .38);
           G.reach(sis, s, t, ch.clone().addScaledVector(side, k * .6).add(new THREE.Vector3(0, -.4, 0)), .085); } }); }
     NPC.eurydice.root.visible = false;
+    if (NPC.hermes) { NPC.hermes.pos.set(-30, 0, 12.4); NPC.hermes.root.position.set(-30, 0, 12.4); NPC.hermes.root.rotation.y = -Math.PI / 2; }
     await breathe(); const shadeT = G.cast("shade"); shadeT.root.visible = false;
     st.shades = scatterShades(scene, shadeT, G.SkeletonUtils, G.CLIPS, 9);
     dog.pos.copy(FAR.gateMouth); dog.mode = "guard"; dog.calm = 0; dog.yaw = Math.PI; dog.asleep = false;
@@ -346,31 +347,31 @@ export function makeOrpheus(G) {
   function drawMap(cv) {
     const g = cv.getContext("2d"), W = cv.width, H = cv.height;
     // the journey runs left to right: near bank, river, gate, meadow, hall. Map x = world z, map y = world x.
-    const s = Math.min(W / 160, H / 100), X = z => 20 + (z + 8) * s, Y = x => H / 2 - (x - 12) * s * .9;
-    g.fillStyle = "#e6d8b8"; g.fillRect(0, 0, W, H);
-    for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(90,70,45,${Math.random() * .05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
-    const ink = "#3a2a1c", label = (t, x, y, size = 22, it = false, color = ink, rot = 0) => { g.save(); g.translate(x, y); g.rotate(rot); g.fillStyle = color; g.font = `${it ? "italic " : ""}${size}px "IM Fell English", Georgia, serif`; g.textAlign = "center"; g.fillText(t, 0, 0); g.restore(); };
-    g.fillStyle = "rgba(30,150,185,.5)"; g.fillRect(X(22), 0, X(64) - X(22), H);
-    label("THE STYX", X(43), H / 2 + 8, 26, false, "#2c4450", -Math.PI / 2);
-    g.fillStyle = "rgba(120,95,60,.2)"; g.fillRect(X(0), Y(38), X(8.5) - X(0), Y(-38) - Y(38));
+    const s = Math.min(W / 160, H / 100), X = z => 20 + (z + 8) * s, Y = x => H / 2 - x * s * .9;
+    g.fillStyle = "#120e0c"; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(220,200,170,${Math.random() * .04})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+    const ink = "#e8dcc4", label = (t, x, y, size = 22, it = false, color = ink, rot = 0) => { g.save(); g.translate(x, y); g.rotate(rot); g.fillStyle = color; g.font = `${it ? "italic " : ""}${size}px "IM Fell English", Georgia, serif`; g.textAlign = "center"; g.fillText(t, 0, 0); g.restore(); };
+    g.fillStyle = "rgba(150,165,180,.16)"; g.fillRect(X(22), 0, X(64) - X(22), H);
+    label("THE STYX", X(43), Y(14), 26, false, "#a9b6c2", -Math.PI / 2);
+    g.fillStyle = "rgba(232,220,196,.1)"; g.fillRect(X(0), Y(38), X(8.5) - X(0), Y(-38) - Y(38));
     label("the arcade", X(4), Y(-20), 18, true, ink, -Math.PI / 2);
-    g.fillStyle = "#6b4e2e"; g.fillRect(X(22), Y(1.5), X(36) - X(22), Y(-1.5) - Y(1.5)); g.fillRect(X(50), Y(1.5), X(64) - X(50), Y(-1.5) - Y(1.5));
-    label("Charon", X(43), Y(0) - 12, 18, true);
-    g.fillStyle = "#4a3a2c"; g.fillRect(X(79), Y(46), X(81) - X(79), Y(3.2) - Y(46)); g.fillRect(X(79), Y(-3.2), X(81) - X(79), Y(-46) - Y(-3.2));
-    label("the gate", X(80), Y(-8), 18, true, ink, -Math.PI / 2);
-    g.fillStyle = "rgba(40,25,20,.6)"; g.beginPath(); g.arc(X(FAR.dogHome.z), Y(FAR.dogHome.x), 12, 0, 7); g.fill();
-    label(dog.asleep ? "Cerberus, asleep" : "Cerberus", X(FAR.dogHome.z), Y(FAR.dogHome.x) - 16, 17, true, "#7a2414");
-    g.strokeStyle = "#8a7a60"; g.setLineDash([6, 6]); g.lineWidth = 3; g.beginPath(); FAR.path.forEach(([x, z], i) => i ? g.lineTo(X(z), Y(x)) : g.moveTo(X(z), Y(x))); g.stroke(); g.setLineDash([]);
-    label("Asphodel Meadow", X(99), Y(22), 20, true, "#55604a");
-    label("Sisyphus", X(FAR.sisyphus.z), Y(FAR.sisyphus.x) + 22, 17, true);
+    g.fillStyle = "#8a7a66"; g.fillRect(X(22), Y(1.5), X(36) - X(22), Y(-1.5) - Y(1.5)); g.fillRect(X(50), Y(1.5), X(64) - X(50), Y(-1.5) - Y(1.5));
+    label("Charon", X(43), Y(0) - 12, 18, true, "#c9d2da");
+    g.fillStyle = "#8a7a66"; g.fillRect(X(79), Y(46), X(81) - X(79), Y(3.2) - Y(46)); g.fillRect(X(79), Y(-3.2), X(81) - X(79), Y(-46) - Y(-3.2));
+    label("the gate", X(80) - 14, Y(-16), 18, true, ink, -Math.PI / 2);
+    g.fillStyle = "rgba(176,34,28,.55)"; g.beginPath(); g.arc(X(FAR.dogHome.z), Y(FAR.dogHome.x), 12, 0, 7); g.fill();
+    label(dog.asleep ? "Cerberus, asleep" : "Cerberus", X(FAR.dogHome.z) - 4, Y(FAR.dogHome.x) - 18, 17, true, "#d8483a");
+    g.strokeStyle = "rgba(232,220,196,.45)"; g.setLineDash([6, 6]); g.lineWidth = 3; g.beginPath(); FAR.path.forEach(([x, z], i) => i ? g.lineTo(X(z), Y(x)) : g.moveTo(X(z), Y(x))); g.stroke(); g.setLineDash([]);
+    label("Asphodel Meadow", X(99), Y(30), 20, true, "#b9b4a6");
+    label("Sisyphus", X(FAR.sisyphus.z), Y(FAR.sisyphus.x) + 26, 17, true);
     g.strokeStyle = ink; g.lineWidth = 2.5; g.strokeRect(X(118), Y(14), X(141) - X(118), Y(-14) - Y(14));
     label("THE HOUSE", X(129.5), Y(0) - 6, 19); label("OF HADES", X(129.5), Y(0) + 16, 19);
-    label("white cypress", X(124), Y(-24) + 24, 15, true); label("Lake of Memory", X(126), Y(25) - 14, 15, true);
-    label("the way up", X(13), Y(-43) + 4, 17, true, "#a2432c");
+    label("white cypress", X(124), Y(-24) + 24, 15, true); label("Lake of Memory", X(126), Y(25) - 16, 15, true);
+    g.fillStyle = "#d8483a"; g.beginPath(); g.arc(X(13), Y(-43), 6, 0, 7); g.fill(); label("the way up", X(13) + 46, Y(-43) + 6, 17, true, "#d8483a");
     const mx = X(me.pos.z), my = Y(me.pos.x);
-    g.fillStyle = "#a2432c"; g.beginPath(); g.arc(mx, my, 9, 0, 7); g.fill();
-    g.strokeStyle = "#a2432c"; g.lineWidth = 4; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx - Math.cos(me.yaw) * 24, my + Math.sin(me.yaw) * 24); g.stroke();
-    label("you", mx, my + 28, 19, true, "#a2432c");
+    g.fillStyle = "#d8483a"; g.beginPath(); g.arc(mx, my, 9, 0, 7); g.fill();
+    g.strokeStyle = "#d8483a"; g.lineWidth = 4; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx - Math.cos(me.yaw) * 24, my + Math.sin(me.yaw) * 24); g.stroke();
+    label("you", mx, my + 28, 19, true, "#d8483a");
     g.strokeStyle = ink; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
   }
 

@@ -400,7 +400,7 @@ const souls = (() => {
     vertexShader: `uniform float time; attribute float seed; varying float vA;
       void main(){ vec3 p = position + vec3(sin(time * .2 + seed) * 1.5, sin(time * .7 + seed * 3.) * .25, cos(time * .15 + seed) * 1.2);
         vec4 mv = modelViewMatrix * vec4(p, 1.); gl_Position = projectionMatrix * mv;
-        vA = .5 + .5 * sin(time * 1.3 + seed * 7.); gl_PointSize = (520. / -mv.z) * (.6 + vA * .6); }`,
+        vA = .5 + .5 * sin(time * 1.3 + seed * 7.); gl_PointSize = min(34., (520. / -mv.z) * (.6 + vA * .6)); }`,
     fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord - .5); float g = smoothstep(.5, 0., d); gl_FragColor = vec4(vec3(.55, .9, 1.) * (g * g * .55 + smoothstep(.1, 0., d) * .9) * (.35 + vA * .6), 1.); }`}));
   scene.add(pts); return pts;
 })();
@@ -472,10 +472,10 @@ const boat = new THREE.Group();
 const hull = new THREE.Mesh(new THREE.BoxGeometry(2.2, .7, 6), M.wood); hull.position.y = -.05;
 const bow = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2, 4), M.wood); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, -.05, 4); bow.scale.set(1, 1, .45);
 boat.add(hull, bow); boat.position.copy(PLACES.boat).setY(-.05); scene.add(boat);
-const lantern = new THREE.PointLight(0xffb060, 16, 14, 1.8); lantern.position.set(.8, 2.4, 36.5); scene.add(lantern);
+const lantern = new THREE.PointLight(0xffb060, 16, 14, 1.8); lantern.position.set(-1.5, 2.4, 35.5); scene.add(lantern);
 torches.push({l: lantern, base: 16, seed: 3});
 const glass = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), new THREE.MeshBasicMaterial({color: 0xffd08a})); glass.position.copy(lantern.position); scene.add(glass);
-const pole = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), M.wood); pole.position.set(.8, 1.1, 36.5); scene.add(pole);
+const pole = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), M.wood); pole.position.set(-1.5, 1.1, 35.5); scene.add(pole);
 
 /* ---------- the waiting bank: people who have lived on this beach for a hundred years ----------
    West of the dock, Elpenor's camp: his bench and the net he mends, nets drying on poles against the glowing surf, his
@@ -2063,7 +2063,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     const ch = new THREE.Vector3(); hymen.bones.spine_03.getWorldPosition(ch);
     reach(hymen, "r", orph.torch.localToWorld(V(0, .14, 0)), ch.clone().add(V(-.3, -.4, .45)), .085); };
   poses.add(hymenHolds); orph.hymenHolds = hymenHolds;
-  wedding.mood("day"); setWeddingLights(true); scene.fog.color.set(0xc8ccc4); scene.fog.density = .006; sky.intensity = 1.3; sound.party(true); sound.birds(true);
+  wedding.mood("wedding"); setWeddingLights(true); sound.party(true); // (at night by candlelight, as the board has it; it was a sunny noon)
   wedding.snake.visible = false;
   let smoking = true;
   (function puff() { if (!smoking) return; const a = orph.smoke.geometry.attributes.position, tip = new THREE.Vector3(); orph.torch.getWorldPosition(tip); tip.y += .72;
@@ -2132,7 +2132,7 @@ async function orpheusFilm({skip = false} = {}) { // skip: the opening was playe
     await pause(2800); await fade("black", 2000);
     if (skipped) return;
     // grief: alone by the stream at dusk; the birds stop singing
-    wedding.mood("dusk"); crowd.hide(); eury.root.visible = false; hymen.root.visible = false; wedding.snake.visible = false; smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
+    wedding.mood("wedding"); crowd.hide(); eury.root.visible = false; hymen.root.visible = false; wedding.snake.visible = false; smoking = false; orph.smoke.visible = false; orph.torch.visible = false;
     PLAYER.root.position.copy(wpos(33, .18, 9.15)); PLAYER.root.rotation.set(0, Math.PI, 0); PLAYER.play("Sitting_Idle_Loop", 0); playLyre(PLAYER, true);
     shot([30.5, 1.4, 6.2], [33, 1, 8.8], [29.8, 2, 5.4], [33, 1, 9], 12000);
     await fade("clear", 2000);

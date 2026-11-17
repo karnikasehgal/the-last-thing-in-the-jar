@@ -124,6 +124,12 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
     m4.compose(new THREE.Vector3(x, 0, z), q, sc); stems.setMatrixAt(n, m4); heads.setMatrixAt(n, m4); n++;
   }
   scene.add(stems, heads);
+  const marble = S(0xbfb8aa, {roughness: .6});
+  for (const [x, z, h, lie] of [[-30, 86, 3.2], [27, 88, 1.6], [-9, 97, 2.4], [16, 104, 4.1], [-34, 104, 1.2, 1], [33, 107, .9], [10, 92, .9, 1], [-28, 114, 2.8]]) {
+    const c = add(new THREE.Mesh(new THREE.CylinderGeometry(.42, .48, h, 14), marble), x, lie ? .42 : h / 2, z);
+    if (lie) { c.rotation.z = Math.PI / 2; c.rotation.y = x; } else c.rotation.set((Math.random() - .5) * .08, 0, (Math.random() - .5) * .08);
+    circles.push([x, z, lie ? h / 2 + .3 : .6]);
+  }
   // pale lights drifting over the meadow, and motes hanging in the air
   const wisps = [[-14, 90], [12, 96], [-6, 106], [18, 110]].map(([x, z]) => {
     const l = light(0xb8d4ff, 9, 22, x, 2.4, z);
@@ -137,10 +143,14 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
   scene.add(motes);
 
   /* Sisyphus's hill */
-  const hill = new THREE.Mesh(new THREE.CylinderGeometry(4, 9, 7, 9, 1), M.rock); add(hill, -19, -2.2, 106); hill.rotation.y = .3;
+  // (the hill stands behind the rock, so its slope starts at the boulder instead of swallowing it and him to the waist)
+  const hill = new THREE.Mesh(new THREE.CylinderGeometry(4, 9, 7, 9, 1), M.rock); add(hill, -19, -2.2, 110.5); hill.rotation.y = .3;
   const boulder = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 1), S(0x6a6056));
   boulder.position.copy(FAR.boulder).setY(1.15); scene.add(boulder);
-  circles.push([-19, 106, 8.6], [FAR.boulder.x, FAR.boulder.z, 1.2]);
+  circles.push([-19, 110.5, 7.4], [FAR.boulder.x, FAR.boulder.z, 1.2]);
+  // one cold shaft from high above onto him and his rock: he was lost in the dark
+  const sisKey = new THREE.SpotLight(0xdfe6ff, 140, 18, .42, .55, 1.4); sisKey.position.set(-17, 12, 99); sisKey.target.position.copy(FAR.boulder).setY(.8);
+  sisKey.visible = false; scene.add(sisKey, sisKey.target); lights.push(sisKey);
 
   /* the House of Hades */
   const H = {x0: -14, x1: 14, z0: FAR.hallZ, z1: FAR.hallEnd};
@@ -152,6 +162,22 @@ export function buildFarBank({scene, boxes, circles, noise, tex, LIB, lights}) {
   add(new THREE.Mesh(new THREE.BoxGeometry(28.8, .6, 23.8), M.wall), 0, 11.2, (H.z0 + H.z1) / 2);
   for (const z of [122, 126.5, 131]) for (const x of [-8, 8]) {
     add(new THREE.Mesh(new THREE.CylinderGeometry(.55, .65, 10.6, 16), M.column), x, 5.3, z); circles.push([x, z, .7]);
+  }
+  // crimson cloth falling from the roof beside each column and pooling on the floor, as on the board
+  const red = new THREE.MeshStandardMaterial({color: 0x6e0a10, roughness: .75, side: THREE.DoubleSide});
+  for (const z of [122, 126.5, 131]) for (const x of [-8, 8]) {
+    const g = new THREE.PlaneGeometry(1.6, 10.8, 8, 1), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 5.5 + z) * .12); // folds
+    g.computeVertexNormals();
+    const d = new THREE.Mesh(g, red); d.position.set(x + Math.sign(x) * 1.3, 5.4, z); d.rotation.y = Math.PI / 2; scene.add(d);
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(.9, 16), red); pool.rotation.x = -Math.PI / 2; pool.scale.set(1, 1.4, 1); pool.position.set(x + Math.sign(x) * 1.3, .17, z); scene.add(pool);
+  }
+  // white tapers in clusters on the dais steps (flames only: the braziers and the shaft do the lighting)
+  const wax = S(0xeee6d6, {roughness: .5}), flameM = new THREE.MeshBasicMaterial({color: 0xffc070});
+  for (const [cx, cz] of [[-4.3, 135.4], [4.3, 135.4], [-4.6, 139.6], [4.6, 139.6]]) for (let k = 0; k < 7; k++) {
+    const h = .25 + Math.random() * .55, a = k * 2.4, r = k ? .12 + Math.random() * .2 : 0, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+    add(new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, h, 6), wax), x, .5 + h / 2, z);
+    add(new THREE.Mesh(new THREE.SphereGeometry(.025, 6, 4), flameM), x, .5 + h + .03, z).scale.y = 1.8;
   }
   // the dais and two thrones
   add(new THREE.Mesh(new THREE.BoxGeometry(10, .5, 5), M.hall), 0, .25, 137.6); boxes.push([-5, 135.1, 5, 140.1]);
