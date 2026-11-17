@@ -1210,8 +1210,8 @@ function throwCake() {
     if (k < 1) requestAnimationFrame(fly); else scene.remove(c);
   })();
   setTimeout(() => {
-    dog.mode = "drugged"; dog.drugUntil = performance.now() + 25000; dog.noiseUntil = 0;
-    toast("He ate it. He's out cold. You've got about 25 seconds."); paintGoal();
+    dog.mode = "drugged"; dog.drugUntil = performance.now() + 35000; dog.noiseUntil = 0; // (25 s left the run back with the coin too tight, 18 Nov)
+    toast("He ate it. He's out cold. You've got about 35 seconds."); paintGoal();
   }, 750);
 }
 function dropCoin() {
