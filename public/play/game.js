@@ -1028,6 +1028,20 @@ function hidePortraits() {
   ptBox.classList.remove("on"); document.body.classList.remove("portrayed");
   ptBox.querySelectorAll(".pt").forEach(f => f.classList.remove("now", "seen", "swap"));
 }
+// Lines cut short in the script (18 Nov 2026) without re-recording: play only this part of the clip, in seconds
+const TRIM = {v2_o1: [0, 3.3], v2_om1: [0, 11.05], v2_om2: [1.25, 99]};
+function playVoice(id, fin, fallback) {
+  const tr = TRIM[id]; voiceEl.ontimeupdate = null; voiceEl.src = `voice/${id}.m4a`;
+  const go = () => voiceEl.play().catch(() => setTimeout(fin, fallback));
+  if (!tr) return go();
+  voiceEl.ontimeupdate = () => { if (voiceEl.currentTime >= tr[1]) { voiceEl.ontimeupdate = null; voiceEl.pause(); fin(); } };
+  if (!tr[0]) return go();
+  // (the servers don't answer range requests, so a streamed clip can't be started part-way: play it from memory)
+  fetch(`voice/${id}.m4a`).then(r => r.blob()).then(bl => {
+    voiceEl.addEventListener("loadedmetadata", () => { voiceEl.currentTime = tr[0]; go(); }, {once: true});
+    voiceEl.src = URL.createObjectURL(bl);
+  }).catch(() => go());
+}
 async function line(who, id, text, cut) {
   const p = NPC[who], heard = cut === "voice" || cut === "vo"; // "voice": heard, not seen; "vo": narration, clear of the world's sound
   const pt = PORTRAITS && !heard && !staging && !document.body.classList.contains("cinema") && (talkingTo || p) ? await portraitFor(who, id) : null;
@@ -1039,14 +1053,13 @@ async function line(who, id, text, cut) {
   if (pt) showPortrait(p && p !== PLAYER ? ".l" : ".r", p ? p.name : chap.player, pt); else hidePortraits();
   if (p && !heard) p.play(p.talk);
   if (p) p.speaking = true;
-  voiceEl.src = `voice/${id}.m4a`;
   const fallback = 900 + text.split(" ").length * 280;
   await new Promise(res => {
     let done = false;
-    const fin = () => { if (done) return; done = true; voiceEl.onended = voiceEl.onerror = null; skipLine = null; res(); };
+    const fin = () => { if (done) return; done = true; voiceEl.onended = voiceEl.onerror = voiceEl.ontimeupdate = null; skipLine = null; res(); };
     voiceEl.onended = fin; voiceEl.onerror = () => setTimeout(fin, fallback);
     skipLine = () => { voiceEl.pause(); fin(); };
-    voiceEl.play().catch(() => setTimeout(fin, fallback));
+    playVoice(id, fin, fallback);
   });
   if (p && !heard) p.play(p.idle);
   if (p) p.speaking = false;
@@ -1110,14 +1123,11 @@ async function conversation(id) {
     if (k === 1) { await say("mikon", "v2_m6", "When I get across, I'll find a way to get you out of here too."); await say("elpenor", "v2_e5", "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person."); }
     if (k === 2) { await say("mikon", "v2_m7", "That might be the saddest thing I've ever heard."); await say("elpenor", "v2_e6", "Thank you. I tell it slightly differently at parties."); }
     if (me.met.hermes) {
-      await say("elpenor", "v4_e0", "Did Hermes walk you down? Check your sandals. On the day he was born he stole fifty of Apollo's cattle and made them walk backwards so nobody could follow the tracks.");
       await say("elpenor", "v5_e2", "And let me guess. He pointed at me and ran. He always leaves the speech to me. Fine. Here's how it works.");
     } else await say("elpenor", "v5_e2b", "Right. Nobody's given you the speech yet. Here's how it works.");
     await say("elpenor", "v5_e3", "That's the Styx. That's the ferry. The cheerful one on board is Charon. One coin a passenger, no exceptions. Your family were meant to put one under your tongue.", "ferry");
     await say("mikon", "v5_m6", "They forgot.");
     await say("elpenor", "v5_e4", "Everyone on this beach has a family that forgot. No coin, you wait a hundred years. I've seen people beg him, bribe him, cry at him. He just flicks water at them.", "charon");
-    await say("mikon", "v5_m7", "How long have you been waiting?");
-    await say("elpenor", "v5_e5", "Long enough to take up a hobby. Nets. Strange thing to make on a river with no fish in it, but it keeps the hands busy.");
     await say("mikon", "v5_m8", "So it's a hundred years, or nothing?");
     await say("elpenor", "v5_e6", "Well. There is one other way. It's a terrible idea, so naturally I've thought about it a lot.");
     await say("elpenor", "v2_e3", "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.", "grotto");
@@ -1914,7 +1924,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     povDim = true; { const t0 = performance.now(); (function dimming() { if (!povDim) return; const u = Math.min(1, (performance.now() - t0) / 9000); paint.uniforms.blur.value = u; paint.uniforms.dim.value = u * .9; if (u < 1) requestAnimationFrame(dimming); })(); }
     await say("kleio", "w_a5", "Mikon? Mikon, look at me. Stay with us. Somebody get water!");
     await say("thea", "w_t3", "Mikon, please. Please.");
-    await vo("mikon", "w_vo1", "One moment I was laughing. The next, everyone I loved was leaning over me, and their voices were getting very far away.");
+    await pause(1800); // (Mikon's narration here only said what the scene had shown: cut, 18 Nov)
     await fade("black", 2200);
     povDim = false; PLAYER.hideHands?.(false); for (const [k] of ring) cast[k].hideHands?.(false); paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0; sound.setMuffle(20000, .5);
     if (skipped) return;
@@ -1932,7 +1942,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     faceShot(cast.demeas, {side: .25, dist: 1.1}); cast.demeas.play("Idle_Talking_Loop"); await say("demeas", "w_d4", "Well, the lamb's going cold now. He'd want us to eat. He loved lamb, the poor man.");
     cast.kleio.play("walk"); cast.demeas.play("walk");
     faceShot(cast.thea, {side: .15, dist: .9, ms: 7000}); await say("thea", "w_t2", "He never even finished the joke. I wanted to know what the priest said.");
-    shot([-1.05, 1.5, .1], [-1.05, .86, 0], [-1.05, 3.2, .2], [-1.05, .86, 0], 9000); await vo("mikon", "w_vo2", "Nobody put a coin under my tongue for the ferryman. They were grieving, and they were busy, and nobody thought of it.");
+    shot([-1.05, 1.5, .1], [-1.05, .86, 0], [-1.05, 3.2, .2], [-1.05, .86, 0], 9000); await pause(3000); // (the narration repeated the family's own scene about the coin: cut, 18 Nov)
     await fade("black", 2000);
   };
   await reel();

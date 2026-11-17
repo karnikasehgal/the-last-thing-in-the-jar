@@ -84,7 +84,7 @@ export function makeOrpheus(G) {
     G.beginTalk(NPC[id] || NPC.hades, id);
     if (id === "hermes") {
       await say("hermes", "v2_oh1", "Hold on. You're breathing. Nobody down here breathes, it's one of the first things they give up. Who are you, and how did you get past the gate at Taenarum?");
-      await say("orpheus", "v2_o1", "My name is Orpheus. My wife is Eurydice. We were married in the spring, and that same afternoon a snake found her ankle in the long grass. I sang at her funeral. Then I stopped singing, and I came here instead.");
+      await say("orpheus", "v2_o1", "My name is Orpheus. My wife is Eurydice.");
       await say("hermes", "v2_oh2", "I'm sorry. I mean that, I was there, I heard the song. But I have to tell you how this goes. The living don't cross. Charon won't take you. And on the far bank there's a dog whose entire purpose is to keep people exactly where they are.", "ferry");
       const k = await G.choose([{t: "Ask for his help"}, {t: "Show him the lyre"}, {t: "Ask if she remembers"}]);
       me.choices.hermes = [{Hermes: 2, Athena: 1}, {Apollo: 2, Dionysus: 1}, {Aphrodite: 2, Hera: 1}][k];
@@ -93,7 +93,7 @@ export function makeOrpheus(G) {
       if (k === 2) await say("hermes", "v2_oh5", "Nobody talks much down here, but I'll tell you this much. She hasn't drunk from Lethe, the river of forgetting. Whatever she was, she still is. Go on, then. I'll be over here, looking the other way.");
       st.stage = Math.max(st.stage, 1); G.hermesLeaves();
     } else if (id === "mikon") {
-      await say("mikon", "v2_om1", "You're the singer, aren't you? Everybody's talking about you. Well, nobody talks down here, but they're all looking at you the way people look at the weather. Good luck with Charon. I've been working on him for ninety-nine years.");
+      await say("mikon", "v2_om1", "You're the singer, aren't you? Everybody's talking about you. Well, nobody talks down here, but they're all looking at you the way people look at the weather. Good luck with Charon.");
     } else if (id === "charon") {
       if (st.stage >= 4 && st.side === "far") return backAcross();
       if (st.side === "far") { await say("charon", "v2_oc1", "Coin."); G.endTalk(); return; }
@@ -334,7 +334,7 @@ export function makeOrpheus(G) {
     // things that happen on the way
     if (!st.fired.slow && me.pos.z < FAR.hallZ - 4 && st.side === "far") { st.fired.slow = true; voice("eurydice", "v2_oe3", "You're walking so fast. My foot still hurts, where it bit me."); }
     if (!st.fired.stop && me.pos.z < FAR.gateZ - 2 && st.side === "far") { st.fired.stop = true; st.stepsOff = true; setTimeout(() => { if (st.over) return; voice("eurydice", "v2_oe2", "Orpheus? Are you still there? I can't hear you anymore.").then(() => setTimeout(() => st.stepsOff = false, 1500)); }, 1200); }
-    if (!st.fired.mikon && st.side === "near" && flat(NPC.mikon.pos).distanceTo(flat(me.pos)) < 8) { st.fired.mikon = true; voice("mikon", "v2_om2", "Mate. Mate. Don't turn around. Just keep walking. I'll tell you if anything weird happens. Everything's weird. Keep walking."); }
+    if (!st.fired.mikon && st.side === "near" && flat(NPC.mikon.pos).distanceTo(flat(me.pos)) < 8) { st.fired.mikon = true; voice("mikon", "v2_om2", "Don't turn around. Just keep walking. I'll tell you if anything weird happens. Everything's weird. Keep walking."); }
     if (!st.fired.light && st.side === "near" && me.pos.x < -34 && me.pos.z > 9 && me.pos.z < 17) { st.fired.light = true; theLight(); }
   }
   function always(dt, now) {
