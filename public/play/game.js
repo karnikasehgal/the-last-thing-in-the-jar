@@ -472,8 +472,8 @@ const boat = new THREE.Group();
 const hull = new THREE.Mesh(new THREE.BoxGeometry(2.2, .7, 6), M.wood); hull.position.y = -.05;
 const bow = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2, 4), M.wood); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, -.05, 4); bow.scale.set(1, 1, .45);
 boat.add(hull, bow); boat.position.copy(PLACES.boat).setY(-.05); scene.add(boat);
-const lantern = new THREE.PointLight(0xffb060, 16, 14, 1.8); lantern.position.set(-1.5, 2.4, 35.5); scene.add(lantern);
-torches.push({l: lantern, base: 16, seed: 3});
+const lantern = new THREE.PointLight(0xffb060, 8, 14, 1.8); lantern.position.set(-1.5, 2.4, 35.5); scene.add(lantern);
+torches.push({l: lantern, base: 8, seed: 3});
 const glass = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), new THREE.MeshBasicMaterial({color: 0xffd08a})); glass.position.copy(lantern.position); scene.add(glass);
 const pole = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), M.wood); pole.position.set(-1.5, 1.1, 35.5); scene.add(pole);
 
@@ -623,11 +623,12 @@ for (let i = 0; i < 14; i++) {
   const r = new THREE.Mesh(new THREE.DodecahedronGeometry(1 + Math.random() * 1.8, 0), M.dark);
   const a = Math.random() * Math.PI * 1.4 - .2, d = 3.5 + Math.random() * 2;
   r.position.set(PLACES.dogHome.x + Math.cos(a) * d, Math.random() * .8, PLACES.dogHome.z - Math.sin(a) * d * .8);
-  r.rotation.set(Math.random(), Math.random(), Math.random()); scene.add(r);
-  // solid, except where one would block the way from the temple to the coin (that path must stay open)
+  r.rotation.set(Math.random(), Math.random(), Math.random());
+  // solid; one that would block the way from the temple to the coin is left out (it used to stay, with nothing solid
+  // about it, so you walked through it and the camera went inside the rock)
   const rr = r.geometry.parameters.radius * 1.1, ax = 65.5, az = 12.5, bx = PLACES.coinSpot.x, bz = PLACES.coinSpot.z;
   const t = Math.max(0, Math.min(1, ((r.position.x - ax) * (bx - ax) + (r.position.z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2)));
-  if (Math.hypot(r.position.x - (ax + (bx - ax) * t), r.position.z - (az + (bz - az) * t)) > rr + 1.1) circles.push([r.position.x, r.position.z, rr * .8]);
+  if (Math.hypot(r.position.x - (ax + (bx - ax) * t), r.position.z - (az + (bz - az) * t)) > rr + 1.1) { scene.add(r); circles.push([r.position.x, r.position.z, rr * .8]); }
 }
 const lairGlow = new THREE.PointLight(0xff4a1a, 22, 14, 1.8); lairGlow.position.set(PLACES.dogHome.x, 1.2, PLACES.dogHome.z - 1); scene.add(lairGlow);
 
@@ -1521,21 +1522,21 @@ function drawMap(cv) {
   const g = cv.getContext("2d"), W = cv.width, H = cv.height;
   // world x -40..84 → map; world z -8..40 → map (river at the bottom)
   const X = x => (x + 40) / 124 * W, Y = z => (z + 8) / 48 * H;
-  g.fillStyle = "#e6d8b8"; g.fillRect(0, 0, W, H);
-  for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(90,70,45,${Math.random() * .05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  g.fillStyle = "#120e0c"; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(220,200,170,${Math.random() * .04})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
   // the river
-  g.fillStyle = "rgba(30,150,185,.55)"; g.fillRect(0, Y(SHORE), W, H - Y(SHORE));
-  g.strokeStyle = "rgba(40,60,70,.5)"; g.lineWidth = 2;
+  g.fillStyle = "rgba(150,165,180,.16)"; g.fillRect(0, Y(SHORE), W, H - Y(SHORE));
+  g.strokeStyle = "rgba(169,182,194,.22)"; g.lineWidth = 2;
   for (let k = 0; k < 7; k++) { g.beginPath(); for (let x = 0; x <= W; x += 20) g.lineTo(x, Y(SHORE + 2.5 + k * 2.4) + Math.sin(x / 40 + k) * 4); g.stroke(); }
-  g.strokeStyle = "#5a4630"; g.lineWidth = 3; g.beginPath(); g.moveTo(0, Y(SHORE)); g.lineTo(W, Y(SHORE)); g.stroke();
-  const ink = "#3a2a1c", label = (t, x, y, size = 26, it = false, color = ink) => { g.fillStyle = color; g.font = `${it ? "italic " : ""}${size}px "IM Fell English", Georgia, serif`; g.textAlign = "center"; g.fillText(t, x, y); };
+  g.strokeStyle = "rgba(232,220,196,.5)"; g.lineWidth = 3; g.beginPath(); g.moveTo(0, Y(SHORE)); g.lineTo(W, Y(SHORE)); g.stroke();
+  const ink = "#e8dcc4", label = (t, x, y, size = 26, it = false, color = ink) => { g.fillStyle = color; g.font = `${it ? "italic " : ""}${size}px "IM Fell English", Georgia, serif`; g.textAlign = "center"; g.fillText(t, x, y); };
   // the arcade
-  g.fillStyle = "rgba(120,95,60,.18)"; g.fillRect(X(-37), Y(0), X(37) - X(-37), Y(8.5) - Y(0));
+  g.fillStyle = "rgba(232,220,196,.08)"; g.fillRect(X(-37), Y(0), X(37) - X(-37), Y(8.5) - Y(0));
   g.strokeStyle = ink; g.lineWidth = 2.5; g.strokeRect(X(-37), Y(0), X(37) - X(-37), Y(8.5) - Y(0));
   g.fillStyle = ink; for (let x = -36; x <= 36; x += 6) { g.beginPath(); g.arc(X(x), Y(8), 5, 0, 7); g.fill(); }
   label("THE ARCADE", X(0), Y(4.8), 28);
   // the dock and the ferry
-  g.fillStyle = "#6b4e2e"; g.fillRect(X(-1.5), Y(SHORE - .5), X(1.5) - X(-1.5), Y(36) - Y(SHORE - .5));
+  g.fillStyle = "#8a7a66"; g.fillRect(X(-1.5), Y(SHORE - .5), X(1.5) - X(-1.5), Y(36) - Y(SHORE - .5));
   g.beginPath(); g.ellipse(X(0), Y(37.8), 18, 34, 0, 0, 7); g.fill();
   label("Charon's ferry", X(0) + 120, Y(36.5), 26, true);
   // the temple and the dog's cave
@@ -1544,22 +1545,22 @@ function drawMap(cv) {
   label("THE OLD TEMPLE", X(56), Y(-1.8), 24);
   g.fillStyle = "#c08a40"; g.beginPath(); g.arc(X(PLACES.altar.x), Y(PLACES.altar.z), 9, 0, 7); g.fill();
   label("a honey cake, on the altar", X(56), Y(11.4), 20, true);
-  g.fillStyle = "rgba(40,25,20,.75)"; g.beginPath(); g.ellipse(X(72.5), Y(12), 42, 30, 0, 0, 7); g.fill();
-  label("the dog sleeps here,", X(72.5), Y(18.2), 21, true, "#7a2414");
-  label("on the only coin", X(72.5), Y(20.4), 21, true, "#7a2414");
+  g.fillStyle = "rgba(176,34,28,.45)"; g.beginPath(); g.ellipse(X(72.5), Y(12), 42, 30, 0, 0, 7); g.fill();
+  label("the dog sleeps here,", X(72.5), Y(18.2), 21, true, "#d8483a");
+  label("on the only coin", X(72.5), Y(20.4), 21, true, "#d8483a");
   g.fillStyle = "#b8862a"; g.beginPath(); g.arc(X(PLACES.coinSpot.x), Y(PLACES.coinSpot.z), 8, 0, 7); g.fill();
   // people
-  const who = (x, z, t) => { g.fillStyle = "#2a3a5e"; g.beginPath(); g.arc(X(x), Y(z), 7, 0, 7); g.fill(); label(t, X(x), Y(z) - 14, 19, true, "#2a3a5e"); };
+  const who = (x, z, t) => { g.fillStyle = "#c9d2da"; g.beginPath(); g.arc(X(x), Y(z), 7, 0, 7); g.fill(); label(t, X(x), Y(z) - 14, 19, true, "#c9d2da"); };
   if (NPC.hermes?.root.visible) who(NPC.hermes.pos.x, NPC.hermes.pos.z, "Hermes");
   who(-6, 16, "Elpenor");
   who(56, -1, "Theseus & Pirithous");
-  label("THE RIVER STYX", X(30), Y(31), 30, false, "#2c4450");
-  label("the river is safe: the dog can't swim", X(30), Y(34.5), 20, true, "#2c4450");
+  label("THE RIVER STYX", X(30), Y(31), 30, false, "#a9b6c2");
+  label("the river is safe: the dog can't swim", X(30), Y(34.5), 20, true, "#a9b6c2");
   // you
   const mx = X(me.pos.x), my = Y(me.pos.z);
-  g.fillStyle = "#a2432c"; g.beginPath(); g.arc(mx, my, 10, 0, 7); g.fill();
-  g.strokeStyle = "#a2432c"; g.lineWidth = 4; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx - Math.sin(me.yaw) * 28, my - Math.cos(me.yaw) * 28); g.stroke();
-  label("you", mx, my + 32, 22, true, "#a2432c");
+  g.fillStyle = "#d8483a"; g.beginPath(); g.arc(mx, my, 10, 0, 7); g.fill();
+  g.strokeStyle = "#d8483a"; g.lineWidth = 4; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx - Math.sin(me.yaw) * 28, my - Math.cos(me.yaw) * 28); g.stroke();
+  label("you", mx, my + 32, 22, true, "#d8483a");
   // where to go next
   if (playing || me.stage === 0) { const goalAt = goal().at(); g.strokeStyle = "#b8862a"; g.lineWidth = 3; g.setLineDash([8, 8]); g.beginPath(); g.moveTo(mx, my); g.lineTo(X(goalAt.x), Y(goalAt.z)); g.stroke(); g.setLineDash([]); }
   g.strokeStyle = ink; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
@@ -1968,7 +1969,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
   const card = $("#titlecard"); card.querySelector("small").textContent = "Chapter I"; card.querySelector("b").textContent = "The Coin";
   card.classList.add("on"); await pause(skipped ? 900 : 2800); card.classList.remove("on");
   await fade("clear", 600);
-  me.pos.set(-20.4, 0, 17.4); me.yaw = -Math.PI / 2; me.pitch = -.05;
+  me.pos.set(-20.4, 0, 13.2); me.yaw = -Math.PI / 2; me.pitch = -.05; // (at z 17.4 a shade stood a step from the camera)
   $(".cine").classList.remove("on"); staging = false; PLAYER.setHead(false); PLAYER.play("Idle_Loop", 0);
   document.body.classList.remove("talking", "cinema"); camShot.active = false; talking = false; skipIntro = null; shot.cur = null;
   paintGoal();
@@ -2379,7 +2380,7 @@ function pickChapter(n) {
   paintGoal(); paintStats();
 }
 drawPalace($("#palace"), CHAPTERS, pickChapter, save.get().done);
-pickChapter(+(new URLSearchParams(location.search).get("chapter") || (save.get().done.includes(1) ? 2 : 1)));
+pickChapter(+(new URLSearchParams(location.search).get("chapter") || 1)); // (always Chapter I unless asked: once it was finished, the game only ever opened on II; pick II in the palace)
 // the lyre button on touch screens: hold to play
 $("#tF").addEventListener("touchstart", e => { e.preventDefault(); lyreHeld = true; }, {passive: false});
 $("#tF").addEventListener("touchend", () => { lyreHeld = false; }); $("#tF").addEventListener("touchcancel", () => { lyreHeld = false; });

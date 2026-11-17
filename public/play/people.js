@@ -1211,7 +1211,7 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   }
   if (look.eyes) { // Charon's eyes of flame
     root.traverse(o => { if (o.isMesh && /head/i.test([].concat(o.material)[0].name)) { o.material = o.material.clone(); } });
-    const l = new THREE.PointLight(look.eyes, .35, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
+    const l = new THREE.PointLight(look.eyes, .05, .4, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
   }
   const headParts = skins.filter(o => /head|opacity/i.test([].concat(o.material)[0].name) || o.userData.head);
   root.traverse(o => { if (o.isMesh && !o.isSkinnedMesh && o.parent?.isBone && /Head/.test(o.parent.name)) headParts.push(o); });
@@ -1336,7 +1336,7 @@ export function makeCastMember(id, {ASSETS, CLIPS, scene, scale = 1, seated = fa
   const person = {root, bones, body};
   look.dress(person, study(body), body);
   if (look.eyes) { // a faint glow on the face, so the eyes read as fire in the dark
-    const l = new THREE.PointLight(look.eyes, .25, .35, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
+    const l = new THREE.PointLight(look.eyes, .04, .35, 2); mount(person, "Head", l, new THREE.Vector3(0, 1.69, .14));
   }
   // For the person you play: hide the head while the camera is inside it, show it in reflections and cutaways.
   const headParts = []; root.traverse(o => { if (o.isMesh && o !== body && (/Hair|Eye/i.test([].concat(o.material)[0]?.name || "") || o.parent?.isBone)) headParts.push(o); });

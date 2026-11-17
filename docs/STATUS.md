@@ -8,6 +8,16 @@
 - **Branches not merged:** `cast-build` (bare 3D Thea and Mikon) and `clothes-agent` (cloth experiments); both wait for the character overhaul in the later lists.
 - **Waiting for your yes:** fixing the small doc errors reported in chat; approving the light rocks (`look-test/Rocks before vs after.jpg`); scrubbing old Claude credit lines from git history.
 
+## Both chapters played through again and fixed (18 November 2026, Karnika's request)
+Chapter I played from Begin (film 269 s) to "You crossed", and again without the film; Chapter II's walk out played following the goal arrow to "You didn't look back". No page errors. Cache `coin-v72`.
+1. **The game always opened on Chapter II** once Chapter I was finished (why Karnika couldn't play the first level). It now opens on Chapter I; Chapter II is picked in the palace. Checked with a save that has Chapter I done.
+2. **Red screen on taking the coin:** cave rocks on the way to the coin had no collision, so you walked into them and the camera went inside the rock. Those rocks are left out now; the dog is in view as you take the coin.
+3. **Charon's face burned orange and his eyes white:** the little light in his ember eyes sat a hand's width from his face. Turned down to a faint glow; the dock lantern also halved.
+4. **Chapter I's how-to map** recoloured to match Chapter II (ivory and red on black).
+5. **After Chapter I's film** you stood a step from a shade; you now start clear of it.
+6. **Chapter II walk out:** the arrow pointed straight through the old sailor's camp; steering round it turned you to face Eurydice. It now leads up the clear walk to the arcade, then west.
+**Seen, not changed:** Chapter I's film is 4 min 29 s before you can move (the plan turns it into a stills film); a ghost-like second of black after the title cards.
+
 ## Chapter II, The Lyre: played through and fixed (17 November 2026, Karnika's request, outside the plan order)
 Played start to finish in a headless browser, walking, holding F, tapping the songs and pressing E like a player (`/play/?chapter=2`). The opening film runs 141 s before you can move; all 96 Chapter II voice lines have their audio; no page errors.
 **Fixed** (about 13 lines changed in `orpheus.js`, `game.js`, `farbank.js`; cache `coin-v69`):

@@ -74,7 +74,7 @@ export function makeOrpheus(G) {
     {label: "Find Charon at the end of the dock. He won't take the living. He might take a song", at: () => G.PLACES.dock},
     {label: () => dog.asleep ? "Through the gate, and follow the path to the House of Hades" : "Get past Cerberus at the gate. Hold F to play your lyre and keep him calm", at: () => dog.asleep ? FAR.throneFront : FAR.gateMouth},
     {label: "Follow the path through the meadow to the House of Hades. Ask for her", at: () => FAR.throneFront},
-    {label: () => st.side === "far" ? "Lead her back to the ferry. Don't look back" : "Lead her to the way up, at the far end of the bank. Don't look back", at: () => st.side === "far" ? V(0, 0, 52) : V(-43, 0, 13)}
+    {label: () => st.side === "far" ? "Lead her back to the ferry. Don't look back" : "Lead her to the way up, at the far end of the bank. Don't look back", at: () => st.side === "far" ? V(0, 0, 52) : me.pos.x > -5 && me.pos.z > 12 ? V(0, 0, 10.5) : V(-43, 0, 13)} // (off the dock, the arrow first leads straight up the clear walk to the arcade, then west in front of the old sailor's camp: straight at the way up it ran through the camp, and steering round it turned you to face her)
   ];
   const stageNow = () => st.stage === 2 && dog.asleep && me.pos.z > FAR.gateZ + 1 ? 3 : Math.min(st.stage, 4);
   st.side = "near";
