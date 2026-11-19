@@ -1127,6 +1127,7 @@ async function conversation(id) {
     } else await say("elpenor", "v5_e2b", "Right. Nobody's given you the speech yet. Here's how it works.");
     await say("elpenor", "v5_e3", "That's the Styx. That's the ferry. The cheerful one on board is Charon. One coin a passenger, no exceptions. Your family were meant to put one under your tongue.", "ferry");
     await say("mikon", "v5_m6", "They forgot.");
+    await flashback("funeral"); // (the night after: nobody put the coin in)
     await say("elpenor", "v5_e4", "Everyone on this beach has a family that forgot. No coin, you wait a hundred years. I've seen people beg him, bribe him, cry at him. He just flicks water at them.", "charon");
     await say("mikon", "v5_m8", "So it's a hundred years, or nothing?");
     await say("elpenor", "v5_e6", "Well. There is one other way. It's a terrible idea, so naturally I've thought about it a lot.");
@@ -1194,9 +1195,19 @@ function pickCoin(mesh) {
   if (dog.mode === "drugged") toast("Got it. Run. When he wakes up, he'll smell it.");
   else wakeDog("He smelled the coin. RUN.");
 }
+// A flashback to the wedding during play (only once the opening has built it; not with ?nointro)
+async function flashback(part) {
+  if (!wedding || !crowd || !guests?.lykon || (me.flashed ||= {})[part]) return;
+  me.flashed[part] = true;
+  const was = talking; talking = true; releaseMouse(); $("#prompt").classList.remove("on");
+  for (const p of Object.values(guests)) p.root.visible = true;
+  await weddingFilm({part});
+  if (!was) { talking = false; document.body.classList.remove("talking"); paintGoal(); if (playing && !ended) grabMouse(); }
+}
 function pickCake() {
   scene.remove(cake); cake = null; me.cake = true; sound.chime(); paintGoal();
   toast("A honey cake. Sticky. The dog will love it.");
+  setTimeout(() => flashback("party"), 1600); // (a cake from a feast: the wedding, as it was before the olive)
 }
 function throwCake() {
   me.cake = false;
@@ -1749,7 +1760,12 @@ async function buildCrowd() {
     servers.forEach((p, i) => { const a = now / 9000 * (i % 2 ? 1 : -1) + i * 1.7, rx = 7.5, rz = 8; p.root.position.copy(wpos(3 + Math.cos(a) * rx, 0, Math.sin(a) * rz)); p.root.rotation.y = Math.atan2(-Math.sin(a) * rx * (i % 2 ? 1 : -1), Math.cos(a) * rz * (i % 2 ? 1 : -1)); });
   }, hide() { people.forEach(p => p.root.visible = false); }, show() { people.forEach(p => p.root.visible = true); }};
 }
-async function weddingFilm({skip = false} = {}) { // skip: the opening was played as video; go straight to the river bank
+// Chapter I opens cold on the choke (PLAN-fixes F1): part "cold" is the opening (the goat joke, the olive, the choke,
+// then he wakes by the river). The rest of the wedding comes back as flashbacks during the level: "party" (arriving,
+// the fish, the toast) when he picks up the honey cake, and "funeral" (nobody put the coin in) when he tells Elpenor
+// his family forgot. Played in 3D until Karnika's stills replace them.
+async function weddingFilm({skip = false, part = "cold"} = {}) { // skip: the opening was played as video; go straight to the river bank
+  if (part !== "cold") await fade("black", 900);
   if (!skip && !crowd) { // the title card goes up before the wedding is built (which takes a few seconds), not after: the river must not show first
     const card = $("#titlecard"); card.querySelector("small").textContent = "Corinth"; card.querySelector("b").textContent = "Last spring";
     $("#fader").style.transition = "none"; $("#fader").style.opacity = 1; card.classList.add("on"); document.body.classList.add("cinema");
@@ -1803,6 +1819,7 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
       if (i < P.length - 1) return requestAnimationFrame(step);
       if (face !== undefined) p.root.rotation.y = face; p.play(end, .25); res(); })(); });
   const reel = async () => {
+    if (part === "party") {
     // Corinth, last spring: the whole wedding from above, then Mikon walking in through the gate with his present
     shot([-2, 9, 14], [-6, 0, -2], [6, 6, 11], [-4, 0, -1], 7000);
     await fade("clear", 1600);
@@ -1846,6 +1863,15 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     faceShot(cast.demeas, {dist: 1.3, side: -.4}); cast.demeas.play("Idle_Talking_Loop"); await say("demeas", "w_d2", "That was one time, Kleio, and the lamb started it.");
     if (skipped) return;
     for (const k of ["lykon", "kleio", "thea", "nikias"]) cast[k].play("sittable");
+      await pause(1200); return;
+    }
+    if (part === "cold") {
+    // cold open: black and the noise of the party, then straight in at the table, mid-story (PLAN-fixes F1)
+    shot([-2.8, 2.3, -3.4], [.6, 1, .4], [-2.2, 2, -2.8], [.6, 1, .4], 4000);
+    await pause(1400); await fade("clear", 1400);
+    { const card = $("#namecard"); card.querySelector("b").textContent = "Corinth"; card.querySelector("span").textContent = "Last spring. Thea's wedding."; card.classList.add("on"); setTimeout(() => card.classList.remove("on"), 3500); }
+    await pause(1500);
+    if (skipped) return;
     // the goat
     faceShot(cast.mikon, {side: .35, dist: 1.05, ms: 7000}); cast.mikon.play("sittabletalk");
     await say("mikon", "w_m1", "Lykon. Lykon. Have you heard the one about the goat who wandered into the temple of Zeus?");
@@ -1927,7 +1953,9 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     await pause(1800); // (Mikon's narration here only said what the scene had shown: cut, 18 Nov)
     await fade("black", 2200);
     povDim = false; PLAYER.hideHands?.(false); for (const [k] of ring) cast[k].hideHands?.(false); paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0; sound.setMuffle(20000, .5);
-    if (skipped) return;
+      return;
+    }
+    // part "funeral"
     // the next night: the same courtyard, cleared, and Mikon laid out on the table
     wedding.mood("funeral"); PLAYER.setHead(true); crowd.hide(); for (const k of ["kleio", "thea", "lykon", "nikias"]) cast[k].expr.hold = {};
     PLAYER.root.position.copy(wpos(.55, .86, 0)); PLAYER.root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(V(0, 0, -1), V(-1, 0, 0), V(0, 1, 0)));
@@ -1946,6 +1974,17 @@ async function weddingFilm({skip = false} = {}) { // skip: the opening was playe
     await fade("black", 2000);
   };
   await reel();
+  }
+  if (part !== "cold") { // back to the beach, where the flashback began
+    await fade("black", 900);
+    stopActs(); if (guests.nikias) guests.nikias.root.rotation.set(0, 0, 0);
+    PLAYER.hideHands?.(false); sound.party(false); sound.setMuffle(20000, .2); povDim = false; paint.uniforms.blur.value = 0; paint.uniforms.dim.value = 0;
+    setWeddingLights(false); for (const p of Object.values(guests)) p.root.visible = false; crowd?.hide(); setLightsFar(farOn);
+    for (const k of Object.keys(guests)) delete NPC[k]; delete NPC.mikon;
+    PLAYER.root.quaternion.identity(); PLAYER.root.rotation.set(0, 0, 0); PLAYER.action && (PLAYER.action.timeScale = 1); PLAYER.expr.hold = {}; PLAYER.setHead(false); PLAYER.play("Idle_Loop", 0);
+    staging = false; camShot.active = false; shot.cur = null; skipIntro = null; $(".cine").classList.remove("on"); document.body.classList.remove("cinema");
+    await fade("clear", 900);
+    return;
   }
   // the river: he wakes on a bench by the Styx, and Hermes is there
   await fade("black", 300);

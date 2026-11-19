@@ -319,18 +319,18 @@ function petasos() { // a traveller's felt hat with a wide brim and two small wi
   const felt = new THREE.MeshStandardMaterial({color: 0x7a5a3a, map: WEAVE, roughness: .95, side: THREE.DoubleSide});
   g.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 40), felt));
   const band = new THREE.Mesh(new THREE.TorusGeometry(.104, .006, 6, 40), gold); band.rotation.x = Math.PI / 2; band.position.y = .02; g.add(band);
-  for (const s of [-1, 1]) g.add(wing(s, .1, .06, -.02, 1.5));
+  for (const s of [-1, 1]) g.add(wing(s, .104, .034, .0, 1.25, true)); // (swept back along the crown: standing up at 1.5x they read as two big ears, 19 Nov)
   return g;
 }
-function wing(side, x, y, z, size = 1) { // a small feathered wing
+function wing(side, x, y, z, size = 1, swept = false) { // a small feathered wing (swept: lying back along a hat, fanned only a little)
   const w = new THREE.Group();
   for (let k = 0; k < 5; k++) {
     const sh = new THREE.Shape(); const L = (.07 + k * .018) * size, H = .018 * size;
     sh.moveTo(0, 0); sh.quadraticCurveTo(L * .5, H * 1.4, L, H * .3); sh.quadraticCurveTo(L * .55, -H * .2, 0, 0);
     const f = new THREE.Mesh(new THREE.ShapeGeometry(sh, 6), feather);
-    f.rotation.z = .25 + k * .17; f.position.y = -k * .004 * size; w.add(f);
+    f.rotation.z = swept ? .06 + k * .08 : .25 + k * .17; f.position.y = -k * .004 * size; w.add(f);
   }
-  w.position.set(side * x, y, z); w.rotation.y = side > 0 ? -.35 : Math.PI + .35;
+  w.position.set(side * x, y, z); w.rotation.y = swept ? (side > 0 ? 1.0 : Math.PI - 1.0) : side > 0 ? -.35 : Math.PI + .35;
   return w;
 }
 function caduceus() { // the herald's staff: two snakes winding up to a pair of wings
@@ -780,8 +780,8 @@ const PLEATS = canvasTex(256, (g, S) => { // fine vertical pleats, as a normal m
 const DRAPES = {};
 function drapeCloth(color, fabric) {
   return DRAPES[color + fabric] ||= fabric === "liquid"
-    ? new THREE.MeshPhysicalMaterial({color, roughness: .3, metalness: .12, sheen: 1, sheenRoughness: .3, sheenColor: new THREE.Color(0xffffff),
-        clearcoat: .35, clearcoatRoughness: .4, normalMap: PLEATS, normalScale: new THREE.Vector2(.55, .55), side: THREE.DoubleSide})
+    ? new THREE.MeshPhysicalMaterial({color, roughness: .38, metalness: 0, sheen: .4, sheenRoughness: .45, sheenColor: new THREE.Color(color).lerp(new THREE.Color(0xffffff), .25),
+        clearcoat: .1, clearcoatRoughness: .5, normalMap: PLEATS, normalScale: new THREE.Vector2(.55, .55), side: THREE.DoubleSide}) // (full white sheen, gloss and a little metal: under the close-up light the brides glowed white, 19 Nov)
     : new THREE.MeshPhysicalMaterial({color, roughness: .5, sheen: .9, sheenRoughness: .35, sheenColor: new THREE.Color(color).lerp(new THREE.Color(0xffffff), .45),
         normalMap: FOLDS, normalScale: new THREE.Vector2(.25, .25), side: THREE.DoubleSide});
 }
