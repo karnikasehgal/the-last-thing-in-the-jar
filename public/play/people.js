@@ -435,7 +435,8 @@ const LOOKS = {
     if (p.toon) return epicHermes(p, B, body);
     const tunic = cloth(0xe9e0cc);
     put(p, wrap(body, UPPER, {mat: tunic, clip: `${NECKLINE} && ${SLEEVE(.33)} && b.y > .97`}));
-    put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), flare: .05, weightsAt: skirtWeights(B)}));
+    put(p, drape(body, SEATED ? {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), flare: .05, weightsAt: skirtWeights(B)} // (standing: the old cut had a stepped hem and the legs came through it, 19 Nov)
+      : {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), off: .022, flare: .11, folds: .006, step: .03, shrink: 1, soft: 8, weightsAt: skirtWeights(B, .5)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .026, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     put(p, drape(body, {from: 1.5, to: .72, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8c2f24, {folds: true}), off: .04, flare: .1, folds: .02,
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
@@ -549,7 +550,8 @@ const LOOKS = {
     beard(p, body, 0x15100c, {thick: .016, chin: .6});
     const black = cloth(0x1c1622, {folds: true});
     put(p, wrap(body, UPPER, {mat: cloth(0x2a2030), clip: `b.y > .97 && b.x < .3 && b.y < max(1.2, 1.32 + 1.5 * b.x) && ${NECKLINE}`}));
-    put(p, drape(body, {from: 1.02, to: .08, mat: black, flare: .12, folds: .025, weightsAt: skirtWeights(B, .8)}));
+    put(p, drape(body, SEATED ? {from: 1.02, to: .08, mat: black, flare: .12, folds: .025, weightsAt: skirtWeights(B, .8)}
+      : {from: 1.02, to: .08, mat: black, off: .02, flare: .12, folds: .008, step: .03, shrink: 1, soft: 8, weightsAt: skirtWeights(B, .55)})); // (standing: lumpy at the hem, 19 Nov)
     if (SEATED) seatedFall(p, B, body, black);
     put(p, drape(body, {from: 1.05, to: 1.0, mat: gold, off: .03, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     put(p, drape(body, {from: 1.52, to: .7, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .045, flare: .08, folds: .03,
@@ -565,7 +567,7 @@ const LOOKS = {
   }},
   // Persephone: queen of the dead, in a pomegranate-red peplos with an overfold, a gold crown, a pomegranate.
   persephone: {body: "female", tone: 0xfbe4d0, hair: ["hair_buns"], hairColor: 0x2a160e, dress(p, B, body) {
-    if (p.toon) weddingDrape(p, B, body, {color: 0x6e1424}); else gown(p, B, body, 0x5e0f1c, 0x1a0a12); // pomegranate-red liquid silk
+    if (p.toon) weddingDrape(p, B, body, {color: 0x6e1424}); else columnGown(p, B, body, 0x5e0f1c, {sheer: 0x1a0a12}); // pomegranate-red liquid silk (as a column: the flared gown stood out like a box and showed the jacket collar underneath, 19 Nov)
     crownOn(p, crown(0xc9a14a, false), p.norm ? 1.735 : 1.675);
     const pom = pomegranate(); if (p.norm) hold(p, "l", pom, new THREE.Vector3(0, .03, -.03)); else mount(p, "hand_l", pom, new THREE.Vector3(.7, 1.38, .01));
   }},
