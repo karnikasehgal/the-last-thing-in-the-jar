@@ -201,7 +201,7 @@ function shadows(now) {
         // Only people, animals and things about their size cast shadows. Every wall, rock and column used to cast one
         // too, and the scene was drawn again for each: millions of triangles a frame for shadows nobody looks at.
         const small = (o.geometry.boundingSphere?.radius || 0) * o.scale.x < 4;
-        o.castShadow = (o.isSkinnedMesh || small) && !big && !m?.transparent && !o.isPoints && !o.isInstancedMesh;
+        o.castShadow = (o.isSkinnedMesh || small) && !big && !m?.transparent && !o.isPoints && !o.isInstancedMesh && !o.userData.noShadow;
         // People were drawn even when off screen (in every shadow, reflection and the picture itself), because a bending
         // arm can leave the mesh's resting bounds. A roomier bound lets them be skipped when out of view.
         if (o.isSkinnedMesh && !o.frustumCulled && !o.userData.noCull) { o.computeBoundingSphere(); o.boundingSphere.radius *= 1.8; o.frustumCulled = true; } } // (a meadow of grass blades would cost more than it shows)
@@ -1207,7 +1207,7 @@ async function flashback(part) {
 function pickCake() {
   scene.remove(cake); cake = null; me.cake = true; sound.chime(); paintGoal();
   toast("A honey cake. Sticky. The dog will love it.");
-  setTimeout(() => flashback("party"), 1600); // (a cake from a feast: the wedding, as it was before the olive)
+  flashback("party"); // (a cake from a feast: the wedding, as it was before the olive. At once: after a delay you could already be walking off when it cut in)
 }
 function throwCake() {
   me.cake = false;

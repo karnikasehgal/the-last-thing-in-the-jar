@@ -219,6 +219,7 @@ function outline(B, y, band, SEG, include) {
 let LONG = false; // set while dressing a realistic body: sleeves to the wrist, hems to the ankle
 function drape(body, {from, to, mat, off = .02, flare = .06, folds = .012, arc = [0, Math.PI * 2], hem = () => 0, include, weightsAt, SEG = 56, step = .035, free = false, cling = true, shrink = .985, soft = 0}) {
   const B = study(body);
+  if (!soft && !SEATED && from - to > .15) soft = 6; // (a long piece, standing: smoothed by default. Unsmoothed it followed every pocket and fold of the trousers underneath, so skirts had stepped, lumpy hems and cloaks stood out like boxes, 19 Nov)
   if (LONG && !free && to < .8 && from < 1.1) to = SEATED ? .46 : Math.min(to, .1);
   if (LONG && from > 1.1 && from - to > .1) off += .022;
   else if (LONG && from - to <= .1) off += .014; // belts and bands sit on top of the tunic, not half inside it // cloaks and capes from the shoulders sit clear of the tunic underneath, which is fuller on a real body
@@ -283,6 +284,9 @@ function skirtWeights(B, legShare = .55) {
     return mixWeights(hipOnly, near, Math.min(1, t * 1.6) * legShare);
   };
 }
+// A cloak from the shoulders to the calves: the top moves with the chest, the lower part with the hips (the old ones
+// stopped at the waist and hung like boards, 19 Nov)
+const cloakWeights = B => boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : y > .95 ? [["spine_03", .4], ["spine_02", .3], ["spine_01", .3]] : [["spine_01", .4], ["pelvis", .6]]);
 function boneWeights(B, list) { // e.g. [["spine_03", 1]] or a function of height
   return (x, y, z, t, a) => new Map((typeof list === "function" ? list(x, y, z, t, a) : list).map(([n, w]) => [B.idx[n], w]));
 }
@@ -438,8 +442,7 @@ const LOOKS = {
     put(p, drape(body, SEATED ? {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), flare: .05, weightsAt: skirtWeights(B)} // (standing: the old cut had a stepped hem and the legs came through it, 19 Nov)
       : {from: 1.0, to: .6, mat: cloth(0xe9e0cc, {folds: true}), off: .022, flare: .11, folds: .006, step: .03, shrink: 1, soft: 8, weightsAt: skirtWeights(B, .5)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .026, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-    put(p, drape(body, {from: 1.5, to: .72, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8c2f24, {folds: true}), off: .04, flare: .1, folds: .02,
-      include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+    put(p, drape(body, {from: 1.5, to: .3, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8c2f24, {folds: true}), off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
     mount(p, "Head", petasos(), new THREE.Vector3(0, p.norm ? 1.805 : 1.755, -.02));
     mount(p, "spine_03", caduceus(), new THREE.Vector3(.05, 1.25, -.17), [0, 0, -.5]);
@@ -453,7 +456,8 @@ const LOOKS = {
     put(p, drape(body, {from: 1.0, to: .07, mat: robe, flare: .14, folds: .025, hem: a => .04 * Math.abs(Math.sin(a * 7)) + .03 * Math.abs(Math.sin(a * 13 + 1)), weightsAt: skirtWeights(B, .35)}));
     put(p, drape(body, {from: 1.035, to: .99, mat: cloth(0x3a2c20), off: .028, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     // a hood over the head and shoulders, open at the face
-    put(p, wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.045 && pow(b.x / .112, 2.) + pow((b.y - 1.65) / .165, 2.) < 1.)", mat: dark, off: .03, smooth: 3, bulge: (x, y, z) => Math.max(0, -z) * .22 + Math.max(0, y - 1.7) * .2}));
+    { const hood = wrap(body, (x, y, z, d) => d === "Head" || d === "neck_01", {clip: "!(b.z > -.045 && pow(b.x / .112, 2.) + pow((b.y - 1.65) / .165, 2.) < 1.)", mat: dark, off: .035, smooth: 14, bulge: (x, y, z) => Math.max(0, -z) * .22 + Math.max(0, y - 1.7) * .2});
+      hood.castShadow = false; hood.userData.noShadow = true; put(p, hood); } // (smooth 3 left it in shards round his head, and they threw dark blotches across his face, 19 Nov)
     put(p, drape(body, {from: 1.56, to: .5, arc: [Math.PI * 1.02, Math.PI * 1.98], mat: robe, off: .05, flare: .1, folds: .03, hem: a => .06 * Math.abs(Math.sin(a * 5)),
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .5], ["spine_02", .3], ["pelvis", .2]])}));
     if (!p.norm) mount(p, "Head", longBeard(0xd8d3c8), new THREE.Vector3(0, 1.62, .075)); // a real face has its own beard; the stiff false one looked pasted on
@@ -477,8 +481,7 @@ const LOOKS = {
     put(p, wrap(body, UPPER, {mat: cloth(0xd8cdb6), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0xd8cdb6, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-    put(p, drape(body, {from: 1.5, to: .95, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8f2f22, {folds: true}), off: .04, flare: .06, folds: .02,
-      include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+    put(p, drape(body, {from: 1.5, to: .3, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x8f2f22, {folds: true}), off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
     mount(p, "pelvis", sword(), new THREE.Vector3(.2, .99, .02), [0, 0, .35]);
   }},
@@ -489,10 +492,9 @@ const LOOKS = {
     put(p, wrap(body, UPPER, {mat: cloth(0x6b4a7a), clip: `${NECKLINE} && ${SLEEVE(.31)} && b.y > .97`}));
     put(p, drape(body, {from: 1.0, to: .68, mat: cloth(0x6b4a7a, {folds: true}), flare: .04, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: 1.035, to: .985, mat: gold, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-    put(p, drape(body, {from: 1.48, to: .95, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(0xa9823a, {folds: true}), off: .04, flare: .05, folds: .02,
-      include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+    put(p, drape(body, {from: 1.48, to: .3, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(0xa9823a, {folds: true}), off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
     const band = new THREE.Mesh(new THREE.TorusGeometry(.112, .008, 6, 40), gold); band.scale.set(1, 1.12, 1);
-    mount(p, "Head", band, new THREE.Vector3(0, 1.735, -.01), [Math.PI / 2 - .12, 0, 0]);
+    // (no gold circlet: at a fixed height it sat crooked across his brow, and sized to his head it looked like a basket on his hair, 19 Nov)
   }},
   // Mikon: nobody in particular. A plain undyed tunic, a few days of beard, an olive pit's worth of bad luck.
   mikon: {tone: 0xf3dcc2, hair: ["hair_buzzed", "hair_beard"], hairColor: 0x3b2a1c, dress(p, B, body) {
@@ -517,8 +519,7 @@ const LOOKS = {
     put(p, drape(body, {from: 1.0, to: .6, mat: cloth(0xeee6d4, {folds: true}), flare: .05, weightsAt: skirtWeights(B, .8)}));
     put(p, drape(body, {from: LONG ? .15 : .64, to: LONG ? .11 : .6, free: true, mat: cloth(0x2c3f6e), off: .055, flare: 0, folds: 0, weightsAt: skirtWeights(B, .8)})); // (a trim at the hem, wherever the hem is)
     put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-    put(p, drape(body, {from: 1.5, to: .78, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x2c3f6e, {folds: true}), off: .04, flare: .1, folds: .02,
-      include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+    put(p, drape(body, {from: 1.5, to: .3, arc: [Math.PI * 1.08, Math.PI * 1.92], mat: cloth(0x2c3f6e, {folds: true}), off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
     mount(p, "clavicle_r", new THREE.Mesh(new THREE.SphereGeometry(.022, 12, 8), gold), new THREE.Vector3(-.13, 1.47, .06));
   }},
   // The wedding at Corinth. Demeas, the uncle who gives the toast.
@@ -554,8 +555,7 @@ const LOOKS = {
       : {from: 1.02, to: .08, mat: black, off: .02, flare: .12, folds: .008, step: .03, shrink: 1, soft: 8, weightsAt: skirtWeights(B, .55)})); // (standing: lumpy at the hem, 19 Nov)
     if (SEATED) seatedFall(p, B, body, black);
     put(p, drape(body, {from: 1.05, to: 1.0, mat: gold, off: .03, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-    put(p, drape(body, {from: 1.52, to: .7, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .045, flare: .08, folds: .03,
-      include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
+    put(p, drape(body, {from: 1.52, to: .25, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
     crownOn(p, crown(0x2b2622, true), p.norm ? 1.8 : 1.755);
   }},
   // Sisyphus: dust, a work tunic gone brown, and a boulder that comes back down.
@@ -586,7 +586,7 @@ function greek(p, B, body, color, cloak, {veil, wreath, kneel} = {}) { // cloak:
     const k = drape(body, {from: 1.0, to: .6, mat: cloth(color), flare: .2, folds: .01, weightsAt: boneWeights(B, [["pelvis", 1]])}); put(p, k); k.visible = false;
     p.kneel = on => { skirt.visible = !on; k.visible = on; }; }
   put(p, drape(body, {from: 1.035, to: .985, mat: leather, off: .027, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
-  if (cloak !== null && !SEATED) put(p, drape(body, {from: 1.5, to: .9, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .045, flare: .06, folds: .02, include: d => TORSO.test(d), weightsAt: boneWeights(B, [["spine_03", 1]])}));
+  if (cloak !== null && !SEATED) put(p, drape(body, {from: 1.5, to: .3, arc: [Math.PI * 1.1, Math.PI * 1.9], mat: cloth(cloak, {folds: true}), off: .05, flare: .2, folds: .035, weightsAt: cloakWeights(B)}));
   if (veil) put(p, wrap(body, (x, y, z, d) => (d === "Head" || d === "neck_01") && z < .02, {clip: "!(b.z > -.03 && pow(b.x / .09, 2.) + pow((b.y - 1.65) / .14, 2.) < 1.)", mat: cloth(veil), off: .018, smooth: 3, bulge: (x, y, z) => Math.max(0, -z) * .1}));
   if (wreath) wreathOn(p, {flowers: p.female, lift: p.female ? -.03 : 0});
 }
@@ -625,7 +625,7 @@ function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
   const skirtMat = silk(color, {folds: true});
   // seated, the skirt has to follow the thighs forward, so it stays close; standing, it flares and trails a little behind
   const skirt = SEATED ? drape(body, {from: 1.0, to: .6, mat: skirtMat, flare: .06, weightsAt: skirtWeights(B, .8)})
-    : drape(body, {from: 1.2, to: .6, mat: skirtMat, off: .03, flare: .2, folds: .016, weightsAt: skirtWeights(B, .45), hem: a => Math.max(0, -Math.sin(a)) * .06});
+    : drape(body, {from: 1.07, to: .6, mat: skirtMat, off: .025, flare: .1, folds: .01, step: .03, shrink: 1, weightsAt: skirtWeights(B, .5), hem: a => Math.max(0, -Math.sin(a)) * .06}); // (to the floor: from 1.2 it stopped at the knee in a stiff bell, 19 Nov)
   put(p, skirt);
   // seated, the gown carries on over the shins to the floor (following each leg, opening out toward the hem)
   if (SEATED) seatedFall(p, B, body, skirtMat);

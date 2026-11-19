@@ -93,7 +93,7 @@ if (TOON) { for (const k of ["toon_rain", "toon_snow", "toon_chiton_short"]) pre
 const person = EXTRA ? makeExtra(ASSETS[ID.replace("/", "_")], {ASSETS, scene, seated: SEATED, female: ID.includes("/f"), colors: [0x8a5a7a, 0xd8c8b0, 0xe8e0d0]})
   : makeCastMember(ID, {ASSETS, CLIPS: {}, scene, seated: SEATED});
 const table = new THREE.Group(); scene.add(table); table.add(person.root); // the turntable: views turn the character, not the light
-person.root.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+person.root.traverse(o => { if (o.isMesh) { o.castShadow = !o.userData.noShadow; o.receiveShadow = true; } });
 person.speaking = on("talk");
 
 // a plain block to sit on, put under the hips once she sits
