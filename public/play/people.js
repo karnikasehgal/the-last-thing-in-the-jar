@@ -554,7 +554,7 @@ const LOOKS = {
     put(p, drape(body, {from: 1.05, to: 1.0, mat: gold, off: .03, flare: 0, folds: 0, weightsAt: boneWeights(B, [["pelvis", 1]])}));
     put(p, drape(body, {from: 1.52, to: .7, arc: [Math.PI * 1.05, Math.PI * 1.95], mat: black, off: .045, flare: .08, folds: .03,
       include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
-    mount(p, "Head", crown(0x2b2622, true), new THREE.Vector3(0, p.norm ? 1.8 : 1.755, -.012));
+    crownOn(p, crown(0x2b2622, true), p.norm ? 1.8 : 1.755);
   }},
   // Sisyphus: dust, a work tunic gone brown, and a boulder that comes back down.
   sisyphus: {tone: 0xd8bfa4, ash: .15, hair: ["hair_long", "hair_beard"], hairColor: 0x6a5c4c, dress(p, B, body) {
@@ -566,7 +566,7 @@ const LOOKS = {
   // Persephone: queen of the dead, in a pomegranate-red peplos with an overfold, a gold crown, a pomegranate.
   persephone: {body: "female", tone: 0xfbe4d0, hair: ["hair_buns"], hairColor: 0x2a160e, dress(p, B, body) {
     if (p.toon) weddingDrape(p, B, body, {color: 0x6e1424}); else gown(p, B, body, 0x5e0f1c, 0x1a0a12); // pomegranate-red liquid silk
-    mount(p, "Head", crown(0xc9a14a, false), new THREE.Vector3(0, p.norm ? 1.735 : 1.675, -.012));
+    crownOn(p, crown(0xc9a14a, false), p.norm ? 1.735 : 1.675);
     const pom = pomegranate(); if (p.norm) hold(p, "l", pom, new THREE.Vector3(0, .03, -.03)); else mount(p, "hand_l", pom, new THREE.Vector3(.7, 1.38, .01));
   }},
   // Eurydice: a shade, so she's pale and not quite there, still in her wedding gown.
@@ -634,7 +634,7 @@ function gown(p, B, body, color, cape, {wreath, kneel, veil} = {}) {
   // a broad collar of gold at the neckline, and drops at the ears
   const collar = new THREE.Group(); for (let i = 0; i < 26; i++) { const a = Math.PI * (.08 + .84 * i / 25), b = new THREE.Mesh(new THREE.SphereGeometry(i % 2 ? .0045 : .006, 8, 6), gold); b.position.set(Math.cos(a) * .078, -Math.sin(a) * .022 * (i % 2 ? 1.4 : 1), Math.sin(a) * .07); collar.add(b); }
   mount(p, "neck_01", collar, new THREE.Vector3(0, p.norm ? 1.565 : 1.5, .005));
-  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, earAt(p, sx)); }
   // gold cuffs where the sleeves end
   if (p.wrist) for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.TorusGeometry(.04, .008, 8, 24), gold), lw = new THREE.Vector3(), hw = new THREE.Vector3(); p.root.updateMatrixWorld(true); p.bones["lowerarm_" + side].getWorldPosition(lw); p.bones["hand_" + side].getWorldPosition(hw);
     const dir = hw.clone().sub(lw).normalize(); c.position.copy(hw).addScaledVector(dir, .03); /* a gold edge on the bell of the sleeve */ c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
@@ -671,7 +671,7 @@ function columnGown(p, B, body, color, {wreath = false, sheer} = {}) {
     p.root.add(col); col.position.copy(s).lerp(e, .05); col.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), e.clone().sub(s).normalize()); col.updateMatrixWorld(true); p.bones.neck_01.attach(col); }
   for (const side of ["l", "r"]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.034, .033, .026, 24, 1, true), gold), lw = p.bones["lowerarm_" + side].getWorldPosition(new THREE.Vector3()), hw = p.bones["hand_" + side].getWorldPosition(new THREE.Vector3());
     const dir = hw.clone().sub(lw).normalize(); p.root.add(c); c.position.copy(hw).addScaledVector(dir, .008); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); c.updateMatrixWorld(true); p.bones["hand_" + side].attach(c); }
-  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, earAt(p, sx)); }
   if (wreath) wreathOn(p, {flowers: true});
 }
 // Thea's wedding gown, on her bare body (after the board: dark theatrical couture, Grecian one-shoulder draping): saffron-
@@ -814,7 +814,7 @@ function weddingDrape(p, B, body, {color = 0xf3ead9, fabric = "liquid", wreath, 
   // the end of the cloth, from the left shoulder down the back
   put(p, drape(body, {from: 1.49, to: SEATED ? .75 : .2, arc: [Math.PI * 1.5, Math.PI * 2.02], mat: liquidSilk, off: .05, flare: .1, folds: .03, free: true,
     include: d => TORSO.test(d), weightsAt: boneWeights(B, (x, y) => y > 1.15 ? [["spine_03", 1]] : [["spine_03", .6], ["spine_02", .4]])}));
-  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005)); }
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), gold), d = new THREE.Mesh(new THREE.SphereGeometry(.0045, 8, 6), gold); d.scale.y = 1.5; d.position.y = -.011; e.add(d); mount(p, "Head", e, earAt(p, sx)); }
   if (armband && p.bones.upperarm_r) { const s = p.bones.upperarm_r.getWorldPosition(new THREE.Vector3()), e = p.bones.lowerarm_r.getWorldPosition(new THREE.Vector3());
     const a = armlet(); p.root.add(a); a.position.copy(s).lerp(e, .4); a.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), e.clone().sub(s).normalize()); a.scale.setScalar(p.toon ? .85 : 1); a.updateMatrixWorld(true); p.bones.upperarm_r.attach(a); }
   if (wreath) wreathOn(p, {flowers: true});
@@ -939,6 +939,12 @@ function trimmed(mesh, test, base, trim = new THREE.Color(0xc9a24a)) { // colour
   if (!mesh.material.userData.own) mesh.material = mesh.material.clone(); // (a cut garment's material is its own already, and a copy would lose the cut)
   mesh.material.vertexColors = true; mesh.material.color.set(0xffffff); mesh.material.needsUpdate = true; return mesh;
 }
+function earAt(p, sx) { // just under the ear lobe on side sx, from the measured head (else the old fixed place)
+  const P = p.skinPts?.length > 300 ? p.skinPts : null; if (!P) return new THREE.Vector3(sx * .072, p.norm ? 1.66 : 1.6, -.005);
+  let best = null; for (let i = 0; i < P.length; i += 3) { const y = P[i + 1]; if (y < 1.57 || y > 1.7) continue; const x = P[i] * sx; if (!best || x > best[0]) best = [x, y, P[i + 2]]; }
+  let lobe = best[1]; for (let i = 0; i < P.length; i += 3) if (P[i] * sx > best[0] - .012 && Math.abs(P[i + 2] - best[2]) < .03 && P[i + 1] > 1.55 && P[i + 1] < best[1]) lobe = Math.min(lobe, P[i + 1]);
+  return new THREE.Vector3(sx * (best[0] - .004), lobe - .004, best[2]);
+}
 function headFit(p) { // from the measured hair: its top, its middle, its half-width just under the top
   const P = p.headPts; let ty = -9; for (let i = 1; i < P.length; i += 3) ty = Math.max(ty, P[i]);
   let cx = 0, cz = 0, n = 0, rx = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - (ty - .07)) < .012) { cx += P[i]; cz += P[i + 2]; n++; rx = Math.max(rx, Math.abs(P[i])); }
@@ -991,6 +997,15 @@ function aulos() { // the double pipes
 // The female body sits a little lower: its own neckline and garment region.
 let FNECK = "b.y < 1.47 && !(b.z > -.02 && pow(b.x / .11, 2.) + pow((b.y - 1.47) / .07, 2.) < 1.)";
 let FUPPER = (x, y, z, d) => y > .92 && y < 1.55 && (TORSO.test(d) || ARMS.test(d) || d === "neck_01");
+function crownOn(p, c, y0) { // a crown sized to the skull (not the hair: buns made it a lampshade) and set at the hairline
+  const P = p.skinPts?.length > 300 ? p.skinPts : null; if (!P) return mount(p, "Head", c, new THREE.Vector3(0, y0, -.012));
+  let ty = -9; for (let i = 1; i < P.length; i += 3) ty = Math.max(ty, P[i]);
+  const y = ty - .04; let cx = 0, cz = 0, n = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < .01) { cx += P[i]; cz += P[i + 2]; n++; } cx /= n || 1; cz /= n || 1;
+  const rs = []; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < .01) rs.push(Math.hypot(P[i] - cx, P[i + 2] - cz)); rs.sort((a, b) => a - b);
+  const r = rs[Math.floor(rs.length * .9)] || .09;
+  c.scale.setScalar(Math.max(.75, Math.min(1.05, (r + .018) / .11))); c.userData.fitted = true; // (+ the hair's thickness)
+  return mount(p, "Head", c, new THREE.Vector3(cx, y, cz));
+}
 function crown(color, spikes) {
   const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({color, roughness: .35, metalness: .9});
   const band = new THREE.Mesh(new THREE.CylinderGeometry(.112, .108, .045, 32, 1, true), mat); band.material.side = THREE.DoubleSide; g.add(band);
@@ -1158,6 +1173,12 @@ function makeRealPerson(id, look, {ASSETS, scene, scale, seated = false, asset, 
   tailor.userData = {toNorm: norm, fromNorm: norm.clone().invert(), home: root, skel};
   const hand = n => w(n).applyMatrix4(norm), wrist = Math.min(Math.abs(hand("Bip01_L_Hand").x), Math.abs(hand("Bip01_R_Hand").x)) + .012; // the sleeves end at the wrist joint
   const person = {root, bones, body: ref, norm: {k, turn}, female, wrist, toon, bare};
+  if (!toon) { // the head and hair, measured, so crowns, wreaths and earrings sit on this head (they were all at one height for everyone, 19 Nov)
+    const v = new THREE.Vector3(), pts = [], skin = [];
+    for (const o of skins) { const nm = [].concat(o.material)[0].name; if (!/head|opacity/i.test(nm)) continue; const pos = o.geometry.attributes.position, isSkin = /head/i.test(nm);
+      for (let i = 0; i < pos.count; i += 2) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld).applyMatrix4(norm); if (v.y > 1.5) { pts.push(v.x, v.y, v.z); if (isSkin) skin.push(v.x, v.y, v.z); } } }
+    if (pts.length > 300) { person.headPts = pts; person.skinPts = skin; } // (headPts: head and hair; skinPts: the head alone, for the ears)
+  }
   if (toon) { // a cartoon head is bigger and higher than the realistic one hats and crowns were placed for: move them up and size them to it
     const hb = w("Bip01_Head").applyMatrix4(norm), box = new THREE.Box3(), top = new THREE.Box3(), v = new THREE.Vector3();
     const eyes = new THREE.Box3();
