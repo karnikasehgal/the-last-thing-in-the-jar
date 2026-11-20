@@ -117,3 +117,11 @@ Taken today at fixed camera spots with the random scenery seeded, so the same sh
 **Unexplained:** one of five wedding test loads earlier today timed out while starting up, with no error message. The retry worked.
 
 **Result for A4:** pass. The normal game and the opening film play as before, with no page errors in any run; speed is the same within run-to-run noise (river bank 52 to 53 fps before, 54 to 55 after; wedding 53 to 60 before, 53 to 60 after).
+
+## 20 Nov: Chapter I show-ready pass (coin-v80)
+- River wake: Mikon's head was left hidden after the dying POV shot; restored. He and Hermes now turn to face each other after "Is that a river?".
+- Olive: close side shot from his right; the hand stops at his lips, bigger olive, jaw opens, shot holds until the hand is down.
+- Party music: the sawtooth piper ("ta ta ta") replaced with a slow, soft lyre.
+- 14 rewritten lines (v5_*) were never recorded and played as silent subtitles. Back to the recorded takes: Hermes v4_h4, v4_m7, v4_h8; Elpenor v2_e1, then Mikon v2_i3 and v4_i4 around the funeral flashback. Every line in both chapters now has a recording.
+- Later (Karnika: "later"): re-record Chapter I with ElevenLabs, about 7,900 characters on the free plan. Will also fix the garbled w_m3.
+- Tested: Chapter I plays to "You crossed", control at 144 s (was 160), 0 errors.

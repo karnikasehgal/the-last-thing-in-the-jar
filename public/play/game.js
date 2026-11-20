@@ -887,17 +887,18 @@ const sound = {
   bark() { if (!actx) return; [0, .18, .36, .7].forEach((d, i) => { const at = actx.currentTime + d, o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(200 - i * 25, at); o.frequency.exponentialRampToValueAtTime(70, at + .2); const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 700; o.connect(f); this.env(f, .55, .01, .22, at); o.start(at); o.stop(at + .3); }); },
   growl(level) { if (!actx) return; const o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.value = 42 + Math.random() * 12; const f = actx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 150; o.connect(f); this.env(f, .55 * level, .08, .55); o.start(); o.stop(actx.currentTime + .7); },
   hit() { if (!actx) return; const o = actx.createOscillator(); o.frequency.setValueAtTime(120, actx.currentTime); o.frequency.exponentialRampToValueAtTime(26, actx.currentTime + 1); this.env(o, 1, .005, 1.1); o.start(); o.stop(actx.currentTime + 1.2); const n = this.noise(.6); this.env(n, .7, .002, .5); n.start(); },
-  // a wedding: a piper on the double pipes (the crowd used to be pulsing static; gone)
+  // a wedding: a lyre played softly across the courtyard, slow and unhurried, under the talk (it was a sawtooth piper,
+  // one hard note every third of a second: the "ta ta ta" heard under every line)
   party(on) {
     if (!actx) return;
     if (!on) { this.partyStop?.(); this.partyStop = null; return; }
-    const out = actx.createGain(); out.gain.value = .0; out.connect(master); out.gain.linearRampToValueAtTime(.5, actx.currentTime + 2);
-    const tune = [62, 64, 65, 67, 69, 67, 65, 64, 62, 60, 62, 64, 65, 64, 62, 62], beat = .32; let k = 0, stop = false;
-    const note = () => { if (stop) return; const at = actx.currentTime + .02, fq = 440 * Math.pow(2, (tune[k % tune.length] - 69) / 12);
-      for (const d of [0, 7]) { const o = actx.createOscillator(); o.type = "sawtooth"; o.frequency.value = fq * Math.pow(2, d / 1200 * 12 * (d ? 1 : 0)) * (d ? 1.498 : 1); const bf = actx.createBiquadFilter(); bf.type = "bandpass"; bf.frequency.value = 1400; bf.Q.value = 1.2; const gg = actx.createGain(); gg.gain.setValueAtTime(0, at); gg.gain.linearRampToValueAtTime(d ? .03 : .06, at + .04); gg.gain.linearRampToValueAtTime(0, at + beat * .95); o.connect(bf).connect(gg).connect(out); o.start(at); o.stop(at + beat); }
-      k++; setTimeout(note, beat * 1000); };
+    // steps on the lyre's scale (0 low E ... 10 high A); a phrase of eight, with a low note under the first of each four
+    const tune = [5, 7, 6, 4, 5, 3, 4, 2, 4, 6, 7, 8, 7, 5, 4, 5], beat = .62; let k = 0, stop = false, t;
+    const note = () => { if (stop) return; const n = tune[k % tune.length];
+      pluck(n, .22 + (k % 4 === 0 ? .08 : 0)); if (k % 4 === 0) pluck(Math.max(0, n - 4), .14, .02);
+      k++; t = setTimeout(note, beat * 1000 * (k % 8 === 0 ? 1.8 : 1)); }; // (a breath at the end of each phrase)
     note();
-    this.partyStop = () => { stop = true; out.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5); setTimeout(() => out.disconnect(), 1600); };
+    this.partyStop = () => { stop = true; clearTimeout(t); };
   },
   // birdsong in a spring meadow; birds() with no argument stops it
   birds(on) {
@@ -1097,12 +1098,9 @@ const WAKE = [
   ["mikon", "v4_m2", "I died. At a wedding. In front of everyone."],
   ["hermes", "v4_h3", "In front of everyone. Though, if it's any comfort, most of them were looking at the lamb."],
   ["mikon", "v4_m3", "Who are you?"],
-  ["hermes", "v5_h4", "Hermes. I walk the dead down here. You're my third today, and I'm already late for the fourth."],
-  ["mikon", "v5_m4", "Down where? What is this place? What am I supposed to do?"],
-  ["hermes", "v5_h5", "All very good questions. I'd love to answer them. I'd also love a day off."],
-  ["hermes", "v5_h6", "See the sailor by the water, mending a net? That's Elpenor. He's been here longer than the sand. He'll tell you how it all works.", "sailor"],
-  ["mikon", "v5_m5", "You're leaving? Just like that?"],
-  ["hermes", "v5_h7", "Just like that. Somewhere up there, a man is trying to pat a lion. Good luck, Mikon. I mean it. And from now on, chew."]
+  ["hermes", "v4_h4", "Hermes. I carry messages for the gods, and when someone dies, I walk them down here. You're my third today."],
+  ["mikon", "v4_m7", "You're very calm about all of this."],
+  ["hermes", "v4_h8", "I've had a lot of practice. Go and find the sailor down by the water. His name is Elpenor, and he's been here long enough to know where everything is. Good luck, Mikon. I mean that.", "sailor"]
 ];
 function beginTalk(p, id) { talking = true; releaseMouse(); document.body.classList.add("talking"); talkingTo = p; $("#toast").classList.remove("on"); clearTimeout(toastT); nameCard(id);
   if (PORTRAITS) for (const w of [id, chap.player.toLowerCase()]) portraitHas(`${PORTRAIT_DIR}${w}-neutral.jpg`); } // ask early, so the first line doesn't wait
@@ -1114,7 +1112,7 @@ async function conversation(id) {
     me.stage = Math.max(me.stage, 1); hermesLeaves();
   } else if (id === "elpenor") {
     // Elpenor is the one who explains how things work here: the ferry, the fare, the hundred years, the coin, the dog, the cake
-    await say("elpenor", "v5_e1", "Careful, you're standing on my net. No, it's fine, it's seen worse. I'm Elpenor. I rowed for Odysseus. Well, near Odysseus. There were a lot of us.");
+    await say("elpenor", "v2_e1", "Oh, hello. Sorry, I don't get many people stopping, most of them walk straight past. Which, honestly, fair. I'm Elpenor. I rowed for Odysseus. Well, I rowed near Odysseus. There were a lot of us.");
     await say("mikon", "v2_m4", "Mikon. I choked on an olive pit at my cousin's wedding, if we're doing how we got here.");
     await say("elpenor", "v2_e2", "That's a good one. Mine's worse. We were staying at Circe's house, and I'd had too much wine, so I went up on the roof to sleep where it was cool. In the morning I heard everyone leaving, jumped up in a hurry, and forgot about the ladder.");
     const k = await choose([{t: "Ask about a coin"}, {t: "Promise to get him out"}, {t: "Say how sad that is"}]);
@@ -1122,15 +1120,10 @@ async function conversation(id) {
     if (k === 0) await say("mikon", "v2_m5", "I don't suppose you've seen a coin lying around anywhere?");
     if (k === 1) { await say("mikon", "v2_m6", "When I get across, I'll find a way to get you out of here too."); await say("elpenor", "v2_e5", "That's, um. Nobody's said anything like that to me before. Not even Odysseus, and he came all the way down here in person."); }
     if (k === 2) { await say("mikon", "v2_m7", "That might be the saddest thing I've ever heard."); await say("elpenor", "v2_e6", "Thank you. I tell it slightly differently at parties."); }
-    if (me.met.hermes) {
-      await say("elpenor", "v5_e2", "And let me guess. He pointed at me and ran. He always leaves the speech to me. Fine. Here's how it works.");
-    } else await say("elpenor", "v5_e2b", "Right. Nobody's given you the speech yet. Here's how it works.");
-    await say("elpenor", "v5_e3", "That's the Styx. That's the ferry. The cheerful one on board is Charon. One coin a passenger, no exceptions. Your family were meant to put one under your tongue.", "ferry");
-    await say("mikon", "v5_m6", "They forgot.");
+    // (only recorded lines here: the rewritten speech, v5, was never recorded and played as silent subtitles. 20 Nov)
+    await say("mikon", "v2_i3", "Nobody put a coin under my tongue for the ferryman. They were busy. It was a wedding, and the lamb was getting cold.", "ferry");
     await flashback("funeral"); // (the night after: nobody put the coin in)
-    await say("elpenor", "v5_e4", "Everyone on this beach has a family that forgot. No coin, you wait a hundred years. I've seen people beg him, bribe him, cry at him. He just flicks water at them.", "charon");
-    await say("mikon", "v5_m8", "So it's a hundred years, or nothing?");
-    await say("elpenor", "v5_e6", "Well. There is one other way. It's a terrible idea, so naturally I've thought about it a lot.");
+    await say("mikon", "v4_i4", "This is where I woke up. The bank of the River Styx, with a ferry I can't pay for, and a hundred years in front of me.", "charon");
     await say("elpenor", "v2_e3", "There's one coin down here that nobody's spent. The dog sleeps on it, in his cave past the old temple, at the far end of the arcade. People have tried for it. Some nights you can hear how that went from here.", "grotto");
     await say("elpenor", "v2_e4", "You can't just walk in and pick it up. He'll smell it the second it moves. You'd have to put him to sleep first.");
     await say("elpenor", "v2_e7", "There's a honey cake on the altar in the temple. Somebody left it as an offering years ago, and it hasn't gone stale, because nothing does down here. No dog alive can say no to honey cake. Throw it close to him, and he'll be out like a lamp.", "altar");
@@ -1881,17 +1874,23 @@ async function weddingFilm({skip = false, part = "cold"} = {}) { // skip: the op
     // the olive: still in the middle of the story, he reaches into the bowl, takes one, and pops it in his mouth
     const olive = wedding.olives.children[3];
     if (olive) {
-      shot([-.3, 1.2, .32], [-.62, .98, -.6], [-.36, 1.22, .2], [-.66, 1.08, -.72], 3400); PLAYER.play("sittabletalk");
+      PLAYER.play("sittabletalk");
       const from = olive.getWorldPosition(new THREE.Vector3()); let held = false;
-      act(t => { const P = PLAYER, f = fwdOf(P), r = rightOf(P), chest = at(P, "spine_03"), mouth = at(P, "Head").addScaledVector(f, .13).add(V(0, .08, 0));
+      // a close side shot from his right, the side the hand comes up on, so it rises beside his face and stops at his
+      // lips: the bowl, the olive and his open mouth all in frame (from across the table the hand crossed his face)
+      { const P = PLAYER, f = fwdOf(P), r = rightOf(P), hd = at(P, "Head"), id = {}, t0 = performance.now();
+        const A = hd.clone().addScaledVector(f, .62).addScaledVector(r, .5).add(V(0, -.02, 0)), B = hd.clone().addScaledVector(f, .5).addScaledVector(r, .4).add(V(0, .01, 0));
+        const L = hd.clone().addScaledVector(f, .16).add(V(0, -.1, 0)); camShot.active = true; camShot.snap = true; shot.cur = id;
+        (function go() { if (shot.cur !== id) return; const u = Math.min(1, (performance.now() - t0) / 3600); camShot.pos.lerpVectors(A, B, u * u * (3 - 2 * u)); camShot.look.copy(L); requestAnimationFrame(go); })(); }
+      act(t => { const P = PLAYER, f = fwdOf(P), r = rightOf(P), chest = at(P, "spine_03"), mouth = at(P, "Head").addScaledVector(f, .17).addScaledVector(r, .04).add(V(0, -.05, 0)); // (the wrist stops just below and to the side of the lips: the fingers, with the olive, are at the mouth)
         // out to the bowl, a moment to pick, up to the mouth, and back down to the table
         const w = ss(0, .8, t) * (1 - ss(2.5, 3.3, t)), goal = from.clone().add(V(0, .02, 0)).lerp(mouth, ss(1.15, 1.95, t));
         toward(P, "r", goal, chest.clone().addScaledVector(r, .55).addScaledVector(f, -.15).add(V(0, -.45, 0)), w, .06);
-        if (!held && t > .95) { held = true; olive.scale.multiplyScalar(1.6); hold(P, "r", olive); }
-        if (t > 1.75 && t < 2.3) P.expr.hold = {AK_25_JawOpen: .45};
+        if (!held && t > .95) { held = true; olive.scale.multiplyScalar(2.2); hold(P, "r", olive); }
+        if (t > 1.6 && t < 2.3) P.expr.hold = {AK_25_JawOpen: .75};
         if (held && t > 2.05 && olive.parent) { olive.removeFromParent(); P.expr.hold = {AK_44_MouthSmileLeft: .7, AK_45_MouthSmileRight: .7}; }
         return t > 3.4; });
-      await pause(2300);
+      await pause(3400); // (the face shot waits until the hand is back on the table)
     }
     PLAYER.expr.hold = {AK_44_MouthSmileLeft: .7, AK_45_MouthSmileRight: .7};
     faceShot(PLAYER, {side: .22, dist: 1, ms: 5000});
@@ -1994,12 +1993,15 @@ async function weddingFilm({skip = false, part = "cold"} = {}) { // skip: the op
   for (const k of Object.keys(guests)) delete NPC[k];
   PLAYER.root.quaternion.identity(); PLAYER.root.position.set(-20.4, 0, 16.05); PLAYER.root.rotation.set(0, Math.PI, 0);
   PLAYER.action && (PLAYER.action.timeScale = 1); PLAYER.play("Sitting_Idle_Loop", 0); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: 1, AK_10_EyeBlinkRight: 1};
+  PLAYER.setHead(true); // (the dying shot is through his eyes, with his head hidden: it has to come back for the river)
   const H = NPC.hermes; H.root.position.set(-19.3, 0, 14.9); H.root.rotation.y = -Math.PI * .8; H.pos.set(-19.3, 0, 14.9); H.face = false;
   if (!skipped) {
     faceShot(PLAYER, {dist: .9, side: .2, ms: 6000});
     await fade("clear", 2500);
     await pause(900); PLAYER.expr.hold = {AK_09_EyeBlinkLeft: .5, AK_10_EyeBlinkRight: .5}; await pause(400); PLAYER.expr.hold = {};
     await say("mikon", "w_m4", "Oh. Oh, no. Is that a river? Why is it glowing?");
+    // then he turns to Hermes, and Hermes to him, so the talk is face to face (they sat back to back)
+    PLAYER.root.rotation.set(0, 2.38, 0); H.root.rotation.y = -.76;
     for (const [who, id, text, cut] of WAKE) { // (the same words as the game's own wake-up, in conversation())
       if (skipped) break;
       if (cut) cutTo(cut); else faceShot(who === "hermes" ? H : PLAYER, {dist: who === "hermes" ? 1.1 : .9, side: who === "hermes" ? -.3 : .25});
